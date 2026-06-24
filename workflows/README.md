@@ -1,17 +1,53 @@
 # harness workflows
 
-> optimization.md 提案的落地脚本。Workflow tool 加载执行的可运行 JS（非文档示例）。
+> 落地脚本。Workflow tool 加载执行的可运行 JS（非文档示例）。
 >
-> **接口手册（how）在此；何时调（when）在 agent_protocol.md。** 落地顺序：脚本先跑通，协议后改。
+> **接口手册（how）在此；何时调（when）在 agent_protocol.md；设计决策在 workflow_design.md。**
 
 ## 脚本清单
 
-| 脚本 | 覆盖 optimization 哪几行 | 状态 |
+| 脚本 | 覆盖 | 状态 |
 |---|---|---|
-| `task_review.js` | review 派 reviewer+test-reviewer / FAIL 轮三方重审 / tech_debt 提取（schema 内嵌） | 待跑通 |
-| `wave_parallel.js` | 波次内并发 task（+ 内联 review 逻辑） | 待跑通（step2，依赖 task_review 验证后） |
+| `task_full.js` | 单 task 完整流程（code→review→FAIL），方案 B 全自动 | 待跑通 |
+| `task_review.js` | 只 review+FAIL 轮（coder 留 Teams），方案 A | 待跑通 |
+| `wave_parallel.js` | 波次内并发 task | 待跑通（step2，worktree 策略待验证） |
 
-optimization 表格四行 → 2 脚本。第四行"tech_debt 提取"不是独立流程，是让 review agent 返回 verdict 时顺带结构化吐 `tech_debt[]`，寄生在两个脚本的 `VERDICT` schema 里，leader 从返回值直接读，不 grep review 正文。
+脚本覆盖确定性 fan-out。tech_debt 提取不是独立流程，是让 review agent 返回 verdict 时顺带结构化吐 `tech_debt[]`，寄生在各脚本的 `VERDICT` schema 里，leader 从返回值直接读，不 grep review 正文。
+
+## 方案 A vs B：单 task 怎么选
+
+| | 方案 A（task_review.js） | 方案 B（task_full.js） |
+|---|---|---|
+| coder 在哪 | 留 Teams（haiku 常驻、可唤醒复用） | 进 Workflow（无状态 fan-out） |
+| Workflow 管 | 只 review+FAIL | 整个 code→review→FAIL |
+| 跨 step 派活 | leader 逐 step 喂，coder 累积上下文 | 脚本一次给全 plan，或脚本内循环 |
+| 人能中途介入 | 能（SendMessage 改方向） | 难（后台跑，只能等结束或 kill） |
+| FAIL 轮 coder | 记得上一轮 | 无状态，从 spec/diff 重建 |
+| 适合 | **大 task / 需盯方向 / 长 step 链** | **小而独立 / 不需介入 / 一把梭** |
+
+**leader 立项时按 task 性质挑**：小独立 → B 全自动；大/需介入 → A（coder 留 Teams，只调 task_review.js）。T9 step2 这种"大、长、有状态"的 → 必走 A。
+
+## ⚠️ worktree 关键约束（首跑必验）
+
+`isolation:'worktree'` 是**每个 `agent()` 各拿独立 worktree，stage 间不共享，路径由 runtime 管不稳定暴露**。后果：
+
+- **task_full.js**：脚本内**不用** isolation。单 task 串行无碰撞，所有 agent 共享会话工作树，coder 写完 reviewer 直接看见。要隔离整个 task → leader 在预建 worktree 里发起本 Workflow。
+- **wave_parallel.js**：跨 task 隔离**不能靠共享未提交改动**（review agent 拿到的是新 worktree，看不见 coder 的）。正确做法：coder 在自己 worktree 内 **commit**，downstream agent 读已提交状态。**这是 wave_parallel 首跑第一要验证的点，没验证前别上生产 task。**
+
+## task_full.js
+
+单 task 完整流程，全自动（方案 B）。
+
+**调用**：
+```js
+Workflow({ scriptPath: "docs/harness/workflows/task_full.js", args: { taskId: "T05", steps: [...] } })
+```
+
+**args**：`taskId`（必填）、`steps`（可选，plan 的 step 列表，给 coder 参考）。
+
+**返回**：`{ taskId, passed, rounds, sharedFileNeeds, techDebt }`。coder 没跑通测试 → 直接返回 `passed:false, reason`。
+
+**leader 用返回值**：`passed` 决定收口 or 阻塞；`sharedFileNeeds` 收口时落共享文件；`techDebt` 追加 tech_debt.md。
 
 ## task_review.js
 

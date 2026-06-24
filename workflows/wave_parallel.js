@@ -8,6 +8,11 @@
 // 注意：本脚本只负责"波次内 fan-out 到双 PASS"。合并 worktree、跑全量测试、收口、commit 仍是 leader 串行职责
 // （协议"收口"段：依赖在前的先合，每合一个跑全量测试）。脚本不碰共享文件、不 commit。
 //
+// ⚠️ worktree 约束（首跑必验）：isolation:'worktree' 每个 agent() 各拿独立 worktree、stage 间不共享。
+//    故 stage2 review 看不见 stage1 coder 的【未提交】改动。正确做法：coder 在自己 worktree 内 commit，
+//    review/downstream 读已提交状态。当前脚本 stage2 直接读 git diff 假设能看见 coder 改动——这点未验证，
+//    很可能需要改成"coder commit + review 读 commit"。没验证前别上生产 task。见 README "worktree 关键约束"。
+//
 // 接口/参数/返回结构见 docs/harness/workflows/README.md。
 
 export const meta = {

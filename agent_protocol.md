@@ -174,13 +174,16 @@ teammate prompt 里只说"读 X 文件、写到 Y 文件、首行 `verdict: PASS
 
 确定性 fan-out（双 review / FAIL 轮 / 波次并发）可由 Dynamic Workflow 脚本接管，leader 只读结构化返回值，不手工调度。**当前为提案，未跑通前仍走上面的手工编排。**
 
-- 脚本：`docs/harness/workflows/task_review.js`（单 task 双 review + FAIL 轮）、`wave_parallel.js`（波次并发）
-- 接口/参数/返回：`docs/harness/workflows/README.md`
-- 设计意见：`docs/harness/optimization.md`
+- 脚本：`docs/harness/workflows/task_full.js`（方案 B：单 task 全流程一把梭）、`task_review.js`（方案 A：只 review+FAIL，coder 留 Teams）、`wave_parallel.js`（波次并发）
+- 接口/参数/返回 + **方案 A/B 选择标准**：`docs/harness/workflows/README.md`
+- 设计意见：`docs/harness/workflow_design.md`
+
+**方案 A vs B（leader 立项时按 task 性质挑）**：小而独立、不需介入 → B（task_full 全自动）；大 task / 需盯方向 / 长 step 链 → A（coder 留 Teams，只调 task_review）。
 
 落地后协议改动（仅在脚本跑通后）：
-- "leader 只取 verdict 首行 head -1" → `Workflow({scriptPath: "docs/harness/workflows/task_review.js", args:{taskId, worktree}})`，读返回 `{passed, rounds, techDebt}`，schema 强制 verdict 替代首行 hack
+- "leader 只取 verdict 首行 head -1" → 调脚本读返回 `{passed, rounds, techDebt}`，schema 强制 verdict 替代首行 hack
 - 波次并发手工派 worktree → `wave_parallel.js`，合并/收口仍 leader 串行
+- **worktree 约束**：isolation 每 agent 各拿独立 worktree、stage 间不共享，跨 stage 传改动要靠 commit 不靠共享未提交态（首跑必验）
 - 落地纪律见 README：脚本先跑通 → 改协议指令 → 真相不写未验证脚本
 
 ## plan 分段派活规则
@@ -262,7 +265,7 @@ compact 后 leader 从三处恢复：
 4. 若有 tasks/{TID}/ 存在且未归档 → 该 task 中途断，从 context.md 续；否则从选 task 规则开新 task
 5. 重建 team（若 team 还在则复用，否则 TeamCreate）
 
-**⚠️ checkpoint 只给断点，不给调度结论**：checkpoint 里写的"串行/并发"是上次的快照，恢复后**必须按"第 0 步：开工调度"重算 DAG 层宽**，不能吃 checkpoint 惯性直接单跑。曾因吃惯性该并发却串行（见 harness_experience #3）。同理，teammate idle ≠ 不可用，**idle = 可唤醒资源**，FAIL 轮/新 review 一律 SendMessage 唤醒原实例，绝不新 spawn（spawn 只用于"全新 task + coder 上下文已满需重建"）。
+**⚠️ checkpoint 只给断点，不给调度结论**：checkpoint 里写的"串行/并发"是上次的快照，恢复后**必须按"第 0 步：开工调度"重算 DAG 层宽**，不能吃 checkpoint 惯性直接单跑（曾有恢复后该并发却串行的问题）。同理，teammate idle ≠ 不可用，**idle = 可唤醒资源**，FAIL 轮/新 review 一律 SendMessage 唤醒原实例，绝不新 spawn（spawn 只用于"全新 task + coder 上下文已满需重建"）。
 
 ## 阻塞项处理（全自动，不停下问）
 
