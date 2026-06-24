@@ -22,6 +22,7 @@ export const meta = {
   ],
 }
 
+// VERDICT schema — 同步修改点：task_review.js / task_review_autofix.js / task_full.js
 const VERDICT = {
   type: 'object',
   properties: {
@@ -126,7 +127,7 @@ while (failing.length && round < MAX_ROUNDS) {
 
 return {
   taskId,
-  passed: failing.length === 0,
+  passed: verdicts.length > 0 && failing.length === 0,
   rounds: round,
   sharedFileNeeds: coder.sharedFileNeeds || [],
   techDebt: verdicts.flatMap((v) => v.tech_debt || []),
