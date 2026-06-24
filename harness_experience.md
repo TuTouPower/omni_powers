@@ -25,14 +25,14 @@
   4. FAIL 轮的修改记录位置不一致
   - T7 coder 写在 context.md，test-reviewer 重审要跨文件找
   - T11/T24/T27 改进为写 review_*.md 同文件追加
-  - 改进：协议固化——FAIL 轮 coder 在 review_*.md 追加"修改记录"段，不写 context.md
+  - 改进：协议固化——按边界类型切。构建边界（每 step 正向进度）写 context.md；质量边界（FAIL 轮来回）写 review_*.md。FAIL 轮禁止碰 context.md，重审一个文件看全线程。
 
   5. commit 粒度 + 漏文件
   - T11 commit 漏了 specs/review 归档文件，补了一次
   - 并发同工作树导致改动混杂，收口要反复 git status 挑文件
   - 改进：worktree 隔离后，每 task 收口 = 自己 worktree 的全部改动，一次 commit 干净
 
-  6. cost hook 误报
-  - StrategicCompact hook 按 200k 窗口算报 92%，实际 1m 窗口才 19%，差点误触发 compact
-  - 改进：hook 需按实际窗口（1m）算阈值，或忽略该提示
-
+leader 发现单个 task plan 太大 拆分成多个 step 的话是否应该分成多个 commit，多次收口
+- 结论：不。收口是 task 级语义动作，step 凑不齐（status 不能→完成、目录不能归档、review 看整 task diff、回滚以 task 为粒度）。step 不收口、不单 commit。
+- 真正的洞：大到要"多次收口" = 拆分粒度错了 → 拆 task 不是拆 commit。拆 task 派 task-splitter（sonnet）执行：建目录 + 切（非重跑）spec/plan + 改 tasks_list，全在它上下文跑，不污染 leader。
+- WIP sub-commit 允许（崩溃保护），但与收口完全脱钩：纯代码落盘，不改 status/不归档/不写 checkpoint。
