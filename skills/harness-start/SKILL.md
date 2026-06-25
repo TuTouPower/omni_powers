@@ -93,8 +93,10 @@ jq -r '
 
 **派活**：leader 先读 plan 拆 steps.md（由 leader 维护进度），只给 coder 当前 step + 相关 spec 段，不给整份 plan。小 task 可一次给全 plan。
 
+**派活消息必须首行切目录**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
+
 ```js
-SendMessage({ to: "coder-1", message: "在 {worktree_path} 中 TDD 实现 T{a} step {N}。spec: {path}/spec.md（相关段）。plan: {path}/plan.md（当前 step）。完成后报告。" })
+SendMessage({ to: "coder-1", message: "cd {worktree_绝对路径} && pwd\n在工作目录中 TDD 实现 T{a} step {N}。spec: {path}/spec.md（相关段）。plan: {path}/plan.md（当前 step）。完成后报告。" })
 ```
 
 tasks_list.json 波次内所有 task status → 进行中。

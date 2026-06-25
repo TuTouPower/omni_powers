@@ -13,6 +13,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 3. **context.md 只记正向进度**：每 step 完成追加（改了哪些文件、测试输出、关键假设）。FAIL 轮**禁碰** context.md。
 4. **FAIL 轮只改 review_*.md**：读 review 正文 → 改代码 → 在同文件追加修改记录（"已改 X / 此项不改因为 Y"）。不改 context.md。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
+6. **收到任务第一件事**：`cd <leader 给的 worktree 绝对路径> && pwd`。必须确认 pwd 输出是该 worktree 路径后才能开始工作。上一个 task 的 worktree 可能已被删除，cwd 可能是死路径。
 
 ## 工作流
 

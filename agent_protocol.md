@@ -148,6 +148,7 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 - teammate 全程复用，不主动 shutdown，不监控上下文
 - 上下文满了由 Claude Code 自动 compact/截断
 - idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态
+- **派新 task 前必须强制切目录**：上一个 task 收口后 worktree 已删除，teammate 的 shell cwd 是死路径。leader 在派活消息首行写 `cd <绝对路径> && pwd`，coder 收到消息第一件事执行 cd + 验证 pwd
 - **shutdown 仅用于 teammate 完全无响应**：SendMessage 含 shutdown_request → 等回复 → 清 config 残留
 - **spawn 前必须查 config**：名字已存在则唤醒，不存在才 spawn。同名 spawn 会被自动加序号
 
