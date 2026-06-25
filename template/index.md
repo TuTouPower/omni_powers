@@ -19,7 +19,6 @@
 | `harness_blueprint/conventions.md` | 编码约定、命名、技术栈 |
 | `harness_blueprint/domain.md` | 领域知识：术语表、业务规则 |
 | `harness_blueprint/test.md` | 测试策略、关键用例 |
-| `harness/agent_protocol.md` | 多 Agent 协作工作流协议（规则手册 + compact 恢复最小集） |
 
 ## harness_execution/ — 流动工作区
 

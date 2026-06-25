@@ -73,7 +73,7 @@ docs/harness_execution/tasks/{TID}/
 
 | 路径 | 谁写 | 何时 |
 |---|---|---|
-| `docs/harness_execution/tasks_list.json` | leader | 状态流转 |
+| `docs/harness_execution/tasks_list.json` | leader | 状态流转（含 tasks 数组和 blockers 数组） |
 | `docs/harness_blueprint/specs/{feature}.md` | leader | 每 task 闭环整理（当前生效规格，按功能聚合） |
 | `docs/harness_record/progress.md` | leader | 闭环后追加 |
 | `docs/harness_record/decisions.md` | leader | 有架构决策才追加 |
