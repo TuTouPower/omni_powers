@@ -1,6 +1,9 @@
 ---
 name: spec-generator
-description: "从 task 需求生成 spec.md。默认深度模式（一问一答协作讨论 + 可选 visual companion），用户说"快速模式/快速决定/直接生成"才走快速。intake/debt-to-tasks 调本 skill 生成 spec。触发：/spec-gen、生成 spec、写规格。"
+description: >
+  从 task 需求生成 spec.md。默认深度模式（一问一答协作讨论 + 可选 visual companion），
+  用户说"快速模式/快速决定/直接生成"才走快速。intake/debt-to-tasks 调本 skill 生成 spec。
+  触发：/spec-gen、生成 spec、写规格。
 ---
 
 # 从需求到设计规格

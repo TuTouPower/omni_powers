@@ -189,7 +189,7 @@ T{n} review 完成。结果：{PASS / FAIL}
 
 9. **git 提交**：**严禁 `git add -A`**。逐条 `git status --short` 判断归属本 task，只 add 本 task 文件。commit 格式：`{type}({TID}): {简述}`
 
-10. **验收**：`bash docs/harness/close_check.sh {TID}`。非 0 拦截，修正直到通过。
+10. **验收**：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`。非 0 拦截，修正直到通过。
 
 11. **回填 commit hash**：progress.md 和 leader_checkpoint.md 中 `<待回填>` → 实际 hash，单独 commit：`chore({TID}): 回填 commit hash`。
 
@@ -243,6 +243,6 @@ spec/plan 就位，派 coder 后 /harness-start。
 | `docs/harness/agent_protocol.md` | 完整协议，按需查 |
 | `docs/harness/workflows/task_review.js` | review gate workflow 脚本（主用，含 autofix 模式） |
 | `docs/harness/workflows/README.md` | workflow 接口手册 |
-| `docs/harness/close_check.sh` | 收口验收脚本，收口后必跑 |
+| `docs/harness/skills/harness-start/scripts/close_check.sh` | 收口验收脚本，收口后必跑 |
 | `docs/harness/template/harness_execution/leader_checkpoint.md` | checkpoint 模板 |
 | `docs/harness/skills/debt-to-tasks/SKILL.md` | 技术债偿还，全 done 后调用 |

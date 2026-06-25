@@ -1,6 +1,9 @@
 ---
 name: plan-generator
-description: "从 spec.md 生成 plan.md。默认深度模式（逐 step 确认 + 可选 visual companion），用户说"快速模式/快速决定/直接生成"才走快速。intake/debt-to-tasks 调本 skill 生成 plan。触发：/plan-gen、生成 plan、写实施计划。"
+description: >
+  从 spec.md 生成 plan.md。默认深度模式（逐 step 确认 + 可选 visual companion），
+  用户说"快速模式/快速决定/直接生成"才走快速。intake/debt-to-tasks 调本 skill 生成 plan。
+  触发：/plan-gen、生成 plan、写实施计划。
 ---
 
 # 写实施计划
