@@ -62,7 +62,7 @@ const CODER_DONE = {
 
 const MAX_ROUNDS = 3
 const { taskId, steps } = args
-const tdir = `docs/work/tasks/${taskId}`
+const tdir = `docs/harness_execution/tasks/${taskId}`
 
 // ── stage 1: coder TDD（共享工作树，无 isolation）──
 phase('Code')

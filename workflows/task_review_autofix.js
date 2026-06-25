@@ -61,7 +61,7 @@ const FIX_SCHEMA = {
 
 const MAX_LINES = 50
 const { taskId, scopeFiles } = args
-const tdir = `docs/work/tasks/${taskId}`
+const tdir = `docs/harness_execution/tasks/${taskId}`
 if (!scopeFiles || !scopeFiles.length) {
   return { taskId, passed: false, escalate: true, blockers: [], techDebt: [], rounds: 0, finalVerdicts: [], reason: 'scopeFiles 未提供，autofix 拒绝跑' }
 }

@@ -40,7 +40,7 @@ Workflow({
 **args**：
 | 字段 | 必填 | 说明 |
 |---|---|---|
-| `taskId` | 是 | 如 `T05`，脚本据此定位 `docs/work/tasks/{taskId}/` |
+| `taskId` | 是 | 如 `T05`，脚本据此定位 `docs/harness_execution/tasks/{taskId}/` |
 
 **返回**：
 ```js
@@ -56,7 +56,7 @@ Workflow({
 **leader 怎么用返回值**：
 - `passed === true` → 进收口
 - `passed === false` → 把 `blockers` 发回原 Teams coder 改，改完**再调本脚本**，max 3 轮；第 3 轮仍 FAIL → 标 `status=阻塞, blocked_by=quality`，写 `issues/{TID}_quality.md`
-- `techDebt` → 收口时直接追加 `docs/work/tech_debt.md`，不读 review 正文
+- `techDebt` → 收口时直接追加 `docs/harness_execution/tech_debt.md`，不读 review 正文
 
 **机制要点**：
 - `VERDICT` schema 强制结构化 verdict，替代 review_*.md 首行 `verdict:` hack，model 输出不符自动 retry

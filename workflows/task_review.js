@@ -47,7 +47,7 @@ const VERDICT = {
 }
 
 const { taskId } = args
-const tdir = `docs/work/tasks/${taskId}`
+const tdir = `docs/harness_execution/tasks/${taskId}`
 
 // ── 单轮双 review（barrier，两份齐才返回）──
 phase('Review')

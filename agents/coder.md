@@ -19,7 +19,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 ### 正向开发（coding 阶段）
 
-leader 会告知 task ID 和工作目录。你读 `docs/work/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
+leader 会告知 task ID 和工作目录。你读 `docs/harness_execution/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
 
 ```
 1. 读 spec/plan，理解当前 step 要做什么
@@ -49,16 +49,16 @@ FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。
 
 ## 文件约定
 
-模板在 `docs/harness/template/work/tasks/{TID}/`，新建文件时拷模板填内容，不改结构。
+模板在 `docs/harness/template/harness_execution/tasks/{TID}/`，新建文件时拷模板填内容，不改结构。
 
 | 文件 | 模板 | 谁写 | 何时 |
 |---|---|---|---|
-| `tasks/{TID}/spec.md` | `work/tasks/{TID}/spec.md` | leader | 只读 |
-| `tasks/{TID}/plan.md` | `work/tasks/{TID}/plan.md` | leader | 只读 |
-| `tasks/{TID}/steps.md` | `work/tasks/{TID}/steps.md` | leader | 只读（如果有） |
-| `tasks/{TID}/context.md` | `work/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `tasks/{TID}/review_code.md` | `work/tasks/{TID}/review_code.md` | reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
-| `tasks/{TID}/review_test.md` | `work/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
+| `tasks/{TID}/spec.md` | `harness_execution/tasks/{TID}/spec.md` | leader | 只读 |
+| `tasks/{TID}/plan.md` | `harness_execution/tasks/{TID}/plan.md` | leader | 只读 |
+| `tasks/{TID}/steps.md` | `harness_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
+| `tasks/{TID}/context.md` | `harness_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
+| `tasks/{TID}/review_code.md` | `harness_execution/tasks/{TID}/review_code.md` | reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
+| `tasks/{TID}/review_test.md` | `harness_execution/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 
 ## TDD 流程
@@ -130,7 +130,7 @@ npm test -- path/to/test.test.ts
 
 所有你写的文件，格式必须对齐 `docs/harness/template/` 下对应模板。
 
-### context.md — 模板 `docs/harness/template/work/tasks/{TID}/context.md`
+### context.md — 模板 `docs/harness/template/harness_execution/tasks/{TID}/context.md`
 
 按轮追加，每轮一段：
 
@@ -157,7 +157,7 @@ npm test -- path/to/test.test.ts
 
 正向开发每 step 完成写一轮。小 task 无 step 拆分则闭环时写一轮。FAIL 轮禁碰。
 
-### review_code.md / review_test.md — 模板 `docs/harness/template/work/tasks/{TID}/review_code.md`
+### review_code.md / review_test.md — 模板 `docs/harness/template/harness_execution/tasks/{TID}/review_code.md`
 
 FAIL 轮在文件末尾追加，不复盖前文。你的段叫 `Round N-2 Coder 修改`：
 
