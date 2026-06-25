@@ -59,7 +59,7 @@ while (存在待开始 task 且依赖全完成) {
 jq -r '
   "# DAG — 任务依赖图\n\n> 生成时间: \(now | strftime("%Y-%m-%d %H:%M:%S"))\n",
   "## Mermaid\n\n```mermaid\ngraph TD",
-  (.tasks[] | select(.depends_on != null) | .depends_on[] as $d | "  \($d)[\($d)] --> \(.id)[\(.id)]"),
+  (.tasks[] | select(.depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d)[\($d)] --> \(.id)[\(.id)]"),
   "```\n",
   "## 依赖关系\n",
   "| Task | 状态 | depends_on |",
