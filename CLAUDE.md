@@ -77,6 +77,8 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | 要查什么 | 去哪看 |
 |---|---|
 | 完整协议规则 | `agent_protocol.md` |
+| 实验发现 | `findings.md` |
+| 决策记录 | `decisions.md` |
 | Workflow 脚本接口 | `workflows/README.md` |
 | Workflow 设计决策 | `workflow_design.md` |
 | 历史踩坑 | `experience.md` |
