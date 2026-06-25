@@ -95,7 +95,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### commit 时机
 
-**一个 task 一次 commit**。收口是 task 级语义动作——step 不收口、不单 commit。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
+**一个 task 一次 commit**。hash 回填延迟到下一个 task 收口时一并提交。收口是 task 级语义动作——step 不收口、不单 commit。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
 
 ### 并发与 worktree
 

@@ -182,7 +182,7 @@ leader 读每个 review_*.md **首行**，不 grep 正文。
 
 10. **验收**：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`。非 0 拦截。
 
-11. **回填 commit hash**：progress.md 和 leader_checkpoint.md 中 `<待回填>` → 实际 hash，单独 commit。
+11. **hash 回填**（延迟到下一个 task）：progress.md 和 leader_checkpoint.md 中的 `<待回填>` 在下一个 task 收口时一并回填并提交。一个 task 只有一次 commit。
 
 #### 步骤 6：FAIL 轮
 

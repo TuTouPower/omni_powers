@@ -1,7 +1,6 @@
 ---
 name: coder
 description: TDD 开发角色。按 spec/plan 写代码，逐 step 追加 context.md，FAIL 轮修复后在 review_*.md 追加修改记录。
-model: haiku
 tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 ---
 
