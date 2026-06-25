@@ -97,7 +97,7 @@ while (存在待开始 task 且依赖全完成) {
 用 jq 查待开始 task：
 
 ```bash
-cat docs/harness_execution/tasks_list.json | jq '[.tasks[] | select(.status == "待开始")]'
+jq '[.tasks[] | select(.status == "待开始")]' docs/harness_execution/tasks_list.json
 ```
 
 **选 task 规则**（4 条全满足，取 ID 最小）：
@@ -166,7 +166,7 @@ leader 读每个 review_*.md **首行**，不 grep 正文。
 
 2. **有决策追加 decisions.md**：无决策跳过。
 
-3. **追加 tech_debt.md**（强制）：从 review_*.md 中提取 tech debt 项写入，节标题 `## {TID} {title}`。无新增也写 `| {TID} | - | 无新增技术债 | - |`。节标题格式不可改（close_check.sh 用 `^## {TID}` 校验）。
+3. **追加 tech_debt.md**（强制）：从 review_*.md 中提取标了"暂存"的项写入，节标题 `## {TID} {title}`。无新增也写 `| {TID} | - | 无新增技术债 | - |`。节标题格式不可改（close_check.sh 用 `^## {TID}` 校验）。
 
 4. **整理 docs/harness_blueprint/specs/{feature}.md**（强制）：判断归属 feature 文件，把当前生效规格整理进去。只留"现在是什么"。
 

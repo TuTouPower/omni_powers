@@ -1,4 +1,4 @@
-# Agent Team 实验发现与决策记录
+# Harness 实验发现
 
 > 2026-06-25 实验验证。记录实验结论和决策依据，最终规则见 agent_protocol.md。
 
@@ -58,7 +58,7 @@
 | shutdown 后清理 | 面板残留 | 无残留 |
 | 适用 | 调试 | 生产 |
 
-**结论**：推荐 in-process。上下文监控改用 SendMessage 问 teammate 的 `ctx_stats`。
+**结论**：推荐 in-process（D2）。tmux shutdown 后面板残留，不值得。上下文监控见实验 6 和 D5。
 
 ## 实验 6：ctx_stats 可用性
 

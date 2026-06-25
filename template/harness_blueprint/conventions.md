@@ -13,9 +13,9 @@
 - 日志优先，禁止 print/console.log 调试输出
 
 ## 技术栈
-- Web: Next.js + TypeScript + React
-- API: FastAPI + Python 3.13
-- DB: Postgres（自托管 Supabase，只用 PG）
+- Web: {前端框架}
+- API: {后端框架}
+- DB: {数据库}
 
 ## 安全
 - secret 由环境提供，不硬编码

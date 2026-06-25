@@ -35,9 +35,8 @@
 - teammate 输出 review_*.md，leader 读文件判 verdict，兼得复用和结构化
 
 **影响**：
-- `docs/harness/workflows/` 下的脚本废弃（待删除）
-- SKILL.md 和 agent_protocol.md 中 task_review.js 引用待更新
-- review 流程改为：leader SendMessage 派 review → code-reviewer/test-reviewer 写 review_*.md → leader 读文件判 verdict
+- `docs/harness/workflows/` 已删除
+- review 流程改为：leader SendMessage 派 review → code-reviewer/test-reviewer 写 review_*.md → leader 读首行 verdict
 
 ## D5：放弃上下文监控，全面复用（2026-06-25）
 

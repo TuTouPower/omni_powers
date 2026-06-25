@@ -50,6 +50,16 @@ else
     fail=1
 fi
 
+# 3.1 spec.md 盖戳检查
+if [ -s "$arch/spec.md" ]; then
+    if grep -q "历史快照" "$arch/spec.md" 2>/dev/null; then
+        echo "[PASS] spec.md 已盖戳"
+    else
+        echo "[FAIL] spec.md 未盖戳（缺少 '历史快照' 标记）"
+        fail=1
+    fi
+fi
+
 # 4. git status 提醒（非本 task 改动）——不拦，只报
 worktree_task="docs/harness_execution/tasks/${TID}"
 others=$(git status --short 2>/dev/null | grep -v "^[MADRC? ]\+ ${worktree_task}" || true)
