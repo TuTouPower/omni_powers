@@ -1,3 +1,11 @@
+# 用户记录的经验 不作为参考
+
+[mattpocock/skills](https://github.com/mattpocock/skills)
+
+/grill-me 生成 prd
+/superpowers:brainstorming 生成 spec
+/superpowers:writing-plans 生成 plan
+
 该 skill 化的（按价值排）
 
   1. tech_debt-to-tasks（你提的）
