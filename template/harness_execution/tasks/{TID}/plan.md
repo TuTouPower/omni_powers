@@ -1,4 +1,4 @@
-# {TID} {标题} Implementation Plan
+# {TID} {title} Implementation Plan
 
 > 生成方式：`superpowers:writing-plans`。
 

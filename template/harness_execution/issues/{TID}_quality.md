@@ -3,7 +3,7 @@
 > 第 3 轮 review 仍 FAIL 时写。跳过该 task 继续。
 
 ## task
-{TID} {标题}
+{TID} {title}
 
 ## 未解决的问题
 （从 review_code.md / review_test.md 摘要残留的 CRITICAL/HIGH）

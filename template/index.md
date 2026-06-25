@@ -14,7 +14,7 @@
 |---|---|
 | `harness_blueprint/prd.md` | 产品需求：为什么做、给谁、成功标准 |
 | `harness_blueprint/spec.md` | 全局总纲 + specs/ 目录索引 |
-| `harness_blueprint/specs/{功能}.md` | 各功能当前生效规格（每 task 闭环整理） |
+| `harness_blueprint/specs/{feature}.md` | 各功能当前生效规格（每 task 闭环整理） |
 | `harness_blueprint/architecture.md` | 技术架构：模块、分层、数据流 |
 | `harness_blueprint/conventions.md` | 编码约定、命名、技术栈 |
 | `harness_blueprint/domain.md` | 领域知识：术语表、业务规则 |
@@ -29,8 +29,7 @@
 | `harness_execution/tasks_list.json` | task 清单 + 依赖 + status（用查询不整体读） |
 | `harness_execution/tasks/{TID}/` | 进行中 task 的 spec/plan/steps/context/review_* |
 | `harness_execution/tech_debt.md` | 已知技术债（每 task 闭环强制追加） |
-| `harness_execution/leader_checkpoint.md` | compact 恢复断点（机器读） |
-| `harness_execution/handoff.md` | 最新会话交接（给人读） |
+| `harness_execution/leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |
 
 ## harness_record/ — 冻结历史
 

@@ -9,7 +9,7 @@
 
 **单 task 10 步**：①确认 spec/plan 就位 ②拆 steps ③派 coder TDD ④调 task_review.js（或手工派双 review）⑤读 {passed,blockers}（PASS→⑥ / FAIL→发回 Teams coder 改再调 task_review.js，max 3 轮）⑥收口（progress/decisions/tech_debt/ref specs/tasks_list/归档）⑦commit ⑧回填 hash ⑨自检 compact ⑩下一个
 
-**关键路径**：tasks_list.json=状态源 / docs/harness_execution/tasks/{TID}/=进行中 / docs/harness_record/tasks/{TID}/=归档 / docs/harness_blueprint/specs/{功能}.md=当前真相 / docs/harness_execution/leader_checkpoint.md=断点 / **docs/harness/template/=所有文件模板（新建文件拷这里）**
+**关键路径**：tasks_list.json=状态源 / docs/harness_execution/tasks/{TID}/=进行中 / docs/harness_record/tasks/{TID}/=归档 / docs/harness_blueprint/specs/{feature}.md=当前真相 / docs/harness_execution/leader_checkpoint.md=断点 / **docs/harness/template/=所有文件模板（新建文件拷这里）**
 
 **新建文件规则（强制）**：协议中任何环节要新建文件（task 工作区的 spec/plan/steps/context/review_code/review_test、tasks_list.json、leader_checkpoint、tech_debt、issues/{TID}_*、harness_blueprint/* 等），一律先拷 `docs/harness/template/` 下对应模板再填内容，保证格式一致。无对应模板才自建。
 
@@ -21,4 +21,4 @@
 - teammate idle = 可唤醒资源，FAIL 唤醒原 coder 实例不新 spawn
 - spawn 失败重试2次→status=阻塞, blocked_by=spawn；回滚用 git revert 不用 reset
 
-**恢复三件套**：`agent_protocol.md`（完整协议）+ `docs/harness_execution/tasks_list.json`（状态）+ `docs/harness_execution/leader_checkpoint.md`（断点）
+**恢复三件套**：本文件 `quick_ref.md`（最小编排集）+ `docs/harness_execution/tasks_list.json`（状态）+ `docs/harness_execution/leader_checkpoint.md`（断点）。遇细节分歧再查 `agent_protocol.md` 正文（完整规则，非每次必读）。

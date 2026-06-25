@@ -27,7 +27,7 @@ const VERDICT = {
   type: 'object',
   properties: {
     verdict: { type: 'string', enum: ['PASS', 'FAIL'] },
-    blockers: { type: 'array', items: { type: 'string' } },
+    blockers: { type: 'array', items: { type: 'string' }, description: 'CRITICAL/HIGH 问题，FAIL 时必填' },
     tech_debt: {
       type: 'array',
       items: {

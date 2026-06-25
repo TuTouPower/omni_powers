@@ -2,7 +2,7 @@
   "tasks": [
     {
       "id": "T01",
-      "title": "{标题}",
+      "title": "{title}",
       "dependencies": [],
       "status": "完成",
       "verification": "{验收标准}",
@@ -10,7 +10,7 @@
     },
     {
       "id": "T02",
-      "title": "{标题}",
+      "title": "{title}",
       "dependencies": ["T01"],
       "status": "进行中",
       "verification": "{验收标准}",
@@ -18,7 +18,7 @@
     },
     {
       "id": "T03",
-      "title": "{标题}",
+      "title": "{title}",
       "dependencies": ["T01"],
       "status": "待开始",
       "verification": "{验收标准}",
@@ -26,7 +26,7 @@
     },
     {
       "id": "T04",
-      "title": "{标题}",
+      "title": "{title}",
       "dependencies": ["T02"],
       "status": "阻塞",
       "verification": "{验收标准}",

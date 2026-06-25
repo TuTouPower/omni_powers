@@ -1,7 +1,7 @@
 # 文档模板
 
 > 对照 `docs/harness/agent_protocol.md` 的文件分层。新建文件时拷对应模板。
-> 模板里 `{TID}` `{标题}` `{功能}` 等是占位符，用实际值替换。
+> 模板里 `{TID}` `{title}` `{feature}` 等是占位符，用实际值替换。
 
 ## 目录
 
@@ -33,10 +33,11 @@
 | [harness_blueprint/test.md](harness_blueprint/test.md) | `docs/harness_blueprint/test.md` | 测试策略 |
 | [harness_blueprint/conventions.md](harness_blueprint/conventions.md) | `docs/harness_blueprint/conventions.md` | 编码约定 |
 | [harness_blueprint/spec.md](harness_blueprint/spec.md) | `docs/harness_blueprint/spec.md` | 全局总纲 + specs/ 索引 |
-| [harness_blueprint/specs/{功能}.md](harness_blueprint/specs/{功能}.md) | `docs/harness_blueprint/specs/{功能}.md` | 各功能当前生效规格 |
+| [harness_blueprint/specs/{feature}.md](harness_blueprint/specs/{feature}.md) | `docs/harness_blueprint/specs/{feature}.md` | 各功能当前生效规格 |
 
 ## 命名约定
 
 - task 目录：`{TID}` 如 `T05`
 - 文件名：snake_case（`review_code.md` 非 `review-code.md`）
 - 归档路径：`docs/harness_record/tasks/{TID}/`（注意是 `harness_record/` 单数，非 `logs/`）
+- **归档无独立模板**：闭环时 `git mv` 把 `harness_execution/tasks/{TID}/` 整个移到 `harness_record/tasks/{TID}/`，文件结构沿用 tasks 工作区模板原样，仅在 `spec.md` 顶部盖戳"⚠️ 历史快照，以 docs/harness_blueprint/specs/ 为准"。故 template 下不放 `harness_record/tasks/` 模板。

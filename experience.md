@@ -1,10 +1,11 @@
-# 用户记录的经验 不作为参考
+# 用户记录的经验 不作为参考 不要修改 只有用户能改
 
-[mattpocock/skills](https://github.com/mattpocock/skills)
-
-/grill-me 生成 prd
-/superpowers:brainstorming 生成 spec
-/superpowers:writing-plans 生成 plan
+- [obra/superpowers: An agentic skills framework & software development methodology that works.](https://github.com/obra/superpowers)
+  - /superpowers:brainstorming 生成 spec
+  - /superpowers:writing-plans 生成 plan
+- [Fission-AI/OpenSpec: Spec-driven development (SDD) for AI coding assistants.](https://github.com/Fission-AI/OpenSpec)
+- [mattpocock/skills: Skills for Real Engineers. Straight from my .claude directory.](https://github.com/mattpocock/skills)
+  - /grill-me 生成 prd
 
 该 skill 化的（按价值排）
 

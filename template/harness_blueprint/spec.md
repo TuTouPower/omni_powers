@@ -1,18 +1,18 @@
 # 技术规格总纲
 
 > 全局总纲 + specs/ 目录索引。需求变更时改。
-> 各功能当前生效规格在 specs/{功能}.md，每 task 闭环时整理更新。
+> 各功能当前生效规格在 specs/{feature}.md，每 task 闭环时整理更新。
 
 ## 技术栈
-- Web: Next.js + TypeScript + React
-- API: FastAPI + Python 3.13
-- DB: Postgres / 自托管 Supabase（只用 PG，不用 Auth/RLS）
+- Web: {前端框架/语言}
+- API: {后端框架/语言}
+- DB: {数据库}
 
 ## 架构分层
 （简要，详见 architecture.md）
 
 ## 安全边界
-- 浏览器不接触 Supabase service key
+- 浏览器/客户端不接触后端高权限密钥（service key 等）
 - API Key 加密存储，不明文返回
 - secret 由环境提供，不硬编码
 

@@ -2,7 +2,7 @@
 
 > 每 task 闭环后 leader 追加一段。不删不改历史。
 
-## YYYY-MM-DD - {TID}: {标题}
+## YYYY-MM-DD - {TID}: {title}
 
 **状态**：完成 ✅ / 阻塞 ⚠️
 

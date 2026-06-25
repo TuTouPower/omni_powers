@@ -37,16 +37,16 @@ else
     fail=1
 fi
 
-# 3. 归档目录五件齐全
+# 3. 归档目录五件齐全且非空
 arch="docs/harness_record/tasks/${TID}"
 missing=()
 for f in spec.md plan.md context.md review_code.md review_test.md; do
-    [ -f "$arch/$f" ] || missing+=("$f")
+    [ -s "$arch/$f" ] || missing+=("$f")
 done
 if [ ${#missing[@]} -eq 0 ]; then
-    echo "[PASS] 归档五件齐全: $arch"
+    echo "[PASS] 归档五件齐全且非空: $arch"
 else
-    echo "[FAIL] 归档缺: ${missing[*]}"
+    echo "[FAIL] 归档缺或空: ${missing[*]}"
     fail=1
 fi
 
