@@ -51,15 +51,28 @@ while (存在待开始 task 且依赖全完成) {
 → 循环结束
 ```
 
-### 1. 选波次
+### 1. 生成 DAG + 选波次
+
+**每次 /harness-start 从 `depends_on` 重算，不靠 checkpoint。**
 
 ```bash
-jq '[.tasks[] | select(.status == "待开始")]' docs/harness_execution/tasks_list.json
+jq -r '
+  "# DAG — 任务依赖图\n\n> 生成时间: \(now | strftime("%Y-%m-%d %H:%M:%S"))\n",
+  "## Mermaid\n\n```mermaid\ngraph TD",
+  (.tasks[] | select(.depends_on != null) | .depends_on[] as $d | "  \($d)[\($d)] --> \(.id)[\(.id)]"),
+  "```\n",
+  "## 依赖关系\n",
+  "| Task | 状态 | depends_on |",
+  "|---|---|---|",
+  (.tasks[] | "| \(.id) | \(.status) | \(.depends_on // "-" | if type == "array" then join(", ") else . end) |")
+' docs/harness_execution/tasks_list.json > docs/harness_execution/dag.md
 ```
 
-选 task（4 条全满足，取 ID 最小）：status=待开始、依赖全完成、不在阻塞范围、ID 最小。
+> Mermaid 图中 `T{n}[T{n}]` 的方括号是节点标签，不是数组。依赖关系表列出所有 task 的 `depends_on` 和当前状态。
 
-重算 DAG 层宽（每次必做，不靠 checkpoint）：拓扑分层 → 层宽决定串行/并发（上限 3）。
+**选 task**（4 条全满足，取 ID 最小）：status=待开始、`depends_on` 中所有 task 均为 `完成`、不在阻塞范围、ID 最小。
+
+层宽 = 所有满足上述条件的待开始 task 数量。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
 
 ### 2. 拆 task（task 太大时）
 

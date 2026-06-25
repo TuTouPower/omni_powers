@@ -61,7 +61,7 @@ description: >
 |---|---|
 | `id` | 从当前最大 ID +1 递增，格式 `T{NN}` |
 | `title` | 简短描述 |
-| `dependencies` | 只填已完成 task 或本批次前面的 task |
+| `depends_on` | 前置依赖 task ID 数组，无依赖填 `null`（必填） |
 | `status` | 统一填 `待开始` |
 | `verification` | 验收标准，一句话 |
 | `blocked_by` | 有环境依赖才填，否则 `null` |
@@ -71,7 +71,7 @@ description: >
 ```
 === 待追加 task ===
 
-T{n}   "{title}"  依赖: [{deps}]  验收: {verification}
+T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 共 {m} 个 task。追加？
 ```
 

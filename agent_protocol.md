@@ -80,6 +80,7 @@ docs/harness_execution/tasks/{TID}/
 | `docs/harness_record/decisions.md` | leader | 有架构决策才追加 |
 | `docs/harness_execution/tech_debt.md` | leader | 闭环后追加 |
 | `docs/harness_execution/leader_checkpoint.md` | leader | 每 task 闭环后写 |
+| `docs/harness_execution/dag.md` | leader | 每次 /harness-start 从 depends_on 重算生成 |
 | `docs/harness_blueprint/spec.md` | leader | 全局总纲 + specs/ 目录索引，需求变更时改 |
 | `docs/index.md` | leader | 文档导航总图（三态模型 + 目录索引），结构变动时同步 |
 
@@ -110,6 +111,12 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 ### commit 时机
 
 **一个 task 一次 commit**。hash 回填延迟到下一个 task 收口时一并提交。收口是 task 级语义动作——step 不收口、不单 commit（step 互相依赖，review 应看整个 task diff；回滚以 task 为粒度，一个 task 一个 commit 便于 revert）。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
+
+### DAG 与 depends_on
+
+每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。**所有新增 task 的入口**（intake、debt-to-tasks、task-splitter）都必须填 `depends_on`。
+
+每次 `/harness-start` 从 `depends_on` 重算拓扑分层，生成 `docs/harness_execution/dag.md`（Mermaid 图 + 分层表），给人看。dag.md 是衍生文件，不存 checkpoint。
 
 ### 并发与 worktree
 
@@ -231,7 +238,7 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 
 **单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读 verdict 首行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（progress/decisions/tech_debt/specs/tasks_list/归档）→ commit → 下一个
 
-**关键路径**：tasks_list.json = 状态源 / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
+**关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 
 **关键规则**：
 - review 首行 `verdict: PASS/FAIL`，leader 只取首行不读正文

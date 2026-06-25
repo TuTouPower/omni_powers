@@ -110,8 +110,8 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
 每个偿还 task 确定以下属性：
 
-**dependencies**：
-- 环境债：`dependencies` 为空（被 blocked_by 阻塞）
+**depends_on**：
+- 环境债：`depends_on` 为 `null`
 - 功能遗留债：填该债项所属的原始 task ID。如 `T02-3` 和 `T02-5` 合并，则依赖 `["T02"]`。如合并了多个来源 task，取并集。
 
 **blocked_by**：
@@ -208,7 +208,7 @@ tech_debt.md 已更新偿还计划。
 
 - **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
 - **harness-start**（统一工作流入口）：偿还 task 创建完成后，走 /harness-start 进入标准开发循环（选 task→派 coder→review→收口）。收口流程与功能 task 相同。
-- 恢复后偿还 task 与功能 task 无区别，/harness-start 统一按 tasks_list.json 的 status 和 dependencies 调度。
+- 恢复后偿还 task 与功能 task 无区别，/harness-start 统一按 tasks_list.json 的 status 和 depends_on 调度。
 
 ## 注意事项
 
