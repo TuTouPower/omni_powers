@@ -18,7 +18,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 
 ### 正向开发（coding 阶段）
 
-leader 会告知 task ID 和工作目录。你读 `docs/harness_execution/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
+leader 会告知 task ID 和工作目录（worktree path）。你在 leader 指定的 worktree 中工作，所有文件路径相对于该 worktree。读 `docs/harness_execution/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
 
 ```
 1. 读 spec/plan，理解当前 step 要做什么

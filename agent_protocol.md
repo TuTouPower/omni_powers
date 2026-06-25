@@ -2,7 +2,7 @@
 
 > 规则手册——定义角色、状态机、文件分层、关键约束。执行流程见 skills。
 > compact 恢复：直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
-> 决策依据见 `docs/harness/decisions.md`，实验记录见 `docs/harness/findings.md`。
+> 决策依据见 `docs/harness/harness_decisions.md`，实验记录见 `docs/harness/findings.md`。
 
 ## 角色
 

@@ -126,7 +126,7 @@ jq '[.tasks[] | select(.status == "待开始")]' docs/harness_execution/tasks_li
 **分配规则**：波次内按 TID 升序分配 `coder-1`、`coder-2`、`coder-3`。并发时每个 coder 在独立 worktree 工作。
 
 ```js
-SendMessage({ to: "coder-1", message: "TDD 实现 T{a}。spec: docs/harness_execution/tasks/{TID}/spec.md。plan: docs/harness_execution/tasks/{TID}/plan.md。完成后报告。" })
+SendMessage({ to: "coder-1", message: "在 {worktree_path} 中 TDD 实现 T{a}。spec: {worktree_path}/docs/harness_execution/tasks/{TID}/spec.md。plan: {worktree_path}/docs/harness_execution/tasks/{TID}/plan.md。完成后报告。" })
 ```
 
 tasks_list.json 波次内所有 task status → 进行中。
@@ -199,7 +199,7 @@ leader 读每个 review_*.md **首行**，不 grep 正文。
   ```
   全部 task 已完成（n/n）。
   ```
-  检查是否有未偿还技术债（`grep '^## T' docs/harness_execution/tech_debt.md`）：
+  检查是否有未偿还技术债（`grep -v "无新增" docs/harness_execution/tech_debt.md | grep -q "^|" && echo "有债" || echo "无债"`）：
   - 有未偿还债项 → "存在技术债。调 /debt-to-tasks 生成偿还 task。"
   - 无债项 → "全部完成，无待偿还技术债。"
 
