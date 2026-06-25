@@ -115,7 +115,6 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
 - **并发收益判断**：画依赖图看层宽；层宽普遍为 1 则串行；列同层 task 的共享文件交集，交集大则降并发或拆波次；用数据决定并发路数。
 - 隔离靠 leader 手动 `git worktree add`。
-- **共享文件冲突规避**：并发 coder 只改本 task scope 文件；共享入口、依赖注册、路由注册由 leader 收口时统一改。coder 在 context.md 声明"需要在共享文件 X 注册 Y"。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
 
 ### Agent Team 管理
@@ -236,6 +235,5 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 **关键规则**：
 - review 首行 `verdict: PASS/FAIL`，leader 只取首行不读正文
 - 每条问题标暂存标签，默认不暂存（当场修）
-- 并发 coder 只改本 task scope 文件，共享文件 leader 收口统一改
 - 一个 task 一次 commit，hash 回填延迟到下一个 task
 - 磁盘是真状态，上下文都是可重建缓存
