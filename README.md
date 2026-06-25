@@ -12,8 +12,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 ## 目录结构
 
 ```
-├── agent_protocol.md        # 核心协议（状态机、标准工作流、通信规则、并发/回滚/阻塞处理）
-├── quick_ref.md             # compact 恢复用的最小协议子集
+├── agent_protocol.md        # 核心协议（规则手册 + compact 恢复最小集）
 ├── workflow_design.md       # Workflow 脚本设计决策（why）
 ├── experience.md            # 踩坑笔记
 │
@@ -53,7 +52,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | `harness_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
 | `harness_record/` | 冻结历史（只追加） | decisions, progress |
 
-**compact 恢复**：上下文窗口满了自动 compact，恢复时只读三件套：`quick_ref.md` + `tasks_list.json` + `leader_checkpoint.md`。
+**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `agent_protocol.md` + `tasks_list.json` + `leader_checkpoint.md`。
 
 ## 工作流一览
 

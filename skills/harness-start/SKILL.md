@@ -67,7 +67,7 @@ Workflow({ scriptPath: "docs/harness/workflows/task_review.js", args: { taskId: 
 
 1. `docs/harness_execution/leader_checkpoint.md` —— 上次断在哪
 2. `docs/harness_execution/tasks_list.json` —— 状态源（以它为准）
-3. `docs/harness/quick_ref.md` —— 编排逻辑
+3. `docs/harness/agent_protocol.md` —— 编排逻辑（129 行，全量加载不贵）
 
 **状态判定规则**（按优先级，命中即停）：
 
@@ -237,7 +237,7 @@ spec/plan 就位，派 coder 后 /harness-start。
 
 | 文件 | 用途 |
 |---|---|
-| `docs/harness/quick_ref.md` | 最小编排集，每次 /harness-start 必读 |
+| `docs/harness/agent_protocol.md` | 规则手册 + 恢复最小集，每次 /harness-start 必读 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |
 | `docs/harness_execution/leader_checkpoint.md` | 断点 |
 | `docs/harness/agent_protocol.md` | 完整协议，按需查 |

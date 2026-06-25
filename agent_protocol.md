@@ -1,7 +1,7 @@
 # 多 Agent 协作工作流协议
 
 > 规则手册——定义角色、状态机、文件分层、关键约束。执行流程见 skills 和 workflows。
-> compact 恢复：`quick_ref.md` + `tasks_list.json` + `leader_checkpoint.md`。
+> compact 恢复：直接读本文件（129 行，无需额外最小集）。
 
 ## 角色
 
@@ -64,6 +64,8 @@ docs/harness_execution/tasks/{TID}/
 
 当前真相在 `docs/harness_blueprint/specs/{feature}.md`，按功能聚合。task 闭环时把当前生效规格整理进去，只留"现在是什么"，不留方案比较/被否方案。归档 task spec 顶部盖戳冻结。
 
+**新建文件规则**：一律先拷 `docs/harness/template/` 下对应模板再填内容。无对应模板才自建。
+
 ## 关键规则
 
 ### review 判定
@@ -79,9 +81,9 @@ docs/harness_execution/tasks/{TID}/
 
 ### 并发与 worktree
 
-- **波次**：DAG 同层所有可跑 task 的集合。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。每波次内 task 全部收口后才进下一波次。
+- 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
 - 隔离靠 leader 手动 `git worktree add`。不用 Workflow 的 `isolation:'worktree'`（粒度是 agent 不是 task）。
-- 收口时按依赖顺序合并 worktree，每合一跑全量测试。
+- 收口时按依赖顺序合并 worktree，每合一跑全量测试。波次全部收口后开下一波次。
 
 ### teammate 管理
 
@@ -95,7 +97,9 @@ docs/harness_execution/tasks/{TID}/
 
 ### compact 恢复
 
-恢复三件套：`quick_ref.md` + `tasks_list.json` + `leader_checkpoint.md`。**checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽。
+恢复三件套已合入本文件。compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
+
+**⚠️ checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性（曾有恢复后该并发却串行的问题）。
 
 ## 阻塞项处理
 
