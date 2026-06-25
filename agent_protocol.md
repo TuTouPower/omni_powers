@@ -5,25 +5,26 @@
 
 ## 角色
 
-leader(opus，主会话) 编排 3 个常驻 teammate（Agent Team）+ 1 个按需 task-splitter（subagent）。
-
 | 角色 | 类型 | model | 职责 |
 |---|---|---|---|
 | leader | 主会话 | opus | 编排、收口、改共享文档 |
-| coder | **teammate** (coder) | haiku | TDD：写测试→写实现→跑测试→写 context.md |
-| reviewer | **teammate** (code-reviewer) | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
-| test-reviewer | **teammate** (test-reviewer) | sonnet | 审测试是否真能发现问题，写 review_test.md |
-| task-splitter | **subagent** (general-purpose) | sonnet | **按需启用**：拆 task，不污染 leader 上下文 |
+| coder | **Agent Team** | haiku | TDD：写测试→写实现→跑测试→写 context.md |
+| reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
+| test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
+| task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
 
-**teammate vs subagent 的区别：**
+### 为什么 coder/reviewer/test-reviewer 用 Agent Team
 
-| | Teammate (Agent Team) | Subagent |
-|---|---|---|
-| 生命周期 | 常驻，跨 task 存活 | 一次性，跑完消失 |
-| 上下文 | 独立窗口，可监控占用率 | 独立窗口，结果返回 leader |
-| FAIL 轮 | 唤醒同一实例，保留状态 | 不存在（subagent 无 FAIL 轮场景） |
-| compact 后 | tmux 模式下继续存活 | 随调用结束消失 |
-| 适用 | coder / reviewer / test-reviewer | task-splitter（机械操作，无需持久） |
+- 跨 task 存活，不用每次重 spawn
+- FAIL 轮唤醒同一实例，保留 spec/plan/上一轮代码上下文
+- tmux 窗格独立运行，leader 可监控上下文占用率
+- compact 后 teammate 仍在 tmux 里，SendMessage 唤醒即可
+
+### 为什么 task-splitter 用 Subagent
+
+- 一次性操作：建目录→切 spec/plan→改 tasks_list→回报消失
+- 无需持久，无需 FAIL 轮，无需跨 task 复用
+- 中间内容不污染 leader 上下文
 
 > 参考：[Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
 
@@ -99,25 +100,34 @@ docs/harness_execution/tasks/{TID}/
 - 隔离靠 leader 手动 `git worktree add`。不用 Workflow 的 `isolation:'worktree'`（粒度是 agent 不是 task）。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试。波次全部收口后开下一波次。
 
-### teammate 管理
+### Agent Team 管理
 
-**spawn**：leader 用 Agent tool 的 `name` 参数 spawn teammate，`subagent_type` 指定角色（coder/code-reviewer/test-reviewer）。teammate 在独立窗口中运行。
+coder、reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
+
+**创建**（首次 /harness-start 时）：
 
 ```
-Agent({ name: "coder", subagent_type: "coder", prompt: "..." })
-Agent({ name: "reviewer", subagent_type: "code-reviewer", prompt: "..." })
+Agent({ name: "coder", subagent_type: "coder",
+  prompt: "等待 leader 派 TDD 任务..." })
+
+Agent({ name: "reviewer", subagent_type: "code-reviewer",
+  prompt: "等待 leader 派 review 任务..." })
+
+Agent({ name: "test-reviewer", subagent_type: "test-reviewer",
+  prompt: "等待 leader 派 review 任务..." })
 ```
 
-**通信**：SendMessage(to: "coder", message: "...")。teammate 之间不直接通信，leader 是唯一编排者。
+**通信**：`SendMessage(to: "coder", message: "...")`。teammate 之间不直接通信。
 
 **生命周期**：
-- idle = 可唤醒资源。FAIL 轮/新 review 一律 SendMessage 唤醒原实例，不新 spawn。
-- spawn 仅用于"全新 task + coder 上下文已满需重建"。
-- coder 阈值：1M 窗口 ≥40% 重 spawn，200K 窗口每次重 spawn。reviewer 常驻复用，≥70% compact。
+- idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态。
+- 只有上下文满了才重 spawn：coder 1M 窗口 ≥40%、200K 窗口每次。reviewer/test-reviewer ≥70% compact，绝不轻易重 spawn。
+- compact 后：in-process 模式 teammate 会消失需重 spawn；tmux 模式（设 `teammateMode: "tmux"`）teammate 继续存活，直接唤醒。
+- 关机：`SendMessage({ to: "coder", message: { type: "shutdown_request" } })`。
 
-**显示模式**：设 `teammateMode: "tmux"` 在 `~/.claude/settings.json`，teammate 在独立 tmux 窗格中运行。leader 可 `tmux capture-pane` 读上下文占用率。
+**为什么不用 Subagent**：subagent 一次性跑完消失。coder 要跨 step/跨 FAIL 轮保留状态，reviewer 要跨 task 积累项目理解——这些只有 Agent Team 做得到。
 
-> 首次使用需设 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 环境变量。
+> 首次使用需设 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`。参考：[Agent Teams](https://code.claude.com/docs/en/agent-teams)
 
 ### tech_debt
 
