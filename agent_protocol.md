@@ -178,7 +178,7 @@ compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 
 ### 拆 task（task 太大时，派 task-splitter）
 
-leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。
+leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。agent 定义见 `docs/harness/agents/harness-task-splitter.md`。
 
 **判断标准**：
 
