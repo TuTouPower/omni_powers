@@ -37,17 +37,23 @@ else
     fail=1
 fi
 
-# 3. 归档目录六件齐全且非空
+# 3. 归档目录五件齐全且非空（steps.md 可选）
 arch="docs/harness_record/tasks/${TID}"
 missing=()
-for f in spec.md plan.md steps.md context.md review_code.md review_test.md; do
+for f in spec.md plan.md context.md review_code.md review_test.md; do
     [ -s "$arch/$f" ] || missing+=("$f")
 done
 if [ ${#missing[@]} -eq 0 ]; then
-    echo "[PASS] 归档六件齐全且非空: $arch"
+    echo "[PASS] 归档五件齐全且非空: $arch"
 else
     echo "[FAIL] 归档缺或空: ${missing[*]}"
     fail=1
+fi
+# steps.md 可选：小 task 可不建
+if [ -s "$arch/steps.md" ]; then
+    echo "[PASS] steps.md 存在"
+else
+    echo "[INFO] steps.md 不存在（小 task 可不建）"
 fi
 
 # 3.1 spec.md 盖戳检查

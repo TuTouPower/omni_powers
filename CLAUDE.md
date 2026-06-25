@@ -13,14 +13,15 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 
 ```
 ├── agent_protocol.md        # 核心协议（规则手册）
-├── decisions.md             # 决策记录
+├── harness_decisions.md     # 决策记录
 ├── findings.md              # 实验发现
 ├── experience.md            # 踩坑笔记
 │
 ├── agents/                  # Agent 角色提示词
 │   ├── harness-coder.md             #   开发者（TDD、review 反馈处理）
 │   ├── harness-code-reviewer.md     #   代码审查（安全/架构/错误处理）
-│   └── harness-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
+│   ├── harness-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
+│   └── harness-task-splitter.md     #   task 拆分（按需启用）
 │
 ├── skills/                  # Claude Code Skills
 │   ├── harness-start/       #   统一工作流入口

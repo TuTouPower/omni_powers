@@ -61,6 +61,6 @@ git commit -m "feat({TID}): add specific feature"
 
 ## Self-Review Checklist
 
-- [ ] 测试覆盖验收标准
-- [ ] 无硬编码 secret
-- [ ] 遵循 ref 约定
+- [ ] 每个 step 的 spec 覆盖：plan 是否完整实现了 spec 中的所有需求
+- [ ] placeholder 扫描：有无 TODO/TBD/不完整段
+- [ ] 类型一致性：后续 step 中的类型、方法签名、属性名是否与前面 step 定义的一致

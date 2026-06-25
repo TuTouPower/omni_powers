@@ -50,6 +50,7 @@ description: >
 5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill 和 plan-generator skill，完成后回报。
 
 > 深度模式直接在主会话调 Skill（需要用户交互），快速模式用子代理（无需交互可并发）。两种方式不同是因为深度模式需要一问一答，子代理无法与用户交互。
+
 6. **汇报**：task 已就位，下一步 /harness-start
 
 ## 拆 task 规则

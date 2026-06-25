@@ -18,7 +18,7 @@
 - reviewer / test-reviewer: 常驻
 
 ## compact 计数
-- 已完成 N task（每 3 task 强制 compact）
+- 已完成 N task
 
 ## 依赖 DAG
 （拓扑分层，波次编排用。⚠️ 恢复后必须重算 DAG 层宽，不吃 checkpoint 惯性）
