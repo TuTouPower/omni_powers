@@ -1,8 +1,10 @@
 # 多 Agent 协作工作流协议
 
-> 规则手册——定义角色、状态机、文件分层、关键约束。执行流程见 skills。
+> **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
 > compact 恢复：直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 > 决策依据见 `docs/harness/harness_decisions.md`，实验记录见 `docs/harness/findings.md`。
+>
+> **核心心智模型**：磁盘是真状态，teammate 和 leader 上下文都是可重建缓存。
 
 ## 角色
 
@@ -25,6 +27,10 @@
 - 一次性操作：建目录→切 spec/plan→改 tasks_list→回报消失
 - 无需持久，无需 FAIL 轮，无需跨 task 复用
 - 中间内容不污染 leader 上下文
+- 拆 task 要读原 spec/plan 全文、切片、重写 tasks_list 片段——这些中间内容若在 leader 上下文跑会大量挤占编排空间
+- 确定性机械操作，sonnet 足够。leader 只下"拆 T09 成 T09a/T09b，边界在 X"的指令，splitter 干完回报结果，leader 不读中间过程
+
+> doc-updater 角色已砍——共享文件应由 leader 串行收口，额外 agent 增加复杂度。
 
 ## 状态机
 
@@ -59,8 +65,9 @@ docs/harness_execution/tasks/{TID}/
 └── review_test.md    # test-reviewer 写 — 同上
 ```
 
-- context.md = 构建边界（正向进度），review_*.md = 质量边界（FAIL 来回）。二者不重叠。
+- context.md = 构建边界（正向进度），review_*.md = 质量边界（FAIL 来回）。二者不重叠——读者、时机、内容不重叠，重审不跨文件找。review 文档是审计痕迹，全部进 git、永不删，记录 coder 改了什么、为什么不改、review 哪里误判。
 - task 闭环后 git mv 到 `docs/harness_record/tasks/{TID}/` 归档。
+- `docs/harness_execution/issues/{TID}_quality.md` 记录质量阻塞（3 轮 FAIL）和 spawn 失败等阻塞原因。
 
 ### 持久文件
 
@@ -72,10 +79,12 @@ docs/harness_execution/tasks/{TID}/
 | `docs/harness_record/decisions.md` | leader | 有架构决策才追加 |
 | `docs/harness_execution/tech_debt.md` | leader | 闭环后追加 |
 | `docs/harness_execution/leader_checkpoint.md` | leader | 每 task 闭环后写 |
+| `docs/harness_blueprint/spec.md` | leader | 全局总纲 + specs/ 目录索引，需求变更时改 |
+| `docs/index.md` | leader | 文档导航总图（三态模型 + 目录索引），结构变动时同步 |
 
 ### specs/ 机制
 
-当前真相在 `docs/harness_blueprint/specs/{feature}.md`，按功能聚合。task 闭环时把当前生效规格整理进去，只留"现在是什么"，不留方案比较/被否方案。归档 task spec 顶部盖戳冻结。
+当前真相在 `docs/harness_blueprint/specs/{feature}.md`，按功能聚合。task 闭环时把当前生效规格整理进去，只留"现在是什么"，不留方案比较/被否方案。归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 specs/ 文件。
 
 **整理规则**：每 task 闭环时，leader 必须把 task spec 里当前生效的接口、数据模型、约束、行为整理进对应功能 specs 文件——不是拷贝，过程性内容留在归档 task spec。同一功能跨多个 task 时累积更新同一个文件，不为后续 task 新建文件。归档后永不再改。
 
@@ -99,11 +108,12 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### commit 时机
 
-**一个 task 一次 commit**。hash 回填延迟到下一个 task 收口时一并提交。收口是 task 级语义动作——step 不收口、不单 commit。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
+**一个 task 一次 commit**。hash 回填延迟到下一个 task 收口时一并提交。收口是 task 级语义动作——step 不收口、不单 commit（step 互相依赖，review 应看整个 task diff；回滚以 task 为粒度，一个 task 一个 commit 便于 revert）。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
 
 ### 并发与 worktree
 
 - 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
+- **并发收益判断**：画依赖图看层宽；层宽普遍为 1 则串行；列同层 task 的共享文件交集，交集大则降并发或拆波次；用数据决定并发路数。
 - 隔离靠 leader 手动 `git worktree add`。
 - **共享文件冲突规避**：并发 coder 只改本 task scope 文件；共享入口、依赖注册、路由注册由 leader 收口时统一改。coder 在 context.md 声明"需要在共享文件 X 注册 Y"。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
@@ -140,13 +150,19 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 
 ### tech_debt
 
-只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行）。
+只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行）。不允许只口头说"记 tech_debt"，必须真写文件，否则 task 不算闭环。
+
+格式：按 task 分节，表格列 `| ID | 来源(review-code/review-test/环境) | 债项 | 严重度 | 暂存原因 |`。
 
 ### compact 恢复
 
 compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 
+**checkpoint 字段**：刚完成 task + commit hash、tasks_list 状态快照、下一个 task、team teammate 状态、team config 路径。
+
 **checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
+
+**恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 context.md 续（判断 coder 进行到哪了），否则重新选 task → 重建/复用 team。
 
 ## 阻塞项处理
 
@@ -157,7 +173,9 @@ compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 | 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
-回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset。不连锁回滚下游，只重置状态。
+回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset（会丢历史）。不连锁回滚下游，只重置状态。
+
+**阻塞汇总**：所有可跑 task 跑完后，若仍有阻塞 task，leader 才停下报告阻塞项、缺什么、需用户提供什么。
 
 ### 拆 task（task 太大时，派 task-splitter）
 
@@ -208,3 +226,16 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 - 不停下问用户（除非全部可跑 task 跑完仍剩阻塞）
 - teammate 之间不直接通信
 - 中间状态不 commit
+
+## Quick Reference（compact 后速查）
+
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读 verdict 首行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（progress/decisions/tech_debt/specs/tasks_list/归档）→ commit → 下一个
+
+**关键路径**：tasks_list.json = 状态源 / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
+
+**关键规则**：
+- review 首行 `verdict: PASS/FAIL`，leader 只取首行不读正文
+- 每条问题标暂存标签，默认不暂存（当场修）
+- 并发 coder 只改本 task scope 文件，共享文件 leader 收口统一改
+- 一个 task 一次 commit，hash 回填延迟到下一个 task
+- 磁盘是真状态，上下文都是可重建缓存
