@@ -70,7 +70,7 @@ const coder = await agent(
   `task=${taskId} TDD 实现。spec/plan 见 ${tdir}/。steps: ${JSON.stringify(steps || [])}。` +
     `写测试→写实现→跑测试绿→写 ${tdir}/context.md（每 step 正向进度：改了哪些文件/测试输出/假设）。` +
     `共享入口/路由/依赖注册不要改，在 sharedFileNeeds 声明，leader 收口统一落地。`,
-  { label: `code:${taskId}`, phase: 'Code', schema: CODER_DONE, agentType: 'general-purpose' }
+  { label: `code:${taskId}`, phase: 'Code', schema: CODER_DONE, agentType: 'coder' }
 )
 
 if (!coder || !coder.testsPassed) {
@@ -106,7 +106,7 @@ while (failing.length && round < MAX_ROUNDS) {
     await agent(
       `task=${taskId} 的 ${v._spec.role} review FAIL。读 ${tdir}/${v._spec.file} 正文，按 blockers 改代码跑测试绿，` +
         `在同文件 ${v._spec.file} 追加"修改记录"段（已改X/不改因Y/review误判因Z）。禁止写 context.md。`,
-      { label: `fix:${v._spec.role}`, phase: 'Reverify', agentType: 'general-purpose' }
+      { label: `fix:${v._spec.role}`, phase: 'Reverify', agentType: 'coder' }
     )
   }
   const reverified = (await parallel(

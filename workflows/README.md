@@ -22,7 +22,7 @@
 
 所有脚本因此**都不用 isolation**，全靠共享会话工作树：单 task 串行无碰撞，coder 写未提交改动 reviewer 直接读 `git diff`。
 
-**task 间隔离 ≠ Workflow 的活**：并发时 leader 手动 `git worktree add` 给每个 task 一个独立工作目录，Teams coder 各自工作。要隔离整个 task 出主树 → leader 在预建 worktree 里发起 Workflow。详见 `docs/harness/worktree_isolation.md`。
+**task 间隔离 ≠ Workflow 的活**：并发时 leader 手动 `git worktree add` 给每个 task 一个独立工作目录，Teams coder 各自工作。要隔离整个 task 出主树 → leader 在预建 worktree 里发起 Workflow。隔离决策见 `docs/harness/workflow_design.md`。
 
 ## task_review.js（主用）
 
@@ -117,7 +117,7 @@ Workflow({ scriptPath: "docs/harness/workflows/task_full.js", args: { taskId: "T
 
 ## wave 并发怎么做
 
-并发不靠脚本。leader 算 DAG layer → 每个 task `git worktree add` 一个独立工作目录 → 派 Teams coder 各自在自己 worktree 工作（task 间天然隔离）→ 每个 worktree 内单独调 `task_review.js` → leader 按依赖序串行合并收口。`isolation:'worktree'` 粒度是 agent 不是 task，做不了 task 间隔离（详见 `worktree_isolation.md`）。
+并发不靠脚本。leader 算 DAG layer → 每个 task `git worktree add` 一个独立工作目录 → 派 Teams coder 各自在自己 worktree 工作（task 间天然隔离）→ 每个 worktree 内单独调 `task_review.js` → leader 按依赖序串行合并收口。`isolation:'worktree'` 粒度是 agent 不是 task，做不了 task 间隔离（详见 `workflow_design.md`）。
 
 ## 已知冗余
 

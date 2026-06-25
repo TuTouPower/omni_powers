@@ -20,6 +20,7 @@
 | `harness_blueprint/domain.md` | 领域知识：术语表、业务规则 |
 | `harness_blueprint/test.md` | 测试策略、关键用例 |
 | `harness/agent_protocol.md` | 多 Agent 协作工作流协议 |
+| `harness/quick_ref.md` | 协议最小恢复集（compact 恢复先读） |
 
 ## harness_execution/ — 流动工作区
 
@@ -38,4 +39,4 @@
 | `harness_record/progress.md` | 进度日志（每 task 闭环追加） |
 | `harness_record/decisions.md` | 架构决策（ADR 精简，只追加） |
 | `harness_record/tasks/{TID}/` | 已完成 task 的 spec/plan/context/review_* 归档 |
-| `harness_record/issues/{TID}_quality.md` | 质量阻塞记录 |
+| `harness_execution/issues/{TID}_quality.md` | 质量阻塞记录 |

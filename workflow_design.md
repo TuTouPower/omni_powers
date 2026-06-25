@@ -7,7 +7,7 @@
 
 **Workflow 只做单 task 的 review gate。** 不替代 coder、不替代并发调度、不替代收口、不替代 task 间隔离。
 
-这个定位是 `worktree_isolation.md` 推导出的能力边界：Workflow 的 `isolation:'worktree'` 粒度是 agent 不是 task，做不了 task 间隔离；coder 进 Workflow 会丢状态+难介入。所以 Workflow 只接管它唯一擅长的——无状态 fan-out + schema 强制 verdict 的 review 判定。
+这个定位是下面"关键设计决策 2"推导出的能力边界：Workflow 的 `isolation:'worktree'` 粒度是 agent 不是 task，做不了 task 间隔离；coder 进 Workflow 会丢状态+难介入。所以 Workflow 只接管它唯一擅长的——无状态 fan-out + schema 强制 verdict 的 review 判定。
 
 ## 分工：哪些进 Workflow，哪些留 leader/Teams
 
@@ -69,9 +69,13 @@ coder 跨轮留在 Teams，保留 spec/plan/上一轮代码状态，不必从 sp
 
 故所有脚本**都不用 isolation**，全靠共享会话工作树：单 task 串行无碰撞，coder 写未提交改动 reviewer 直接读 `git diff`。要隔离整个 task 出主树 → leader 在预建 worktree 里发起 Workflow。
 
+**已否决的两条隔离路（踩坑实录，留此防重蹈）**：
+- **试 A：每个 agent 加 `isolation:'worktree'`**。coder 在 worktree-A 写代码，reviewer 是另一个 `agent()`、拿到全新 worktree-B（基线代码），跑 `git diff` 看到空 diff，审个寂寞。根因：isolation 粒度是 agent 不是 task，API 无"多 agent 共用一个 worktree"参数。
+- **试 B：coder 在自己 worktree commit，reviewer 跨 worktree 读**。失败：worktree 共享 object DB 但不共享分支 HEAD，reviewer 跑 `git diff HEAD~1..HEAD` 读到的是自己基线历史；要读 coder 改动须 `git diff main...wf-coder`，但 isolation 的分支名 runtime 自动生成、不暴露给脚本，拿不到。且 fix agent 又是新 worktree，改动落自己分支，coder/reverify 都看不见——stage 间写依赖 isolation 根本接不住。
+
 ### 3. task 间隔离永远是 git worktree 的活，与 Workflow 无关
 
-并发时 leader `git worktree add` 给每个 task 一个独立工作目录，Teams coder 各自在自己 worktree 工作，task 间天然隔离。曾考虑用 Workflow 做并发隔离（wave_parallel 方案）是过度设计（详见 `worktree_isolation.md`），已否决。并发调度 + 合并收口始终 leader 手动。
+并发时 leader `git worktree add` 给每个 task 一个独立工作目录，Teams coder 各自在自己 worktree 工作，task 间天然隔离。曾考虑用 Workflow 做并发隔离（wave_parallel 方案）是过度设计（理由见决策 2/3），已否决。并发调度 + 合并收口始终 leader 手动。
 
 ## 为什么不把 coder 也塞进 Workflow（默认）
 

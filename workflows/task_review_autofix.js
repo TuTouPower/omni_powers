@@ -129,7 +129,7 @@ await agent(
   `task=${taskId} review FAIL，全是 scope 内小修。读 ${tdir}/review_code.md 和 review_test.md 正文，` +
     `按 blockers 改代码，只允许改这些文件：${JSON.stringify(scopeFiles)}，总改动 ≤${MAX_LINES} 行。跑测试确认绿。` +
     `在对应 review_*.md 追加"修改记录"段（已改X/不改因Y）。禁止写 context.md。禁止改 scope 外文件。`,
-  { label: 'autofix', phase: 'Autofix', agentType: 'general-purpose' }
+  { label: 'autofix', phase: 'Autofix', agentType: 'coder' }
 )
 
 // ── 硬校验：autofix 是否真的在 scope 内（确定性检查，不靠 AI 判断）──
