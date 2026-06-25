@@ -8,7 +8,7 @@
 | 角色 | 类型 | model | 职责 |
 |---|---|---|---|
 | leader | 主会话 | opus | 编排、收口、改共享文档 |
-| coder | **Agent Team** | haiku | TDD：写测试→写实现→跑测试→写 context.md |
+| coder-1/2/3 | **Agent Team** | haiku | TDD：写测试→写实现→跑测试→写 context.md。并发波次按需 spawn，串行只需 coder-1 |
 | reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
 | task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
@@ -88,7 +88,7 @@ docs/harness_execution/tasks/{TID}/
 - task_review.js workflow 返回 `{passed, blockers, techDebt}`。leader 读返回值，不 grep review 正文。
 - 双 PASS → 收口。任一 FAIL → FAIL 轮。
 - **PASS 门槛**：能当场修的问题（不分 LOW/MEDIUM/HIGH）必须修完才 PASS。只有修不了的（跨 scope/依赖环境/需架构决策）才标暂存进 tech_debt。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 Teams coder → coder 改代码 + 在 review_*.md 追加修改记录（禁碰 context.md）→ 重调 task_review.js。coder 跨轮保留状态。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码 + 在 review_*.md 追加修改记录（禁碰 context.md）→ 重调 task_review.js。coder-N 跨轮保留状态。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality。
 
 ### commit 时机
 
@@ -102,28 +102,28 @@ docs/harness_execution/tasks/{TID}/
 
 ### Agent Team 管理
 
-coder、reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
+coder-1/2/3、reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
 
 **创建**（首次 /harness-start 时）：
 
 ```
-Agent({ name: "coder", subagent_type: "coder",
+Agent({ name: "coder-1", subagent_type: "coder",
   prompt: "等待 leader 派 TDD 任务..." })
 
-Agent({ name: "reviewer", subagent_type: "code-reviewer",
+Agent({ name: "code-reviewer", subagent_type: "code-reviewer",
   prompt: "等待 leader 派 review 任务..." })
 
 Agent({ name: "test-reviewer", subagent_type: "test-reviewer",
   prompt: "等待 leader 派 review 任务..." })
 ```
 
-**通信**：`SendMessage(to: "coder", message: "...")`。teammate 之间不直接通信。
+**通信**：`SendMessage(to: "coder-N", message: "...")`。teammate 之间不直接通信。
 
 **生命周期**：
 - idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态。
-- 只有上下文满了才重 spawn：coder 1M 窗口 ≥40%、200K 窗口每次。reviewer/test-reviewer ≥70% compact，绝不轻易重 spawn。
+- 只有上下文满了才重 spawn：coder-N 1M 窗口 ≥40%、200K 窗口每次。reviewer/test-reviewer ≥70% compact。
 - compact 后：in-process 模式 teammate 会消失需重 spawn；tmux 模式（设 `teammateMode: "tmux"`）teammate 继续存活，直接唤醒。
-- 关机：`SendMessage({ to: "coder", message: { type: "shutdown_request" } })`。
+- 关机：`SendMessage({ to: "coder-N", message: { type: "shutdown_request" } })`。
 
 **为什么不用 Subagent**：subagent 一次性跑完消失。coder 要跨 step/跨 FAIL 轮保留状态，reviewer 要跨 task 积累项目理解——这些只有 Agent Team 做得到。
 
