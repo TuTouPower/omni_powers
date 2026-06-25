@@ -9,6 +9,9 @@
 
 上面三个项目的介绍在这里，/home/karon/karson_ubuntu/user_config_backup/overview
 
+team 里积了 29 个成员，coder、coder-2 名字已被旧实例占用，自动递增到 coder-3。之前每次新 task 都 spawn 了新 coder 但不删旧的。
+
+
 ## GLM
 该 skill 化的（按价值排）
 

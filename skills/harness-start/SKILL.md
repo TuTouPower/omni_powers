@@ -93,12 +93,9 @@ while (存在待开始 task 且依赖全完成) {
   ┌─────────────────────────────────────────────────────────┐
   │ 1. 选波次（DAG 同层可并发 task，上限 3）               │
   │ 2. 派 coder（并发时同时 SendMessage 多个 coder-N）     │
-  │ 3. await 所有 coder 完成  ← 暂停点（等最慢的）        │
-  │ 4. review（并发时每个 worktree 独立调 task_review.js） │
-  │ 5. await 所有 review 返回  ← 暂停点                   │
-  │ 6. 处理结果（每个 task 独立 PASS/FAIL）                │
-  │ 7. 收口（按依赖顺序合并 worktree，逐个收口）          │
-  │ 8. 波次收口完成 → 自动进入下一波次                     │
+  │ 3. 每个 coder 完成 → 立即派 code-reviewer review      │
+  │ 4. 每个 review 返回 → 立即处理结果 + 收口             │
+  │ 5. 波次全部收口完成 → 自动进入下一波次                 │
   └─────────────────────────────────────────────────────────┘
 }
 → 循环结束，跳到阶段 6
@@ -149,56 +146,40 @@ SendMessage({ to: "coder-2", message: "在 worktree-{TID-b} 中 TDD 实现 T{b}.
 
 tasks_list.json 波次内所有 task status → 进行中。
 
-#### 步骤 3：等待 coder 完成（暂停点）
+#### 步骤 3：coder 完成 → 立即 review（事件驱动）
 
-leader idle，等波次内**所有** coder 完成通知。**不需要用户介入，teammate 完成后系统自动唤醒 leader。**
+**不等全波次完成。** 每个 coder 完成后，leader 立即对该 task 派 review。code-reviewer 单实例串行处理——先到先审，后到排队。
 
-- 串行：等 coder-1
-- 并发：等最慢的 coder-N。先完成的 idle 等待，leader 收到全部完成通知后统一进入步骤 4
+**完成判断**：coder 的 SendMessage 回复含 "完成"/"done" 关键词，且 `docs/harness_execution/tasks/{TID}/context.md` 非空、末尾有 "## 完成状态" 段。coder 报错/阻塞则 status → 阻塞，该 task 退出波次。
 
-如果用户主动触发 `/harness-start`（查进度）：
-```bash
-cat docs/harness_execution/tasks/{TID}/steps.md  # 看 step 进度
-```
-输出 "波次中：T{a} step {k}/{total}，T{b} step {j}/{total}。coder 完成后自动进入 review。"
-
-#### 步骤 4：review
-
-波次内所有 coder 完成后，自动对每个 task 调 `task_review.js`。完成判断：coder 的 SendMessage 回复含 "完成"/"done" 关键词，且 `docs/harness_execution/tasks/{TID}/context.md` 非空、末尾有 "## 完成状态" 段。coder 报错/阻塞则 status → 阻塞，该 task 退出波次。
-
+**review 派发**：
 ```js
-// 串行
+// coder-1 完成，立即派 review（不等 coder-2/3）
+SendMessage({ to: "code-reviewer", message: "review T{a}。worktree: {path}。git diff + context.md → 写 review_code.md。" })
+SendMessage({ to: "test-reviewer", message: "review T{a} tests。worktree: {path}。读 tests/ + context.md → 写 review_test.md。" })
+
+// 调 task_review.js 触发 review workflow
 const result = await Workflow({
   scriptPath: "docs/harness/workflows/task_review.js",
   args: { taskId: "{TID}" }
 })
-
-// 并发：每个 worktree 内独立调，互不干扰
 ```
 
-波次内所有 task status → 审阅中。
+tasks_list.json 该 task status → 审阅中。leader idle，等 review 返回。**coder-2/3 如果还在跑，不受影响——它们各自完成后也会立即触发自己的 review。**
 
-#### 步骤 5：等待 review 返回（暂停点）
+#### 步骤 4：review 返回 → 立即处理 + 收口（事件驱动）
 
-leader idle，等波次内**所有** `task_review.js` workflow 返回。**不需要用户介入。**
+每个 `task_review.js` workflow 返回后，leader 立即处理该 task 结果，不等波次内其他 review。
 
-- 串行：等一个 workflow
-- 并发：等最慢的 workflow，先完成的 idle
+读 workflow 返回的 `{passed, blockers, techDebt, finalVerdicts}`，不 grep review_*.md 正文。
 
-如果用户主动触发 `/harness-start`（查进度）：
-输出 "T{a} review 进行中，T{b} review 进行中。review 完成后自动处理结果。"
+**双 PASS → 立即收口（步骤 5）**
 
-#### 步骤 6：处理 review 结果
+**任一 FAIL → 立即进 FAIL 轮（步骤 6）**
 
-读每个 workflow 返回的 `{passed, blockers, techDebt, finalVerdicts}`，不 grep review_*.md 正文。**每个 task 独立判定**。
+#### 步骤 5：收口
 
-- 双 PASS → 该 task 进入收口（步骤 7）
-- 任一 FAIL → 该 task 进入 FAIL 轮（步骤 8）
-- 波次内 PASS 和 FAIL 可以并存，各自独立处理
-
-#### 步骤 7：收口
-
-**按依赖顺序逐个收口**（并发时：先收口被依赖的 task，合并 worktree，每合一跑全量测试，再收口下一个）。
+**并发时按依赖顺序收口**：先收口被依赖的 task，合并 worktree，每合一跑全量测试，再收口下一个。无依赖关系的按 TID 升序。
 
 每个 task 的收口步骤：
 
@@ -224,14 +205,13 @@ leader idle，等波次内**所有** `task_review.js` workflow 返回。**不需
 
 11. **回填 commit hash**：progress.md 和 leader_checkpoint.md 中 `<待回填>` → 实际 hash，单独 commit。
 
-12. **波次全部收口完成 → 自动回到步骤 1，选下一波次。**
+#### 步骤 6：FAIL 轮
 
-#### 步骤 8：FAIL 轮
-
-- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "T{n} review FAIL。blockers: {...}。读 review_*.md 改代码，在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**自动回到步骤 4 重调 `task_review.js`**（不需要用户介入）。
+- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "T{n} review FAIL。blockers: {...}。读 review_*.md 改代码，在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重调 `task_review.js`**（不需要用户介入）。
 - 可选——全是 lint/小边界/类型错误且在 scope 内 → 重调 `task_review.js` 传 `autofix: { scopeFiles }`。
-- 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**该 task 退出波次，波次内其他 task 继续收口。**
-- 波次内所有 FAIL 轮处理完后 → 回到步骤 7 收口（PASS 的先收口，FAIL 的跳过）。
+- 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**该 task 退出波次，波次内其他 task 继续。**
+
+**波次结束判断**：波次内所有 task 都收口完成（或阻塞退出）→ 自动回到步骤 1 选下一波次。
 
 ### 阶段 6：循环结束
 
@@ -272,11 +252,22 @@ leader idle，等波次内**所有** `task_review.js` workflow 返回。**不需
 
 ### Spawn（什么时候新建）
 
+**⚠️ spawn 前必须先查 team config**：读 `~/.claude/teams/{team}/config.json` 的 `members` 列表。名字已在列表中 → 跳过 spawn，用 SendMessage 唤醒。名字不在列表中 → 才 spawn。
+
+重复 spawn 同名会被自动加序号（`coder-1` → `coder-1-2`），导致 SendMessage 找不到人。
+
+```bash
+# 检查 teammate 是否已存在
+cat ~/.claude/teams/{team}/config.json | jq '.members[] | select(.name == "coder-1")'
+# 有结果 → 跳过 spawn，SendMessage 唤醒
+# 无结果 → spawn
+```
+
 | 场景 | 动作 |
 |---|---|
-| 首次 /harness-start | spawn code-reviewer + test-reviewer + coder-1（串行） |
-| 并发波次需要第 N 路 coder | spawn coder-N（N=2 或 3），不存在才建 |
-| compact 后 in-process teammate 消失 | 按需重建（见"恢复"段） |
+| 首次 /harness-start | TeamCreate + spawn code-reviewer + test-reviewer + coder-1 |
+| 并发波次需要第 N 路 coder | 查 config，不在列表中才 spawn coder-N |
+| compact 后 in-process teammate 消失 | 查 config，isActive=false 的先清理残留再 spawn（见"恢复"段） |
 | tmux 模式 teammate 存活 | 不 spawn，SendMessage 唤醒 |
 
 ```js
@@ -285,7 +276,7 @@ Agent({ name: "coder-1", subagent_type: "coder", prompt: "..." })
 Agent({ name: "code-reviewer", subagent_type: "code-reviewer", prompt: "..." })
 Agent({ name: "test-reviewer", subagent_type: "test-reviewer", prompt: "..." })
 
-// 并发扩展（按需）
+// 并发扩展（按需，先查 config 确认不存在）
 Agent({ name: "coder-2", subagent_type: "coder", prompt: "..." })
 Agent({ name: "coder-3", subagent_type: "coder", prompt: "..." })
 ```
@@ -304,7 +295,7 @@ Agent({ name: "coder-3", subagent_type: "coder", prompt: "..." })
 
 | teammate | 触发条件 | 动作 |
 |---|---|---|
-| coder-N | 当前 task 收口完成 + 上下文 ≥40%（1M 窗口） | shutdown，下次需要时重新 spawn |
+| coder-N | 当前 task 收口完成 + (上下文 ≥40%（1M 窗口）或者 200k 窗口) | shutdown，下次需要时重新 spawn |
 | code-reviewer | 上下文 ≥70% | compact（不删除，压缩后继续用） |
 | test-reviewer | 上下文 ≥70% | compact（不删除，压缩后继续用） |
 
@@ -312,19 +303,35 @@ Agent({ name: "coder-3", subagent_type: "coder", prompt: "..." })
 
 ### 删除（什么时候 shutdown）
 
+**shutdown 三步**：发消息 → 等回复 → 清 config 残留。
+
+```bash
+# 1. 发 shutdown（嵌入文本中，不能裸发 JSON）
+SendMessage({ to: "coder-1", message: "收到后回复 shutdown_response 并关闭。{\"type\":\"shutdown_request\"}" })
+
+# 2. 等 teammate 回复 {"type":"shutdown_response","approve":true}
+
+# 3. 清 config 残留（否则再 spawn 同名会被加序号）
+cat ~/.claude/teams/{team}/config.json \
+  | jq 'del(.members[] | select(.name == "coder-1" and .isActive == false))' \
+  > /tmp/config_clean.json \
+  && mv /tmp/config_clean.json ~/.claude/teams/{team}/config.json
+```
+
 | 场景 | 动作 |
 |---|---|
-| coder-N 收口完成 + 无待跑 task 分配给它 | `SendMessage({ to: "coder-N", message: { type: "shutdown_request" } })` |
-| 并发波次结束，coder-2/3 不再需要 | 同上 |
-| 所有 task 完成（ALL_DONE） | shutdown code-reviewer + test-reviewer + 所有 coder-N |
-| 循环结束，剩余阻塞 | shutdown 所有 coder-N，保留 code-reviewer/test-reviewer（解除阻塞后复用） |
+| coder-N 收口完成 + 无待跑 task 分配给它 | shutdown + 清残留 |
+| 并发波次结束，coder-2/3 不再需要 | shutdown + 清残留 |
+| 所有 task 完成（ALL_DONE） | shutdown code-reviewer + test-reviewer + 所有 coder-N + 清残留 |
+| 循环结束，剩余阻塞 | shutdown 所有 coder-N + 清残留，保留 code-reviewer/test-reviewer |
 
 ### 恢复（compact 后）
 
 1. 读 `leader_checkpoint.md` 中的 teammate 列表
-2. tmux 模式 → SendMessage 唤醒，确认存活
-3. in-process 模式 → 按需重新 spawn（只建当前循环需要的）
-4. 恢复后从 spec/plan/context.md 重建上下文
+2. **查 team config**：确认哪些 teammate 还在、哪些 isActive=false
+3. tmux 模式 + isActive=true → SendMessage 唤醒，确认存活
+4. isActive=false 或不存在 → 清残留（如需）→ 按需 spawn
+5. 恢复后从 spec/plan/context.md 重建上下文
 
 ## 相关文件
 

@@ -123,7 +123,9 @@ Agent({ name: "test-reviewer", subagent_type: "test-reviewer",
 - idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态。
 - 只有上下文满了才重 spawn：coder-N 1M 窗口 ≥40%、200K 窗口每次。reviewer/test-reviewer ≥70% compact。
 - compact 后：in-process 模式 teammate 会消失需重 spawn；tmux 模式（设 `teammateMode: "tmux"`）teammate 继续存活，直接唤醒。
-- 关机：`SendMessage({ to: "coder-N", message: { type: "shutdown_request" } })`。
+- **shutdown**：SendMessage 含 `{"type":"shutdown_request"}`（嵌入文本，不能裸发 JSON）。teammate 回复 `shutdown_response` approve 后关闭。
+- **⚠️ shutdown 后必须清 config 残留**：用 jq 删除 `~/.claude/teams/{team}/config.json` 中 `isActive: false` 的条目，否则再 spawn 同名会被自动加序号。
+- **⚠️ spawn 前必须查 config**：先检查 config.json 成员列表，名字已存在则 SendMessage 唤醒，不存在才 spawn。
 
 **为什么不用 Subagent**：subagent 一次性跑完消失。coder 要跨 step/跨 FAIL 轮保留状态，reviewer 要跨 task 积累项目理解——这些只有 Agent Team 做得到。
 
