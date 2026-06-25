@@ -33,7 +33,7 @@ description: >
 
 ## 深度模式
 
-1. **读上下文**：tasks_list.json + ref 文档（prd/spec/architecture/domain）
+1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
 2. **调 spec-generator（深度模式）**：一问一答逐项确认，可选 visual companion，产出 spec 草稿
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
 4. **生成正式 spec/plan**：对每个 task 调 spec-generator（快速模式，因方案已在讨论中确认）+ plan-generator（快速模式）
@@ -43,11 +43,11 @@ description: >
 
 用户明确说"快速"时才走此模式。
 
-1. **读上下文**：tasks_list.json + ref 文档
+1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询）+ ref 文档
 2. **确认需求范围**：从输入提取，输出确认
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
-5. **调 spec-generator（快速模式）+ plan-generator（快速模式）**
+5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 启动一个子代理，子代理内依次完成 spec-generator 和 plan-generator，使用与主代理相同的模型。
 6. **汇报**：task 已就位，下一步 /harness-start
 
 ## 拆 task 规则

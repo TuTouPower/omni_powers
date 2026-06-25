@@ -33,7 +33,7 @@ description: >
 | 参数 | 默认值 | 说明 |
 |---|---|---|
 | `tech_debt_path` | `docs/harness_execution/tech_debt.md` | 技术债清单 |
-| `tasks_list_path` | `docs/harness_execution/tasks_list.json` | 当前 task 清单 |
+| `tasks_list_path` | `docs/harness_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
 | `tasks_list_template` | `docs/harness/template/harness_execution/tasks_list.json` | tasks_list.json 模板 |
 | `spec_template` | `docs/harness/template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
 | `plan_template` | `docs/harness/template/harness_execution/tasks/{TID}/plan.md` | plan 模板 |
@@ -156,7 +156,7 @@ cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_exe
 
 3. 调 plan-generator 生成 plan.md
 
-**快速模式（默认）**：spec-generator 和 plan-generator 都走快速模式，skill 自主判断，用户审阅结果。
+**快速模式（默认）**：为每个偿还 task 启动一个子代理，子代理内依次完成 spec-generator 和 plan-generator，使用与主代理相同的模型。skill 自主判断，用户审阅结果。
 
 **深度模式**（用户明确说"深度"时才走）：spec-generator 走深度模式逐债项讨论，plan-generator 走深度模式逐 step 确认。
 
