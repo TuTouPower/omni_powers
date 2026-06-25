@@ -69,7 +69,7 @@ jq '[.tasks[] | select(.status == "待开始")]' docs/harness_execution/tasks_li
 
 **操作**：
 1. leader 定边界（哪些 step 归子 task A、哪些归子 task B、依赖关系）
-2. SendMessage 给 task-splitter 子代理执行（建目录、切 spec/plan、改 tasks_list.json）
+2. Subagent task-splitter 执行（建目录、切 spec/plan、改 tasks_list.json）
 3. task-splitter 回报后，leader 按新 tasks_list 重走步骤 1
 
 **不能等 coder 写一半再拆**——已落盘代码要回切会乱。
@@ -115,7 +115,7 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 
 每个 task 的收口分两部分——closer 做机械读写，leader 做状态变更和提交：
 
-**closer 执行（SendMessage 派发）**：
+**closer 执行（Subagent，一次性，不加入 team）**：
 1. 追加 progress.md
 2. 有决策追加 decisions.md
 3. 提取 review_*.md 中标了【暂存】的项写入 tech_debt.md
@@ -124,7 +124,7 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 6. git mv 归档到 record/tasks/{TID}
 
 ```js
-SendMessage({ to: "closer", message: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: {path}。" })
+Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: {path}。" })
 ```
 
 **leader 执行（closer 回报后）**：
