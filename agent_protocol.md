@@ -77,6 +77,8 @@ docs/harness_execution/tasks/{TID}/
 
 当前真相在 `docs/harness_blueprint/specs/{feature}.md`，按功能聚合。task 闭环时把当前生效规格整理进去，只留"现在是什么"，不留方案比较/被否方案。归档 task spec 顶部盖戳冻结。
 
+**整理规则**：每 task 闭环时，leader 必须把 task spec 里当前生效的接口、数据模型、约束、行为整理进对应功能 specs 文件——不是拷贝，过程性内容留在归档 task spec。同一功能跨多个 task 时累积更新同一个文件，不为后续 task 新建文件。归档后永不再改。
+
 **新建文件规则**：一律先拷 `docs/harness/template/` 下对应模板再填内容。无对应模板才自建。
 
 ## 关键规则
@@ -93,7 +95,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker，不跑完整 TDD 循环，不为新增行为补写测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker，不跑完整 TDD 循环，不扩展范围、不补写新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重读后**：reviewer 承认误判则首行改 PASS，维持原判则保持 FAIL 并追加理由。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖自动顺延到下一波次；3 轮后 blocked_by=quality，下游按依赖关系连锁阻塞或绕过。
 
 ### commit 时机
 
@@ -103,7 +105,8 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 - 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
 - 隔离靠 leader 手动 `git worktree add`。
-- 收口时按依赖顺序合并 worktree，每合一跑全量测试。波次全部收口后开下一波次。
+- **共享文件冲突规避**：并发 coder 只改本 task scope 文件；共享入口、依赖注册、路由注册由 leader 收口时统一改。coder 在 context.md 声明"需要在共享文件 X 注册 Y"。
+- 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
 
 ### Agent Team 管理
 
@@ -154,7 +157,37 @@ compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 | 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
-回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset。
+回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset。不连锁回滚下游，只重置状态。
+
+### 拆 task（task 太大时，派 task-splitter）
+
+leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。
+
+**判断标准**：
+
+| 情况 | 处理 |
+|---|---|
+| 多改动各自需独立 review + 能独立回滚 | 拆成多 task（T09a/T09b），各自 spec/plan/review/commit |
+| 多改动是一个连贯交付、一起 review 才有意义 | 一个 task 多 step，一次收口一次 commit |
+
+**时机**：在拆 steps.md 那一刻判断，不能等 coder 写一半再拆——已落盘代码要回切会乱。
+
+**机制**（task-splitter 子代理执行，不污染 leader 上下文）：
+1. leader 定边界（哪些 step 归 T09a、哪些归 T09b、依赖关系），SendMessage 给 task-splitter
+2. task-splitter 执行：建子目录、切原 spec/plan（不重跑 generator）、已写代码归入 context.md、改 tasks_list.json（删原未完成 task 行、加子 task 行）
+3. task-splitter 回报结果，leader 不读中间过程，按新 tasks_list 重走选 task 规则
+
+**未完成原 task 可替换**：已完成 task 不删是为保依赖链；被重新 scope 的未完成 task 可删原 task 加子 task，避免永不完成的原 task 误导选 task。
+
+**例外**：拆分时发现原 spec 本身漏/错，错的部分由 leader 走 intake 重跑，正确部分仍交 splitter 切。
+
+### plan 分段派活
+
+leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，由 leader 维护进度）。每个 step 是一组相关文件改动。
+
+**派活方式**：leader 只给 coder 当前 step + 相关 spec 段，不给整份 plan。coder 每 step 完成后 leader 再派下一个。小 task 可一次给全 plan。
+
+**steps.md**：leader 维护，记录当前 step 编号和进度。coder 只读不写。
 
 ## 执行体系（指向 skill）
 
