@@ -184,43 +184,6 @@ const usersWithPosts = await db.query(`
 - **Magic numbers** — Unexplained numeric constants
 - **Inconsistent formatting** — Mixed semicolons, quote styles, indentation
 
-## Review Output Format
-
-Organize findings by severity. For each issue:
-
-```
-[CRITICAL] Hardcoded API key in source
-File: src/api/client.ts:42
-Issue: API key "sk-abc..." exposed in source code. This will be committed to git history.
-Fix: Move to environment variable and add to .gitignore/.env.example
-
-  const apiKey = "sk-abc123";           // BAD
-  const apiKey = process.env.API_KEY;   // GOOD
-```
-
-### Summary Format
-
-End every review with:
-
-```
-## Review Summary
-
-| Severity | Count | Status |
-|----------|-------|--------|
-| CRITICAL | 0     | pass   |
-| HIGH     | 2     | warn   |
-| MEDIUM   | 3     | info   |
-| LOW      | 1     | note   |
-
-Verdict: WARNING — 2 HIGH issues should be resolved before merge.
-```
-
-## Approval Criteria
-
-- **Approve**: No CRITICAL or HIGH issues
-- **Warning**: HIGH issues only (can merge with caution)
-- **Block**: CRITICAL issues found — must fix before merge
-
 ## Project-Specific Guidelines
 
 When available, also check project-specific conventions from `CLAUDE.md` or project rules:

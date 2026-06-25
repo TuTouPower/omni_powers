@@ -77,7 +77,7 @@ spawn 后 teammate idle 自动通知 leader。后续用 SendMessage 派活，不
 
 ### 自治循环
 
-进入循环后，leader 自动重复以下步骤，直到没有可跑 task。**一个循环迭代 = 一个波次**（串行时波次只有 1 个 task）。
+进入循环后，leader 自动重复以下步骤，直到没有可跑 task。**一个循环迭代 = 从选波次到该波次所有 task 收口完成**（串行时波次只有 1 个 task）。
 
 ```
 while (存在待开始 task 且依赖全完成) {
@@ -135,7 +135,7 @@ tasks_list.json 波次内所有 task status → 进行中。
 
 **不等全波次完成。** 每个 coder 完成后，leader 立即对该 task 派 review。code-reviewer 单实例串行处理——先到先审，后到排队。
 
-**完成判断**：coder 的 SendMessage 回复含 "完成"/"done" 关键词，且 `context.md` 非空、末尾有 "## 完成状态" 段。coder 报错/阻塞则 status → 阻塞，该 task 退出波次。
+**完成判断**：coder 的 SendMessage 回复含 "完成"/"done" 关键词，且 `context.md` 非空、当前 Round 内含 "### 完成状态" 段。coder 报错/阻塞则 status → 阻塞，该 task 退出波次。
 
 **review 派发**：
 ```js
@@ -154,7 +154,7 @@ leader 读每个 review_*.md **首行**，不 grep 正文。
 
 **双 PASS → 立即收口（步骤 5）**
 
-**任一 FAIL → 立即进 FAIL 轮（步骤 6）**
+**任一 FAIL → 立即进 FAIL 轮**
 
 #### 步骤 5：收口
 

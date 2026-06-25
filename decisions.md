@@ -2,7 +2,7 @@
 
 > 记录架构和设计决策及其依据。最终规则见 agent_protocol.md。
 
-## D1：Agent Team vs Workflow（2026-06-25）
+## D1：Agent Team vs Workflow（2026-06-25）— ⚠️ 已被 D4 取代
 
 | | Workflow（task_review.js） | Agent Team（teammate） |
 |---|---|---|
@@ -76,4 +76,4 @@
 
 **决策**：不改 debt-to-tasks SKILL.md 中的 `<HARD-GATE>` 标签。
 
-**理由**：spec-generator 和 plan-generator 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用，不需要注册到 `~/.claude/skills/`。
+**理由**：spec-generator 和 plan-generator 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。

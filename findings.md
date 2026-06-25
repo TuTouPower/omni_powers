@@ -93,5 +93,7 @@
 - `default_sonnet`（test-reviewer）：200K tokens
 - `[1m]` 后缀是模型别名的一部分，不是窗口大小
 
-**结论**：窗口大小取决于实际模型 variant。不能让 agent 猜，需从系统提示解析。系统提示含 `You are powered by the model default_sonnet[1m]`，leader 根据此字符串 + settings.json 推导窗口大小。
+**结论**：窗口大小取决于实际模型 variant。不能让 agent 猜，需从系统提示解析。
+
+**解析方法**：teammate 系统提示含 `You are powered by the model xxx`。leader SendMessage 问 teammate "你的系统提示里 powered by the model 后面是什么？原样回复"，拿到模型别名后查 settings.json 的 `ANTHROPIC_DEFAULT_HAIKU_MODEL` / `ANTHROPIC_DEFAULT_SONNET_MODEL` 配置推导窗口大小。
 

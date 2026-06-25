@@ -47,7 +47,7 @@ description: >
 2. **确认需求范围**：从输入提取，输出确认
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
-5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 启动一个子代理，子代理内依次完成 spec-generator 和 plan-generator，使用与主代理相同的模型。
+5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill 和 plan-generator skill，完成后回报。
 6. **汇报**：task 已就位，下一步 /harness-start
 
 ## 拆 task 规则
