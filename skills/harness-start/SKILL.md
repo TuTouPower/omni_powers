@@ -59,7 +59,8 @@ while (存在待开始 task 且依赖全完成) {
 jq -r '
   "# DAG — 任务依赖图\n\n> 生成时间: \(now | strftime("%Y-%m-%d %H:%M:%S"))\n",
   "## Mermaid\n\n```mermaid\ngraph TD",
-  (.tasks[] | select(.depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d)[\($d)] --> \(.id)[\(.id)]"),
+  (.tasks[] | "  \(.id)[\(.id)<br/>\(.status)]"),
+  (.tasks[] | select(.depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d) --> \(.id)"),
   "```\n",
   "## 依赖关系\n",
   "| Task | 状态 | depends_on |",
@@ -68,7 +69,7 @@ jq -r '
 ' docs/harness_execution/tasks_list.json > docs/harness_execution/dag.md
 ```
 
-> Mermaid 图中 `T{n}[T{n}]` 的方括号是节点标签，不是数组。依赖关系表列出所有 task 的 `depends_on` 和当前状态。
+> 先用 `(.tasks[])` 生成全部节点（含状态），再用 `select(...length>0)` 生成边。depends_on 为 null 或空数组的任务不出边，但作为孤立节点出现在图中。依赖关系表列出所有 task。
 
 **选 task**（4 条全满足，取 ID 最小）：status=待开始、`depends_on` 中所有 task 均为 `完成`、不在阻塞范围、ID 最小。
 
