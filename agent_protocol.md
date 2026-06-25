@@ -91,7 +91,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - leader 读首行判定，不 grep 正文
 - 双 PASS → 收口。任一 FAIL → FAIL 轮。
 - **PASS 门槛**：能当场修的问题（不分 LOW/MEDIUM/HIGH）必须修完才 PASS。只有修不了的（跨 scope/依赖环境/需架构决策）才标暂存进 tech_debt。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码 + 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker，不跑完整 TDD 循环，不为新增行为补写测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。
 
 ### commit 时机
 

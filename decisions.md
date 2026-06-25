@@ -31,7 +31,7 @@
 **理由**：
 - Workflow 每次重新填充上下文，token 成本高
 - Agent Team 跨 task 复用上下文，FAIL 轮保留状态
-- Workflow 的 schema 强制优势可通过 teammate 输出结构化 JSON 到文件实现
+- Workflow 的 schema 强制优势可通过 teammate 输出 review_*.md 首行 verdict 实现
 - teammate 输出 review_*.md，leader 读文件判 verdict，兼得复用和结构化
 
 **影响**：

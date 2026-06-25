@@ -71,7 +71,7 @@
 | harness-code-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
 | harness-test-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
 
-**结论**：ctx_stats 在 teammate 上可用，但**对上下文监控无用**——只显示 context-mode 拦截了多少字节，不显示实际上下文窗口占用率。无法用来判断何时需要 shutdown 重建。
+**结论**：ctx_stats 在 teammate 上可用，但**对上下文监控无用**——只显示 context-mode 拦截了多少字节，不显示 teammate 的实际上下文窗口占用率，无法用于判断何时需重建 teammate。
 
 ## 实验 7：model 参数
 

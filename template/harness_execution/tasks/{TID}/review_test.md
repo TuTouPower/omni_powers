@@ -1,4 +1,4 @@
-verdict: PASS
+verdict: <PASS|FAIL>
 
 > 首行 verdict: 为人工阅读参考。实际判定：leader 读 review_*.md 首行 verdict，不 grep 正文。
 > **PASS 门槛**：能当场修的问题（含所有 LOW）必须 coder 修完才能 PASS，LOW 不是放过理由。

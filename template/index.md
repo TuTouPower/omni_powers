@@ -29,6 +29,7 @@
 | `harness_execution/tasks/{TID}/` | 进行中 task 的 spec/plan/steps/context/review_* |
 | `harness_execution/tech_debt.md` | 已知技术债（每 task 闭环强制追加） |
 | `harness_execution/leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |
+| `harness_execution/issues/{TID}_quality.md` | 质量阻塞记录 |
 
 ## harness_record/ — 冻结历史
 
@@ -37,4 +38,3 @@
 | `harness_record/progress.md` | 进度日志（每 task 闭环追加） |
 | `harness_record/decisions.md` | 架构决策（ADR 精简，只追加） |
 | `harness_record/tasks/{TID}/` | 已完成 task 的 spec/plan/context/review_* 归档 |
-| `harness_execution/issues/{TID}_quality.md` | 质量阻塞记录 |
