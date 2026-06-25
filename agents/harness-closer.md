@@ -56,6 +56,6 @@ specs 归属：{feature 文件名，或"不确定"}
 
 ## 注意
 
-- 所有路径相对于 leader 指定的工作目录（可能是 worktree）
+- 所有路径相对于 `.worktrees/{TID}/`
 - 整理 specs 时保留原格式，不改结构
 - tech_debt 节标题格式严格为 `## {TID} {title}`，不可改

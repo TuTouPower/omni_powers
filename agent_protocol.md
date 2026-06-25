@@ -122,7 +122,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 - 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
 - **并发收益判断**：画依赖图看层宽；层宽普遍为 1 则串行；列同层 task 的共享文件交集，交集大则降并发或拆波次；用数据决定并发路数。
-- 隔离靠 leader 手动 `git worktree add`。
+- 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
 
 ### Agent Team 管理

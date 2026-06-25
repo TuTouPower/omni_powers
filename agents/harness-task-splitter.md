@@ -42,6 +42,6 @@ leader 的 SendMessage 会告诉你：
 
 ## 注意
 
-- 所有路径相对于 leader 指定的工作目录（可能是 worktree）
+- 所有路径相对于 `.worktrees/{TID}/`
 - 切 spec/plan 时保留原格式，不改结构
 - 子 task 的 context.md 用模板格式，已写代码归入时按 Round 格式追加

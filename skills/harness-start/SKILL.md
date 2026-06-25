@@ -92,12 +92,18 @@ jq -r '
 
 波次内按 TID 升序分配 coder-1/2/3。并发时每个 coder 在独立 worktree 工作。
 
+**创建 worktree**：统一路径 `.worktrees/{TID}`，分支 `feat/{TID}`：
+
+```bash
+git worktree add .worktrees/{TID} -b feat/{TID}
+```
+
 **派活**：leader 先读 plan 拆 steps.md（由 leader 维护进度），只给 coder 当前 step + 相关 spec 段，不给整份 plan。小 task 可一次给全 plan。
 
 **派活消息必须首行切目录**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
 
 ```js
-SendMessage({ to: "coder-1", message: "cd {worktree_绝对路径} && pwd\n在工作目录中 TDD 实现 T{a} step {N}。spec: {path}/spec.md（相关段）。plan: {path}/plan.md（当前 step）。完成后报告。" })
+SendMessage({ to: "coder-1", message: "cd .worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
 ```
 
 tasks_list.json 波次内所有 task status → 进行中。
@@ -109,8 +115,8 @@ tasks_list.json 波次内所有 task status → 进行中。
 完成判断：coder 回复含 "完成"/"done"，且 context.md 非空、当前 Round 含 "### 完成状态"。coder 报错/阻塞 → status=阻塞，退出波次。
 
 ```js
-SendMessage({ to: "code-reviewer", message: "review T{a}。worktree: {path}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
-SendMessage({ to: "test-reviewer", message: "review T{a} tests。worktree: {path}。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "code-reviewer", message: "review T{a}。worktree: .worktrees/{TID}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "test-reviewer", message: "review T{a} tests。worktree: .worktrees/{TID}。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
 ```
 
 tasks_list.json status → 审阅中。leader idle 等返回。
@@ -140,7 +146,7 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 6. git mv 归档到 record/tasks/{TID}
 
 ```js
-Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: {path}。" })
+Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: .worktrees/{TID}。" })
 ```
 
 **leader 执行（closer 回报后）**：
