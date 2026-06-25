@@ -36,7 +36,7 @@ description: >
 1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
 2. **讨论需求（第一轮 spec-generator）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
-4. **生成正式 spec/plan（第二轮）**：对每个 task 调用 spec-generator（深度模式，方案细节还需讨论）+ plan-generator（深度模式），输出到各 task 目录
+4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill（深度模式）和 plan-generator skill（深度模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
 
 <HARD-GATE>
 必须对每个 task 调用 `Skill("spec-generator")` 和 `Skill("plan-generator")`，禁止手写 spec/plan。不得跳过此步。
@@ -52,7 +52,7 @@ description: >
 2. **确认需求范围**：从输入提取，输出确认
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
-5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill 和 plan-generator skill，完成后回报。每个 task 的子代理独立运行，多个 task 的子代理可并发。
+4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill（快速模式）和 plan-generator skill（快速模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
 
 <HARD-GATE>
 必须对每个 task 调用 spec-generator 和 plan-generator skill，禁止手写 spec/plan。不得跳过此步。
