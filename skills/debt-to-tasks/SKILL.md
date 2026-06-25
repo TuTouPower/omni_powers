@@ -1,0 +1,214 @@
+---
+name: debt-to-tasks
+description: >
+  技术债偿还——扫 tech_debt.md，按主题归类，拆成偿还 task，生成 spec/plan，更新 tasks_list.json。
+  默认快速模式（直接归类拆 task），用户说"深度模式/深度讨论"才走深度（逐债项讨论）。
+  功能 task 全部完成后由 leader 触发。
+---
+
+# debt-to-tasks：技术债偿还
+
+## 触发
+
+- 所有功能 task 状态为 `完成` 后，leader 调用本 skill
+- 用户显式说 `/debt-to-tasks`、还债、偿还技术债
+
+## 模式选择
+
+**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 spec/plan-generator（快速）。
+
+**深度模式**：仅当用户**明确说**以下关键词时才走深度：
+- "深度模式"、"深度讨论"、"逐项讨论"、"详细讨论"
+
+进入 skill 后先确认：
+
+```
+/debt-to-tasks
+
+默认快速归类直接拆。说"深度"则逐债项讨论。开始？
+```
+
+## 输入
+
+| 参数 | 默认值 | 说明 |
+|---|---|---|
+| `tech_debt_path` | `docs/harness_execution/tech_debt.md` | 技术债清单 |
+| `tasks_list_path` | `docs/harness_execution/tasks_list.json` | 当前 task 清单 |
+| `tasks_list_template` | `docs/harness/template/harness_execution/tasks_list.json` | tasks_list.json 模板 |
+| `spec_template` | `docs/harness/template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
+| `plan_template` | `docs/harness/template/harness_execution/tasks/{TID}/plan.md` | plan 模板 |
+
+## 输出
+
+1. 归类报告（终端输出，不落盘）
+2. 更新 `tasks_list.json`（追加偿还 task）
+3. 为每个偿还 task 生成 `docs/harness_execution/tasks/{TID}/spec.md` + `plan.md`
+
+## 步骤
+
+### step 1：读 tech_debt.md
+
+读 `tech_debt_path`，解析全部债项。
+
+解析规则：
+- 跳过注释行（`>` 开头）和空行
+- 识别 `## 环境限制` 节下的表格 → 环境债
+- 识别 `## {TID} {title}` 节下的表格 → 功能 task 遗留债
+- 跳过 `## 偿还计划` 节（如已存在则只读不解析）
+- 跳过标记为"已偿还"的债项（如存在 `状态` 列且值为 `已偿还`）
+
+每行债项提取字段：
+
+| 字段 | 环境债列 | 功能债列 |
+|---|---|---|
+| id | `ID` | `ID` |
+| task_id | `任务`（如 `T01`） | 从节标题 `## {TID}` 提取 |
+| source | — | `来源` |
+| debt | `债项` | `债项` |
+| severity | — | `严重度` |
+| reason | `暂存原因` | `暂存原因` |
+
+### step 2：归类
+
+按以下优先级归类，同一债项可匹配多条规则，取优先级最高的那条：
+
+1. **环境债**：单独成 task，标 `blocked_by`
+2. **同文件/模块**：债项描述中提到相同文件或模块 → 合为一个 task
+3. **同主题**：跨 scope 但同主题（如"所有错误处理优化"、"统一日志格式"）→ 合为一个 task
+4. **来源为 `环境`** 但不在环境限制节下的 → 归入环境债组
+5. **剩余独立债项**：每项单独成 task
+
+归类输出格式（终端打印）：
+
+```
+=== 技术债归类结果 ===
+
+环境债：
+  [E1] T01 真实 DB 集成测试未跑 → 偿还 task: T{next_id}（blocked_by=key）
+
+模块: src/api/auth/
+  [T02-3] review-code | 缺少 token 刷新逻辑 | HIGH
+  [T02-5] review-test | 未覆盖 token 过期场景 | MEDIUM
+  → 偿还 task: T{next_id+1}
+
+主题: 错误处理
+  [T03-1] review-code | API 层未统一错误格式 | MEDIUM
+  [T05-2] review-test | 异常路径无测试 | MEDIUM
+  → 偿还 task: T{next_id+2}
+
+独立:
+  [T01-7] review-code | 缺 rate limiting | HIGH → 偿还 task: T{next_id+3}
+```
+
+### step 3：确定 task ID
+
+读 `tasks_list.json`，取当前最大 task ID（如 `T05`），新偿还 task 从 `T06` 开始递增。
+
+ID 格式：`T{NN}`，两位数，不足两位前面补零。
+
+### step 4：分配 task 属性
+
+每个偿还 task 确定以下属性：
+
+**dependencies**：
+- 环境债：`dependencies` 为空（被 blocked_by 阻塞）
+- 功能遗留债：填该债项所属的原始 task ID。如 `T02-3` 和 `T02-5` 合并，则依赖 `["T02"]`。如合并了多个来源 task，取并集。
+
+**blocked_by**：
+- 环境债：按原因填 `key` / `domain` / 其他
+- 功能遗留债：填 `null`
+
+**title**：格式为 `还债: {简要描述}`
+
+**verification**：从债项描述推导验收标准，一句话。
+
+**status**：统一填 `待开始`。
+
+### step 5：更新 tasks_list.json
+
+读 `tasks_list.json`，在 `tasks` 数组末尾追加新 task。不改已有 task。
+
+如存在环境债，同步更新 `blockers` 数组：
+
+```json
+{
+  "id": "B{n}",
+  "desc": "{环境依赖描述}",
+  "affects": ["{TID}"],
+  "status": "待提供"
+}
+```
+
+### step 6：生成 spec + plan
+
+对每个偿还 task：
+
+1. 建目录拷模板：
+```bash
+mkdir -p docs/harness_execution/tasks/{TID}
+cp docs/harness/template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
+cp docs/harness/template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
+cp docs/harness/template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
+cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
+```
+
+2. 调 spec-generator 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
+
+3. 调 plan-generator 生成 plan.md
+
+**快速模式（默认）**：spec-generator 和 plan-generator 都走快速模式，skill 自主判断，用户审阅结果。
+
+**深度模式**（用户明确说"深度"时才走）：spec-generator 走深度模式逐债项讨论，plan-generator 走深度模式逐 step 确认。
+
+### step 7：更新 tech_debt.md
+
+在 `tech_debt.md` 末尾追加（如 `## 偿还计划` 节不存在则创建）：
+
+```markdown
+## 偿还计划
+
+| 偿还 task | 覆盖债项 | 状态 |
+|---|---|---|
+| T06 | T02-3, T02-5 | 待开始 |
+| T07 | T03-1, T05-2 | 待开始 |
+```
+
+### step 8：汇报
+
+终端输出最终汇总：
+
+```
+=== 偿还 task 已创建 ===
+
+T06 还债: auth 模块 token 刷新逻辑（依赖 T02）→ spec/plan 已生成
+T07 还债: 统一错误处理（依赖 T03, T05）→ spec/plan 已生成
+T08 还债: 环境-真实 DB 集成测试（blocked_by=key）→ spec/plan 已生成
+
+共 3 个偿还 task 已追加到 tasks_list.json。
+tech_debt.md 已更新偿还计划。
+```
+
+## task 数量限制
+
+- 合并后偿还 task 总数不超过 10 个。如超过，优先合并同模块项，必要时将低严重度项合并到主题 task。
+- 每 task 覆盖债项不超过 5 个。超过则拆分为同主题的多个 task。
+
+## 边界情况
+
+- **tech_debt.md 为空**（仅含模板注释）：输出 "无技术债，无需偿还"，不创建 task。
+- **tech_debt.md 不存在**：报错 "tech_debt.md 不存在，请确认路径"。
+- **所有债项已偿还**（偿还计划表中状态全为 `完成`）：输出 "所有技术债已偿还"，不创建新 task。
+- **功能 task 未全部完成**：警告 "尚有功能 task 未完成（列出未完成的 TID），按协议应等功能 task 全部收口后再偿还。是否继续？"
+
+## 与其他 skill 的关系
+
+- **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
+- **harness-start**（统一工作流入口）：偿还 task 创建完成后，走 /harness-start 进入标准开发循环（选 task→派 coder→review→收口）。收口流程与功能 task 相同。
+- 恢复后偿还 task 与功能 task 无区别，/harness-start 统一按 tasks_list.json 的 status 和 dependencies 调度。
+
+## 注意事项
+
+- leader 是本 skill 的唯一调用者。coder/reviewer/test-reviewer 不调用本 skill。
+- 偿还 task 走标准开发循环（spec/plan/coder/review/收口），与功能 task 流程完全一致。
+- 不在功能 task 跑到一半插偿还 task——等当前波次收口。
+- 环境债的 blocked_by 在环境就位后由 leader 手动改为 null，然后走标准循环。

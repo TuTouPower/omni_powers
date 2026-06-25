@@ -8,8 +8,7 @@
 
 | 脚本 | 覆盖 | 状态 |
 |---|---|---|
-| `task_review.js` | 单 task 单轮 review gate（双 review + schema verdict） | 待跑通（主用） |
-| `task_review_autofix.js` | review + 1 轮 scope 内 autofix，超限 escalate | 待跑通（可选） |
+| `task_review.js` | 单 task review gate（双 review + schema verdict + 可选 autofix） | 待跑通（主用） |
 | `task_full.js` | 单 task 全流程（code→review→FAIL），方案 B 全自动 | 待跑通（可选，默认不用） |
 
 **定位**：Workflow 只做单 task review gate。不替代 coder、不替代并发调度、不替代收口、不替代 task 间隔离。tech_debt 寄生在 `VERDICT` schema 里顺带结构化吐出，leader 从返回值直接读，不 grep review 正文。
@@ -26,7 +25,11 @@
 
 ## task_review.js（主用）
 
-单 task 单轮 review gate：并行跑 code-reviewer + test-reviewer，schema 强制 verdict，返回结果。**不做 FAIL 轮修复**——FAIL 默认交回 Teams coder（leader 把 blockers 发给原 coder，改完再调本脚本）。
+单 task review gate：并行跑 code-reviewer + test-reviewer，schema 强制 verdict。**不做 FAIL 轮修复**——FAIL 默认交回 Teams coder（leader 把 blockers 发给原 coder，改完再调本脚本，max 3 轮）。
+
+可选 autofix 模式：传 `autofix.scopeFiles`，首审 FAIL 后走 scope 内小修 → 硬校验 → reverify。
+
+### 默认模式
 
 **调用**：
 ```js
@@ -35,12 +38,13 @@ Workflow({
   args: { taskId: "T05" }
 })
 ```
-> ⚠️ leader 必须在目标 worktree 内发起 Workflow。脚本不做 worktree 切换。
+> 必须在目标 worktree 内发起 Workflow。脚本不做 worktree 切换。
 
 **args**：
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `taskId` | 是 | 如 `T05`，脚本据此定位 `docs/harness_execution/tasks/{taskId}/` |
+| `autofix` | 否 | 提供 `scopeFiles` 则开启 autofix 模式 |
 
 **返回**：
 ```js
@@ -58,47 +62,37 @@ Workflow({
 - `passed === false` → 把 `blockers` 发回原 Teams coder 改，改完**再调本脚本**，max 3 轮；第 3 轮仍 FAIL → 标 `status=阻塞, blocked_by=quality`，写 `issues/{TID}_quality.md`
 - `techDebt` → 收口时直接追加 `docs/harness_execution/tech_debt.md`，不读 review 正文
 
-**机制要点**：
-- `VERDICT` schema 强制结构化 verdict，替代 review_*.md 首行 `verdict:` hack，model 输出不符自动 retry
-- **空 verdicts 守卫**：`passed` 要求 `verdicts.length === reviewSpecs.length`——任一 agent crash 返回 null 被 filter 过滤后，length 不够直接判 FAIL，不会因 `[].every()` 偷渡 PASS
-- 单轮 `parallel`（barrier，两份齐才返回）；FAIL 轮由 leader 驱动（不进脚本），leader 跨轮计数
-- 并发时：每个 task 在各自 worktree 里单独调本脚本，产出落各自 review_*.md 互不干扰
+### autofix 模式
 
-## task_review_autofix.js（可选）
-
-review + 1 轮 scope 内 autofix。仅 FAIL 项都是局部小修（lint/测试断言/小边界/类型错误）时用。**写死的限制**：最多 1 轮、改动必须在 `scopeFiles` 内、改动超 50 行或涉及架构/接口/数据模型 → 立即 `escalate:true` 交回 Teams coder。autofix 后有**确定性硬校验**（`git diff --name-only` + `--numstat`），不靠 AI 判断 scope。
+仅 FAIL 项全是局部小修（lint/测试断言/小边界/类型错误）时用。写死限制：最多 1 轮、改动必须在 `scopeFiles` 内、改动超 50 行或涉及架构/接口/数据模型 → 立即 `escalate:true` 交回 Teams coder。autofix 后有确定性硬校验（`git diff --name-only` + `--numstat`），不靠 AI 判断 scope。
 
 **调用**：
 ```js
 Workflow({
-  scriptPath: "docs/harness/workflows/task_review_autofix.js",
-  args: { taskId: "T05", scopeFiles: ["src/api/foo.py", "tests/api/test_foo.py"] }
+  scriptPath: "docs/harness/workflows/task_review.js",
+  args: { taskId: "T05", autofix: { scopeFiles: ["src/api/foo.py", "tests/api/test_foo.py"] } }
 })
 ```
-> ⚠️ leader 必须在目标 worktree 内发起 Workflow。脚本不做 worktree 切换。
 
-**args**：
-| 字段 | 必填 | 说明 |
-|---|---|---|
-| `taskId` | 是 | 如 `T05` |
-| `scopeFiles` | 是 | 允许 autofix 改的文件白名单；超出即 escalate |
-
-**返回**：
+**autofix 模式额外返回字段**：
 ```js
 {
-  taskId: "T05",
-  passed: true,            // autofix 后双 PASS 才 true
-  rounds: 1,               // autofix 轮数（0=首审即过未 autofix，1=autofix 过）
-  blockers: [...],
-  techDebt: [...],
-  escalate: false          // true=超限，blockers 交回 Teams coder
+  ...,
+  rounds: 1,      // 0=首审即过，1=autofix 过
+  escalate: false  // true=超限，blockers 交回 Teams coder
 }
 ```
 
 **leader 怎么用返回值**：
 - `passed === true` → 进收口
-- `escalate === true` 或 `passed === false` → 交回 Teams coder（按 task_review.js 默认 FAIL 路径走）
-- 默认不用本脚本；仅 leader 判断 FAIL 项全是 scope 内小修时用
+- `escalate === true` 或 `passed === false` → 交回 Teams coder（按默认 FAIL 路径走）
+- 默认不用 autofix；仅 leader 判断 FAIL 项全是 scope 内小修时传 `autofix.scopeFiles`
+
+**机制要点**：
+- `VERDICT` schema 强制结构化 verdict，替代 review_*.md 首行 `verdict:` hack，model 输出不符自动 retry
+- **空 verdicts 守卫**：`passed` 要求 `verdicts.length === reviewSpecs.length`——任一 agent crash 返回 null 被 filter 过滤后，length 不够直接判 FAIL，不会因 `[].every()` 偷渡 PASS
+- 单轮 `parallel`（barrier，两份齐才返回）；FAIL 轮由 leader 驱动（不进脚本），leader 跨轮计数
+- 并发时：每个 task 在各自 worktree 里单独调本脚本，产出落各自 review_*.md 互不干扰
 
 ## task_full.js（可选，默认不用）
 
@@ -121,6 +115,6 @@ Workflow({ scriptPath: "docs/harness/workflows/task_full.js", args: { taskId: "T
 
 ## 已知冗余
 
-`task_full.js` 的 review 段是 `task_review.js` 逻辑的**内联复制**。Workflow 脚本单文件必须自包含（不能 import 另一脚本），故有意冗余。**改 review 逻辑要同步改两处**——三份 VERDICT schema 均有 `// VERDICT schema — 同步修改点` 注释标记。若未来验证 Bun runtime 支持跨文件 import，可抽 `shared.js` 消除冗余。
+`task_full.js` 的 review 段是 `task_review.js` 逻辑的**内联复制**。Workflow 脚本单文件必须自包含（不能 import 另一脚本），故有意冗余。task_review.js 是唯一的 VERDICT schema 源。若未来验证 Bun runtime 支持跨文件 import，可抽 `shared.js` 消除冗余。
 
 落地纪律见 `docs/harness/workflow_design.md`。

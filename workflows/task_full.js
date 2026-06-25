@@ -22,7 +22,7 @@ export const meta = {
   ],
 }
 
-// VERDICT schema — 同步修改点：task_review.js / task_review_autofix.js / task_full.js
+// VERDICT schema — 与 task_review.js 同步。task_review.js 是主源
 const VERDICT = {
   type: 'object',
   properties: {
