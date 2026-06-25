@@ -12,18 +12,15 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 ## 目录结构
 
 ```
-├── agent_protocol.md        # 核心协议（规则手册 + compact 恢复最小集）
-├── workflow_design.md       # Workflow 脚本设计决策（why）
+├── agent_protocol.md        # 核心协议（规则手册）
+├── decisions.md             # 决策记录
+├── findings.md              # 实验发现
 ├── experience.md            # 踩坑笔记
 │
 ├── agents/                  # Agent 角色提示词
-│   ├── coder.md             #   开发者（TDD、review 反馈处理）
-│   └── test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
-│
-├── workflows/               # Workflow 脚本（可执行 JS）
-│   ├── README.md            #   接口手册（调用方式、args、返回结构）
-│   ├── task_review.js       #   单 task review gate（主用，含可选 autofix）
-│   └── task_full.js         #   单 task 全流程（可选，默认不用）
+│   ├── harness-coder.md             #   开发者（TDD、review 反馈处理）
+│   ├── harness-code-reviewer.md     #   代码审查（安全/架构/错误处理）
+│   └── harness-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
 │
 ├── skills/                  # Claude Code Skills
 │   ├── harness-start/       #   统一工作流入口
@@ -61,14 +58,14 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
     │
     ├─ ALL_DONE   → 提示 /debt-to-tasks
     ├─ READY      → 重算 DAG → 选 task → 派 coder
-    ├─ CODING     → 检查 coder 进度 → 完成则调 task_review.js
-    ├─ REVIEW     → 读 workflow 返回值 → PASS 进收口 / FAIL 回 coder
+    ├─ CODING     → coder 完成 → 派 review（Agent Team）
+    ├─ REVIEW     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 coder
     └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
 ```
 
 ## 依赖
 
-- Claude Code（Teams + Workflow tool + SendMessage）
+- Claude Code（Teams + SendMessage）
 - `jq`（tasks_list.json 查询）
 - `git`（worktree 并发隔离）
 
@@ -77,9 +74,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | 要查什么 | 去哪看 |
 |---|---|
 | 完整协议规则 | `agent_protocol.md` |
-| 实验发现 | `findings.md` |
 | 决策记录 | `decisions.md` |
-| Workflow 脚本接口 | `workflows/README.md` |
-| Workflow 设计决策 | `workflow_design.md` |
+| 实验发现 | `findings.md` |
 | 历史踩坑 | `experience.md` |
 | 文档模板 | `template/README.md` |

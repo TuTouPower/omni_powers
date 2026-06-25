@@ -187,7 +187,7 @@ git commit -m "feat: add specific feature"
 
 **"Plan 已写入 `docs/harness_execution/tasks/{TID}/plan.md`。task 就位，调 /harness-start 开始开发循环。"**
 
-harness-start 会接管后续：选 task → 派 coder → 调 task_review.js → 收口。
+harness-start 会接管后续：选 task → 派 coder → review → 收口。
 
 ## 相关文件
 
