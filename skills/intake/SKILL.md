@@ -36,7 +36,12 @@ description: >
 1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
 2. **讨论需求（第一轮 spec-generator）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
-4. **生成正式 spec/plan（第二轮）**：对每个 task 调 spec-generator（快速模式，因方案已在讨论中确认）+ plan-generator（快速模式），输出到各 task 目录
+4. **生成正式 spec/plan（第二轮）**：对每个 task 调用 spec-generator（深度模式，方案细节还需讨论）+ plan-generator（深度模式），输出到各 task 目录
+
+<HARD-GATE>
+必须对每个 task 调用 `Skill("spec-generator")` 和 `Skill("plan-generator")`，禁止手写 spec/plan。不得跳过此步。
+</HARD-GATE>
+
 5. **汇报**：task 已就位，下一步 /harness-start
 
 ## 快速模式
@@ -48,6 +53,10 @@ description: >
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
 5. **调 spec-generator + plan-generator（快速模式）**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill 和 plan-generator skill，完成后回报。每个 task 的子代理独立运行，多个 task 的子代理可并发。
+
+<HARD-GATE>
+必须对每个 task 调用 spec-generator 和 plan-generator skill，禁止手写 spec/plan。不得跳过此步。
+</HARD-GATE>
 
 > 深度模式直接在主会话调 Skill（需要用户交互），快速模式用子代理（无需交互可并发）。两种方式不同是因为深度模式需要一问一答，子代理无法与用户交互。
 
@@ -61,7 +70,7 @@ description: >
 |---|---|
 | `id` | 从当前最大 ID +1 递增，格式 `T{NN}` |
 | `title` | 简短描述 |
-| `depends_on` | 前置依赖 task ID 数组，无依赖填 `null`（必填） |
+| `depends_on` | 前置依赖 task ID 数组，无依赖填 `null`（**必填，不可省略**） |
 | `status` | 统一填 `待开始` |
 | `verification` | 验收标准，一句话 |
 | `blocked_by` | 有环境依赖才填，否则 `null` |
@@ -92,7 +101,7 @@ context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）
 ```
 /intake（默认深度模式）
     │
-    ├── 深度：spec-generator（深度讨论）→ 拆 task → spec/plan-generator（快速）
+    ├── 深度：spec-generator（深度讨论）→ 拆 task → spec/plan-generator（深度）
     │
     └── 快速：确认范围 → 拆 task → spec/plan-generator（快速）
                 │
