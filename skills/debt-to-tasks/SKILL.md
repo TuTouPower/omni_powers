@@ -54,7 +54,6 @@ description: >
 - 跳过注释行（`>` 开头）和空行
 - 识别 `## 环境限制` 节下的表格 → 环境债
 - 识别 `## {TID} {title}` 节下的表格 → 功能 task 遗留债
-- 跳过 `## 偿还计划` 节（如已存在则只读不解析）
 - 跳过标记为"已偿还"的债项（如存在 `状态` 列且值为 `已偿还`）
 
 每行债项提取字段：
@@ -166,16 +165,9 @@ cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_exe
 
 ### step 7：更新 tech_debt.md
 
-在 `tech_debt.md` 末尾追加（如 `## 偿还计划` 节不存在则创建）：
+从 tech_debt.md 中删除被偿还 task 覆盖的债项表格行。只删被覆盖的行，不删整节。该节下所有行都删完后，删该节标题。
 
-```markdown
-## 偿还计划
-
-| 偿还 task | 覆盖债项 | 状态 |
-|---|---|---|
-| T06 | T02-3, T02-5 | 待开始 |
-| T07 | T03-1, T05-2 | 待开始 |
-```
+偿还 task 本身已在 tasks_list.json 中，无需在 tech_debt.md 中重复记录。
 
 ### step 8：汇报
 
@@ -189,7 +181,7 @@ T07 还债: 统一错误处理（依赖 T03, T05）→ spec/plan 已生成
 T08 还债: 环境-真实 DB 集成测试（blocked_by=key）→ spec/plan 已生成
 
 共 3 个偿还 task 已追加到 tasks_list.json。
-tech_debt.md 已更新偿还计划。
+tech_debt.md 已清理。
 ```
 
 ## task 数量限制
@@ -199,9 +191,8 @@ tech_debt.md 已更新偿还计划。
 
 ## 边界情况
 
-- **tech_debt.md 为空**（仅含模板注释）：输出 "无技术债，无需偿还"，不创建 task。
+- **tech_debt.md 为空或所有债项已转化为偿还 task**：输出 "无技术债，无需偿还"，不创建 task。
 - **tech_debt.md 不存在**：报错 "tech_debt.md 不存在，请确认路径"。
-- **所有债项已偿还**（偿还计划表中状态全为 `完成`）：输出 "所有技术债已偿还"，不创建新 task。
 - **功能 task 未全部完成**：警告 "尚有功能 task 未完成（列出未完成的 TID），按协议应等功能 task 全部收口后再偿还。是否继续？"
 
 ## 与其他 skill 的关系
