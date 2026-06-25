@@ -102,7 +102,7 @@ description: >
 
 ### step 3：确定 task ID
 
-读 `tasks_list.json`，取当前最大 task ID（如 `T05`），新偿还 task 从 `T06` 开始递增。
+用 jq 查询 `tasks_list.json`，取当前最大 task ID（如 `T05`），新偿还 task 从 `T06` 开始递增。
 
 ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
@@ -126,7 +126,7 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
 ### step 5：更新 tasks_list.json
 
-读 `tasks_list.json`，在 `tasks` 数组末尾追加新 task。不改已有 task。
+用 jq 读取 `tasks_list.json`，在 `tasks` 数组末尾追加新 task。不改已有 task。
 
 如存在环境债，同步更新 `blockers` 数组：
 

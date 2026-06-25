@@ -51,7 +51,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | `harness_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
 | `harness_record/` | 冻结历史（只追加） | decisions, progress |
 
-**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `agent_protocol.md` + `tasks_list.json` + `leader_checkpoint.md`。
+**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `agent_protocol.md` + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 
 ## 工作流一览
 
