@@ -128,7 +128,17 @@ cat docs/harness_execution/tasks/{TID}/steps.md  # 看 step 进度
 读 checkpoint 查 team config 路径。
 
 - **coder 还在跑** → SendMessage 唤醒确认进度。仍在进行中 → "T{n} step {k}/{total} 进行中。等 coder 完成报告后 /harness-start。"
-- **coder 已完成**（context.md 非空且 tests/ 有改动）→ 自动调 `task_review.js` workflow：
+- **coder 已完成**（context.md 非空且 tests/ 有改动）→ 自动调 `task_review.js` workflow**
+- **无 coder（全新 task）** → spawn teammate：
+  ```
+  Agent({ name: "coder", subagent_type: "coder",
+    prompt: "读 docs/harness_execution/tasks/{TID}/spec.md + plan.md，TDD 实现" })
+  Agent({ name: "reviewer", subagent_type: "code-reviewer",
+    prompt: "等待 leader 派 review 任务" })
+  Agent({ name: "test-reviewer", subagent_type: "test-reviewer",
+    prompt: "等待 leader 派 review 任务" })
+  ```
+  > 参考：[Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
 
 ```
 T{n} coding 完成。调 task_review.js 自动化 review...
@@ -229,18 +239,37 @@ spec/plan 就位，派 coder 后 /harness-start。
 
 ## teammate 管理
 
+> 参考：[Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
+
+**spawn**：leader 用 Agent tool spawn teammate，`name` 参数命名，`subagent_type` 指定角色：
+
+```js
+// 首次启动时 spawn 三常驻 teammate
+Agent({ name: "coder", subagent_type: "coder", prompt: "等待 leader 派 TDD 任务" })
+Agent({ name: "reviewer", subagent_type: "code-reviewer", prompt: "等待 leader 派 review 任务" })
+Agent({ name: "test-reviewer", subagent_type: "test-reviewer", prompt: "等待 leader 派 review 任务" })
+```
+
+teammate 在独立窗口中运行。设 `teammateMode: "tmux"` 用 tmux 窗格，leader 可 `tmux capture-pane` 读上下文占用率。
+
+**通信**：SendMessage(to: "coder", message: "...")。teammate 之间不直接通信。coder 完成后 SendMessage 通知 leader。
+
+**生命周期**：
 - **唤醒优先**：idle teammate 一律 SendMessage 唤醒，不新 spawn
 - **spawn 条件**：仅"全新 task + coder 上下文已满需重建"
-- **查 team config**：从 checkpoint 读 `~/.claude/teams/{team-name}/config.json`
+- coder 阈值：1M 窗口 ≥40% 重 spawn，200K 窗口每次重 spawn
+- reviewer / test-reviewer：常驻复用，≥70% compact
+- **compact 恢复**：in-process teammate 不可恢复需重新 spawn；tmux 模式 teammate 继续存活，读 checkpoint 用 SendMessage 唤醒
+
+> 首次使用需设 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 环境变量。
 
 ## 相关文件
 
 | 文件 | 用途 |
 |---|---|
-| `docs/harness/agent_protocol.md` | 规则手册 + 恢复最小集，每次 /harness-start 必读 |
+| `docs/harness/agent_protocol.md` | 规则手册，每次 /harness-start 必读 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |
 | `docs/harness_execution/leader_checkpoint.md` | 断点 |
-| `docs/harness/agent_protocol.md` | 完整协议，按需查 |
 | `docs/harness/workflows/task_review.js` | review gate workflow 脚本（主用，含 autofix 模式） |
 | `docs/harness/workflows/README.md` | workflow 接口手册 |
 | `docs/harness/skills/harness-start/scripts/close_check.sh` | 收口验收脚本，收口后必跑 |

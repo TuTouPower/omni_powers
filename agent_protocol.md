@@ -1,17 +1,31 @@
 # 多 Agent 协作工作流协议
 
 > 规则手册——定义角色、状态机、文件分层、关键约束。执行流程见 skills 和 workflows。
-> compact 恢复：直接读本文件（129 行，无需额外最小集）。
+> compact 恢复：直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 
 ## 角色
 
-| 角色 | subagent_type | model | 职责 |
+leader(opus，主会话) 编排 3 个常驻 teammate（Agent Team）+ 1 个按需 task-splitter（subagent）。
+
+| 角色 | 类型 | model | 职责 |
 |---|---|---|---|
-| leader | （主会话） | opus | 编排、收口、改共享文档 |
-| coder | coder | haiku | TDD：写测试→写实现→跑测试→写 context.md |
-| reviewer | code-reviewer | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
-| test-reviewer | test-reviewer | sonnet | 审测试是否真能发现问题，写 review_test.md |
-| task-splitter | general-purpose | sonnet | **按需启用**：拆 task（建目录+切 spec/plan+改 tasks_list），不污染 leader 上下文 |
+| leader | 主会话 | opus | 编排、收口、改共享文档 |
+| coder | **teammate** (coder) | haiku | TDD：写测试→写实现→跑测试→写 context.md |
+| reviewer | **teammate** (code-reviewer) | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
+| test-reviewer | **teammate** (test-reviewer) | sonnet | 审测试是否真能发现问题，写 review_test.md |
+| task-splitter | **subagent** (general-purpose) | sonnet | **按需启用**：拆 task，不污染 leader 上下文 |
+
+**teammate vs subagent 的区别：**
+
+| | Teammate (Agent Team) | Subagent |
+|---|---|---|
+| 生命周期 | 常驻，跨 task 存活 | 一次性，跑完消失 |
+| 上下文 | 独立窗口，可监控占用率 | 独立窗口，结果返回 leader |
+| FAIL 轮 | 唤醒同一实例，保留状态 | 不存在（subagent 无 FAIL 轮场景） |
+| compact 后 | tmux 模式下继续存活 | 随调用结束消失 |
+| 适用 | coder / reviewer / test-reviewer | task-splitter（机械操作，无需持久） |
+
+> 参考：[Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
 
 ## 状态机
 
@@ -87,9 +101,23 @@ docs/harness_execution/tasks/{TID}/
 
 ### teammate 管理
 
-- idle = 可唤醒资源。FAIL 轮/新 review 一律 SendMessage 唤醒，不新 spawn。
+**spawn**：leader 用 Agent tool 的 `name` 参数 spawn teammate，`subagent_type` 指定角色（coder/code-reviewer/test-reviewer）。teammate 在独立窗口中运行。
+
+```
+Agent({ name: "coder", subagent_type: "coder", prompt: "..." })
+Agent({ name: "reviewer", subagent_type: "code-reviewer", prompt: "..." })
+```
+
+**通信**：SendMessage(to: "coder", message: "...")。teammate 之间不直接通信，leader 是唯一编排者。
+
+**生命周期**：
+- idle = 可唤醒资源。FAIL 轮/新 review 一律 SendMessage 唤醒原实例，不新 spawn。
 - spawn 仅用于"全新 task + coder 上下文已满需重建"。
 - coder 阈值：1M 窗口 ≥40% 重 spawn，200K 窗口每次重 spawn。reviewer 常驻复用，≥70% compact。
+
+**显示模式**：设 `teammateMode: "tmux"` 在 `~/.claude/settings.json`，teammate 在独立 tmux 窗格中运行。leader 可 `tmux capture-pane` 读上下文占用率。
+
+> 首次使用需设 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 环境变量。
 
 ### tech_debt
 
@@ -97,9 +125,11 @@ docs/harness_execution/tasks/{TID}/
 
 ### compact 恢复
 
-恢复三件套已合入本文件。compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
+compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
 
-**⚠️ checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性（曾有恢复后该并发却串行的问题）。
+**⚠️ checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
+
+**teammate 恢复**：compact 后 in-process 模式的 teammate 不可恢复，需重新 spawn。tmux 模式的 teammate 在独立窗格中继续存活，读 checkpoint 中的 teammate 名称 SendMessage 唤醒。恢复后从 spec/plan/context.md 重建上下文。
 
 ## 阻塞项处理
 
