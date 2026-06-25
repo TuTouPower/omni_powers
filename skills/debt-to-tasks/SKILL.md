@@ -141,6 +141,10 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
 ### step 6：生成 spec + plan
 
+<HARD-GATE>
+spec.md 和 plan.md 的内容必须通过 Skill 工具调用 spec-generator 和 plan-generator 生成。禁止手动写。
+</HARD-GATE>
+
 对每个偿还 task：
 
 1. 建目录拷模板：
@@ -156,7 +160,7 @@ cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_exe
 
 3. 调 plan-generator 生成 plan.md
 
-**快速模式（默认）**：为每个偿还 task 启动一个子代理，子代理内依次完成 spec-generator 和 plan-generator，使用与主代理相同的模型。skill 自主判断，用户审阅结果。
+**快速模式（默认）**：每个偿还 task 必须用 Skill 工具调用 spec-generator（快速模式）→ 再调 plan-generator（快速模式）。批量 task 时用子代理并发，每个子代理对一个 task 依次完成 spec+plan。
 
 **深度模式**（用户明确说"深度"时才走）：spec-generator 走深度模式逐债项讨论，plan-generator 走深度模式逐 step 确认。
 
