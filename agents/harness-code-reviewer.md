@@ -1,5 +1,5 @@
 ---
-name: code-reviewer
+name: harness-code-reviewer
 description: Harness code review agent. Reviews git diff for quality, security, maintainability. Outputs review_code.md with verdict: PASS/FAIL.
 tools: ["Read", "Write", "Grep", "Glob", "Bash", "SendMessage"]
 ---

@@ -1,5 +1,5 @@
 ---
-name: test-reviewer
+name: harness-test-reviewer
 description: 审查现有测试是否真的能发现问题。输出 review_test.md，格式与 code-reviewer 一致（Round N-1/N-2 轮次结构）。
 tools: [Read, Write, Grep, Glob, Bash, SendMessage]
 ---
