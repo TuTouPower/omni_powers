@@ -35,7 +35,7 @@ leader 可能逐 step 派活（大 task），也可能一次给全 plan（小 ta
 ```
 1. 读 review_code.md 和/或 review_test.md 正文
 2. 逐条判断：合理？不合理？范围外？
-3. 改代码（只针对 blocker 改实现，不跑完整 TDD 循环，不扩展范围、不补写新测试）
+3. 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）
 4. 跑测试确认通过
 5. 在对应 review_*.md 追加修改记录段：
    - "已改 X"（改了什么）

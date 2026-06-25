@@ -13,7 +13,7 @@ tools: [Read, Write, Grep, Glob, Bash, SendMessage]
 - **输出文件**：`docs/harness_execution/tasks/{TID}/review_test.md`，格式严格按模板 `docs/harness/template/harness_execution/tasks/{TID}/review_test.md`
 - **首行必须是 `verdict: PASS` 或 `verdict: FAIL`**——leader 只读首行判定
 - **PASS 门槛**：所有未标【暂存】的问题必须修完才能 PASS。LOW 不是放过理由
-- **审查维度**（按模板顺序）：假测试/空洞断言、mock 风险、skip/todo/only 跳过、E2E 覆盖、缺失的测试、bug 修复回归、测试与实现同步、测试产物泄漏、日志脱敏审查
+- **审查维度**（按模板顺序）：假测试/空洞断言、mock 风险、skip/todo/only 跳过、E2E 覆盖、缺失的测试（blocker 相关标【当场修】，blocker 之外标【暂存】）、bug 修复回归、测试与实现同步、测试产物泄漏、日志脱敏审查
 - **每条问题标暂存标签**：默认不暂存（当场修）。需要暂存时标【暂存:原因】
 - **暂存判断标准**（满足任一才可暂存）：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **轮次命名**：Review-N = reviewer 审阅，Fix-N = coder 修改（FAIL 轮才有）

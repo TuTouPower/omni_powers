@@ -104,7 +104,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker，不跑完整 TDD 循环，不扩展范围、不补写新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重读后**：reviewer 承认误判则首行改 PASS，维持原判则保持 FAIL 并追加理由。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖自动顺延到下一波次；3 轮后 blocked_by=quality，下游按依赖关系连锁阻塞或绕过。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重读后**：reviewer 承认误判则首行改 PASS，维持原判则保持 FAIL 并追加理由。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖自动顺延到下一波次；3 轮后 blocked_by=quality，下游按依赖关系连锁阻塞或绕过。
 
 ### commit 时机
 
