@@ -1,7 +1,7 @@
 # 多 Agent 协作工作流协议
 
 > **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
-> compact 恢复：直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
+> compact 恢复：读本文件 + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 > 决策依据见 `docs/harness/harness_decisions.md`，实验记录见 `docs/harness/findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，teammate 和 leader 上下文都是可重建缓存。
@@ -156,7 +156,7 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 
 ### compact 恢复
 
-compact 后直接读本文件 + `tasks_list.json` + `leader_checkpoint.md`。
+compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoint.md`。
 
 **checkpoint 字段**：刚完成 task + commit hash、tasks_list 状态快照、下一个 task、team teammate 状态、team config 路径。
 
