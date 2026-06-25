@@ -163,6 +163,8 @@ docs/work/tasks/{TID}/
 
 **verdict 用结构化首行**：文件第一行必须是 `verdict: PASS` 或 `verdict: FAIL`。leader 用 `head -1` / `grep '^verdict:'` 只取这一行判断 PASS/FAIL，**不读 review 正文**。两份都 PASS → 收口；任一 FAIL → 进入 FAIL 轮。
 
+**PASS 门槛（关键）**：只要 reviewer 发现的问题是**能当场解决的**——不分 LOW/MEDIUM/HIGH——coder 必须修完，verdict 才能 PASS。LOW 不是放过理由。只有"修不了"的才允许标 tech_debt 暂存并 PASS：跨 scope（动到别的 task 代码）、依赖环境/外部 key、需架构决策、需未来 task 配合。reviewer 在 review 正文里对每条问题明确标"当场修"或"暂存(原因)"，标"当场修"的没修完 = FAIL。
+
 **FAIL 轮（默认交回 Teams coder，真来回）**：task_review.js 返回 FAIL + blockers → leader 把 blockers 发回**原 Teams coder**：
 - coder：读 review_*.md 正文 → 改代码 → 在**对应 review_*.md** 同文件追加"修改记录"段（已改 X / 此项不改因为 Y / review 此处判断有误因为 Z）。**禁止写 context.md**——FAIL 轮记录只进 review_*.md。
 - leader 再调 `task_review.js`（或手工派双 review）：reviewer/test-reviewer 重读 review_*.md（看 coder 追加的反驳 + 新 git diff）→ 返回新 verdict。
@@ -441,7 +443,20 @@ leader 用 jq/python 查询片段，不整体读 tasks_list.json 进上下文。
 3. `git mv docs/work/tasks/{TID} docs/log/tasks/{TID}` — 归档（文件已跟踪，mv 不漏）
 4. `git add docs/log/tasks/{TID} docs/work/tasks_list.json` — 纳入归档移动
 5. commit
-6. `git status --short` 确认无本 task 残留；若有非本 task 改动留下，记录到 checkpoint 不算漏
+6. 跑 `bash docs/harness/close_check.sh {TID}` 验收（见下"收口 checklist"）
+
+### 收口 checklist（强制，脚本验收）
+
+收口完必须跑 `docs/harness/close_check.sh {TID}`，非 0 不许进下一个 task。脚本查 4 项：
+
+| 项 | 判定 | 拦截 |
+|---|---|---|
+| tech_debt.md 含本 task 段（含"无新增"标注） | grep `^## TID` 或 `TID.*无新增` | 必拦 |
+| leader_checkpoint.md 含本 task | grep `TID` | 必拦 |
+| 归档目录五件齐全（spec/plan/context/review_code/review_test） | `ls docs/log/tasks/{TID}/` | 必拦 |
+| git status 非本 task 改动 | `git status --short` 过滤本 task 路径 | 仅提醒不拦 |
+
+**tech_debt 强制写入**：无新增也要追加一行 `| {TID} | - | 无新增技术债 | - | 本 task 所有问题当场修复 |`，否则脚本查不到段会 FAIL。git status 非空只提醒，leader 自查残留属本 task 还是需 stash 隔离。
 
 ### tech_debt 结构化
 
@@ -479,10 +494,15 @@ leader 开始并发前评估：
 
 ## tech_debt 落盘（强制）
 
-每个 task 闭环时，leader **必须**把两份 review 里的 MEDIUM/LOW/suggestion + 环境限制项追加到 `docs/work/tech_debt.md`。CRITICAL/HIGH 已当场修复不列。
+tech_debt 只记**修不了的问题**，不是所有 MEDIUM/LOW 的垃圾桶。reviewer 发现的问题分两类：
+
+- **能当场修**（含所有 LOW）→ 不进 tech_debt，进 FAIL 轮让 coder 当场改。coder 手上有上下文，现在改最便宜，记下等以后修纯浪费。
+- **修不了才进 tech_debt**：跨 scope（动到别的 task 代码）、依赖环境/外部 key、需架构决策、需未来 task 配合。
+
+每个 task 闭环时，leader 把两份 review 里**标"暂存"的**问题 + 环境限制项追加到 `docs/work/tech_debt.md`。
 
 - 不允许只口头说"记 tech_debt"——必须真写进文件，否则 task 不算闭环。
-- 格式：按 task 分节，表格列 `ID | 来源(review-code/review-test/环境) | 债项 | 严重度`。
+- 格式：按 task 分节，表格列 `ID | 来源(review-code/review-test/环境) | 债项 | 严重度 | 暂存原因`。
 - 与 progress.md 回填 commit hash 同一步完成，写在收尾 checklist 里。
 
 ## tech_debt 偿还
