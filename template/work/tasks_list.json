@@ -1,0 +1,44 @@
+{
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "{标题}",
+      "dependencies": [],
+      "status": "完成",
+      "verification": "{验收标准}",
+      "blocked_by": null
+    },
+    {
+      "id": "T02",
+      "title": "{标题}",
+      "dependencies": ["T01"],
+      "status": "进行中",
+      "verification": "{验收标准}",
+      "blocked_by": null
+    },
+    {
+      "id": "T03",
+      "title": "{标题}",
+      "dependencies": ["T01"],
+      "status": "待开始",
+      "verification": "{验收标准}",
+      "blocked_by": null
+    },
+    {
+      "id": "T04",
+      "title": "{标题}",
+      "dependencies": ["T02"],
+      "status": "阻塞",
+      "verification": "{验收标准}",
+      "blocked_by": "key"
+    }
+  ],
+  "blockers": [
+    {
+      "id": "B1",
+      "desc": "{外部依赖缺失描述，如 API key/域名/凭据}",
+      "affects": ["T04"],
+      "status": "待提供"
+    }
+  ]
+}
