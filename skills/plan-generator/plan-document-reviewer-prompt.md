@@ -4,7 +4,7 @@ Use this template when dispatching a plan document reviewer subagent.
 
 **Purpose:** Verify the plan is complete, matches the spec, and has proper task decomposition.
 
-**Dispatch after:** The complete plan is written.
+**Dispatch after:** Plan document is written to `docs/harness_execution/tasks/{TID}/plan.md`
 
 ```
 Subagent (general-purpose):

@@ -1,6 +1,6 @@
 verdict: PASS
 
-> 首行必须是 `verdict: PASS` 或 `verdict: FAIL`，leader 用 head -1 取此行判断。
+> 首行 verdict: 为人工阅读参考。实际判定来自 task_review.js workflow schema 返回值 `{passed, blockers, techDebt}`，leader 读返回值不 grep 正文。
 > **PASS 门槛**：能当场修的问题（含所有 LOW）必须 coder 修完才能 PASS，LOW 不是放过理由。
 > 每条问题明确标【当场修】或【暂存:原因】（跨 scope/环境/架构决策/需未来 task）。标【当场修】没修完 = FAIL。
 > **轮次命名**：每轮拆两段——N-1 = reviewer 审阅（写意见 + verdict），N-2 = coder 修改（FAIL 轮才有，逐项回应）。

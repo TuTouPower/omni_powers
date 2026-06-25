@@ -79,7 +79,7 @@ docs/harness_execution/tasks/{TID}/
 
 ### 并发与 worktree
 
-- 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
+- **波次**：DAG 同层所有可跑 task 的集合。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。每波次内 task 全部收口后才进下一波次。
 - 隔离靠 leader 手动 `git worktree add`。不用 Workflow 的 `isolation:'worktree'`（粒度是 agent 不是 task）。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试。
 

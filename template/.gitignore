@@ -1,0 +1,46 @@
+# .gitignore 模板
+#
+# 含 harness 工作区通用忽略项。拷到项目根目录后按需调整。
+
+# Superpowers brainstorm 产物
+.superpowers/
+
+# 运行时产物
+logs/
+data/
+artifacts/
+
+# 环境变量
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+.venv/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 依赖
+node_modules/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 构建产物
+dist/
+build/
+*.egg
+
+# 测试产物
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
