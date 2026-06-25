@@ -12,7 +12,7 @@
       "id": "T02",
       "title": "{title}",
       "dependencies": ["T01"],
-      "status": "进行中",
+      "status": "审阅中",
       "verification": "{验收标准}",
       "blocked_by": null
     },
@@ -20,12 +20,20 @@
       "id": "T03",
       "title": "{title}",
       "dependencies": ["T01"],
-      "status": "待开始",
+      "status": "进行中",
       "verification": "{验收标准}",
       "blocked_by": null
     },
     {
       "id": "T04",
+      "title": "{title}",
+      "dependencies": ["T01"],
+      "status": "待开始",
+      "verification": "{验收标准}",
+      "blocked_by": null
+    },
+    {
+      "id": "T05",
       "title": "{title}",
       "dependencies": ["T02"],
       "status": "阻塞",

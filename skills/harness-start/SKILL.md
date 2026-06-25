@@ -69,10 +69,10 @@ spawn 后 teammate idle 自动通知 leader。后续用 SendMessage 派活，不
 
 | 条件 | 动作 |
 |---|---|
-| 所有 task status=完成 | → 阶段 6（ALL_DONE） |
-| 存在 status=审阅中 | → 恢复循环步骤 4（等 review 返回） |
-| 存在 status=进行中 | → 恢复循环步骤 3（等 coder 完成） |
-| 存在可跑 task（待开始 + 依赖全完成） | → 进入自治循环步骤 1 |
+| 所有 task status=完成 | → 循环结束（ALL_DONE） |
+| 存在 status=审阅中 | → 恢复循环：等 review 返回 |
+| 存在 status=进行中 | → 恢复循环：等 coder 完成 |
+| 存在可跑 task（待开始 + 依赖全完成） | → 进入自治循环 |
 | 全部阻塞 | → 输出阻塞原因，等外部解除 |
 
 ### 自治循环

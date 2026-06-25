@@ -56,10 +56,10 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 ```
 /harness-start
     │
-    ├─ ALL_DONE   → 提示 /debt-to-tasks
-    ├─ READY      → 重算 DAG → 选 task → 派 coder
-    ├─ CODING     → coder 完成 → 派 review（Agent Team）
-    ├─ REVIEW     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 coder
+    ├─ 全完成     → 提示 /debt-to-tasks
+    ├─ 待开始     → 重算 DAG → 选 task → 派 coder
+    ├─ 进行中     → coder 完成 → 派 review（Agent Team）
+    ├─ 审阅中     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 coder
     └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
 ```
 

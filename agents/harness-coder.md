@@ -56,7 +56,7 @@ FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。
 | `tasks/{TID}/plan.md` | `harness_execution/tasks/{TID}/plan.md` | leader | 只读 |
 | `tasks/{TID}/steps.md` | `harness_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
 | `tasks/{TID}/context.md` | `harness_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `tasks/{TID}/review_code.md` | `harness_execution/tasks/{TID}/review_code.md` | reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
+| `tasks/{TID}/review_code.md` | `harness_execution/tasks/{TID}/review_code.md` | code-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
 | `tasks/{TID}/review_test.md` | `harness_execution/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 

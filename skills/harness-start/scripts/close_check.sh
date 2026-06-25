@@ -4,7 +4,7 @@
 # 检查项:
 #   1. tech_debt.md 有本 task 段（含"无新增"）        → 必须通过
 #   2. leader_checkpoint.md 含本 task                → 必须通过
-#   3. 归档目录五件齐全                              → 必须通过
+#   3. 归档目录六件齐全                              → 必须通过
 #   4. git status 非本 task 残留                     → 仅提醒，不拦
 # 注意: 调用前应先 commit 本 task 改动，否则 git status 会混入未提交项
 
@@ -37,14 +37,14 @@ else
     fail=1
 fi
 
-# 3. 归档目录五件齐全且非空
+# 3. 归档目录六件齐全且非空
 arch="docs/harness_record/tasks/${TID}"
 missing=()
-for f in spec.md plan.md context.md review_code.md review_test.md; do
+for f in spec.md plan.md steps.md context.md review_code.md review_test.md; do
     [ -s "$arch/$f" ] || missing+=("$f")
 done
 if [ ${#missing[@]} -eq 0 ]; then
-    echo "[PASS] 归档五件齐全且非空: $arch"
+    echo "[PASS] 归档六件齐全且非空: $arch"
 else
     echo "[FAIL] 归档缺或空: ${missing[*]}"
     fail=1

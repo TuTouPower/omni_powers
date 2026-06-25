@@ -34,9 +34,9 @@ description: >
 ## 深度模式
 
 1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
-2. **调 spec-generator（深度模式）**：一问一答逐项确认，可选 visual companion，产出 spec 草稿
+2. **讨论需求（第一轮 spec-generator）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
-4. **生成正式 spec/plan**：对每个 task 调 spec-generator（快速模式，因方案已在讨论中确认）+ plan-generator（快速模式）
+4. **生成正式 spec/plan（第二轮）**：对每个 task 调 spec-generator（快速模式，因方案已在讨论中确认）+ plan-generator（快速模式），输出到各 task 目录
 5. **汇报**：task 已就位，下一步 /harness-start
 
 ## 快速模式
