@@ -113,19 +113,26 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 
 并发时按依赖顺序收口，先合被依赖的 task，每合一跑全量测试，全部合并完再做共享文档收口。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。
 
-每个 task 的收口步骤：
+每个 task 的收口分两部分——closer 做机械读写，leader 做状态变更和提交：
 
-1. **追加 progress.md**：末尾追加 `## {TID} {title}` 段。commit hash 先写 `<待回填>`
-2. **有决策追加 decisions.md**：无决策跳过
-3. **追加 tech_debt.md**（强制）：提取 review_*.md 中标了"暂存"的项。无新增也写一行
-4. **整理 specs/{feature}.md**（强制）：把当前生效规格整理进去，只留"现在是什么"
-5. **更新 tasks_list.json**：status → 完成
-6. **归档 spec 盖戳**：spec.md 顶部加 `> ⚠️ 历史快照，以 docs/harness_blueprint/specs/ 为准`
-7. **git mv 归档**：`git mv docs/harness_execution/tasks/{TID} docs/harness_record/tasks/{TID}`
-8. **写 leader_checkpoint.md**：按模板更新
-9. **git 提交**：**严禁 `git add -A`**，逐条判断归属本 task。一个 task 一次 commit，step 不单 commit。commit 格式：`{type}({TID}): {简述}`
-10. **验收**：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`。非 0 拦截
-11. **hash 回填**（延迟到下一个 task）：`<待回填>` 在下一个 task 收口时一并回填提交
+**closer 执行（SendMessage 派发）**：
+1. 追加 progress.md
+2. 有决策追加 decisions.md
+3. 提取 review_*.md 中标了【暂存】的项写入 tech_debt.md
+4. 整理 specs/{feature}.md（读 task spec 全文，整理当前生效规格进功能 specs）
+5. 归档 spec 盖戳
+6. git mv 归档到 record/tasks/{TID}
+
+```js
+SendMessage({ to: "closer", message: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: {path}。" })
+```
+
+**leader 执行（closer 回报后）**：
+7. 更新 tasks_list.json：status → 完成
+8. 写 leader_checkpoint.md
+9. git 提交（严禁 `git add -A`，一个 task 一次 commit）
+10. 验收：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`
+11. hash 回填（延迟到下一个 task）
 
 ### 7. FAIL 轮
 

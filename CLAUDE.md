@@ -22,6 +22,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 │   ├── harness-code-reviewer.md     #   代码审查（安全/架构/错误处理）
 │   ├── harness-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
 │   └── harness-task-splitter.md     #   task 拆分（按需启用）
+│   └── harness-closer.md            #   收口机械步骤（按需启用）
 │
 ├── skills/                  # Claude Code Skills
 │   ├── harness-start/       #   统一工作流入口

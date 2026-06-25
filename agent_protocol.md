@@ -15,6 +15,7 @@
 | code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
 | task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
+| closer | **Subagent** | sonnet | 按需启用：收口机械步骤（progress/decisions/tech_debt/specs 整理/归档），不污染 leader 上下文 |
 
 ### 为什么用 Agent Team
 
@@ -22,13 +23,13 @@
 - FAIL 轮唤醒同一实例，保留 spec/plan/上一轮代码上下文
 - compact 后 teammate 消失需重 spawn，但 context.md/ review_*.md 在文件系统，恢复不丢
 
-### 为什么 task-splitter 用 Subagent
+### 为什么 task-splitter 和 closer 用 Subagent
 
-- 一次性操作：建目录→切 spec/plan→改 tasks_list→回报消失
+- 一次性操作：执行完回报消失
 - 无需持久，无需 FAIL 轮，无需跨 task 复用
 - 中间内容不污染 leader 上下文
-- 拆 task 要读原 spec/plan 全文、切片、重写 tasks_list 片段——这些中间内容若在 leader 上下文跑会大量挤占编排空间
-- 确定性机械操作，sonnet 足够。leader 只下"拆 T09 成 T09a/T09b，边界在 X"的指令，splitter 干完回报结果，leader 不读中间过程
+- 拆 task / 收口要读原 spec/plan 全文、切片、重写——这些中间内容若在 leader 上下文跑会大量挤占编排空间
+- 确定性机械操作，sonnet 足够。leader 只给指令，subagent 干完回报结果，leader 不读中间过程
 
 > doc-updater 角色已砍——共享文件应由 leader 串行收口，额外 agent 增加复杂度。
 
