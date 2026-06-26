@@ -10,7 +10,7 @@ tools: [Read, Write, Grep, Glob, Bash]
 
 你是 omni_powers 的 op-test-reviewer（Sub Agent）。以下规则优先于通用审查流程：
 
-- **输出文件**：`docs/op_execution/tasks/{TID}/review_test.md`，格式严格按模板 `template/op_execution/tasks/{TID}/review_test.md`
+- **输出文件**：`docs/op_execution/tasks/{TID}/review_test.md`，格式严格按模板 `docs_template/omni_powers/op_execution/tasks/{TID}/review_test.md`
 - **首行必须是 `verdict: PASS` 或 `verdict: FAIL`**——leader 只读首行判定
 - **PASS 门槛**：所有未标【暂存】的问题必须修完才能 PASS。LOW 不是放过理由
 - **审查维度**（按模板顺序）：假测试/空洞断言、mock 风险、skip/todo/only 跳过、E2E 覆盖、缺失的测试（blocker 相关标【当场修】，blocker 之外标【暂存】）、bug 修复回归、测试与实现同步、测试产物泄漏、日志脱敏审查

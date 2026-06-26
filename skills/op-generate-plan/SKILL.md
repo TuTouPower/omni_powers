@@ -192,7 +192,7 @@ op-start 会接管后续：选 task → 派 op-coder → review → 收口。
 
 | 文件 | 用途 |
 |---|---|
-| `template/op_execution/tasks/{TID}/plan.md` | plan 模板 |
-| `template/op_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
+| `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | plan 模板 |
+| `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
 | `skills/op-generate-spec/SKILL.md` | 上一步：op-generate-spec |
 | `skills/op-start/SKILL.md` | 下一步：op-start |

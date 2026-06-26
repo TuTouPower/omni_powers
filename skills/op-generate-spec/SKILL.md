@@ -128,7 +128,7 @@ digraph brainstorming {
 **文档：**
 
 - 把验证过的设计（spec）写到 `docs/op_execution/tasks/{TID}/spec.md`
-- 使用 `template/op_execution/tasks/{TID}/spec.md` 模板结构
+- 使用 `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` 模板结构
 - 提交设计文档到 git
 
 **Spec 自审：**
@@ -214,7 +214,7 @@ scripts/stop-server.sh $SESSION_DIR
 
 | 文件 | 用途 |
 |---|---|
-| `template/op_execution/tasks/{TID}/spec.md` | spec 模板 |
+| `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板 |
 | `docs/op_blueprint/prd.md` | 产品需求 |
 | `docs/op_blueprint/spec.md` | 全局总纲 |
 | `docs/op_blueprint/architecture.md` | 系统架构 |

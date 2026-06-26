@@ -173,7 +173,7 @@ bash skills/op-start/scripts/op-status.sh {TID} 完成
 # 按需更新 docs/op_blueprint/ 下受影响文档（prd/architecture/domain/conventions/spec 等）
 
 HASH=$(git rev-parse HEAD)
-# checkpoint 格式见 template/op_execution/leader_checkpoint.md
+# checkpoint 格式见 docs_template/omni_powers/op_execution/leader_checkpoint.md
 ```
 
 #### 3.4.5 验收 + 提交
@@ -237,7 +237,7 @@ Sub Agent 每次重新 dispatch，不需要恢复 agent 实例。
 |---|---|
 | `RULES.md` | 规则手册 |
 | `RULES_DETAIL.md` | 操作细则 |
-| `template/` | 文档模板 |
+| `docs_template/omni_powers/` | 文档模板 |
 | `skills/op-start/scripts/op-status.sh` | 状态流转 |
 | `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 |
 | `skills/op-start/scripts/close_check.sh` | 收口验收 |

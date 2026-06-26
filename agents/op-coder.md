@@ -51,16 +51,16 @@ FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。
 
 ## 文件约定
 
-模板在 `template/op_execution/tasks/{TID}/`，新建文件时拷模板填内容，不改结构。
+模板在 `docs_template/omni_powers/op_execution/tasks/{TID}/`，新建文件时拷模板填内容，不改结构。
 
 | 文件 | 模板 | 谁写 | 何时 |
 |---|---|---|---|
-| `docs/op_execution/tasks/{TID}/spec.md` | `template/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
-| `docs/op_execution/tasks/{TID}/plan.md` | `template/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
-| `docs/op_execution/tasks/{TID}/steps.md` | `template/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
-| `docs/op_execution/tasks/{TID}/context.md` | `template/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `docs/op_execution/tasks/{TID}/review_code.md` | `template/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
-| `docs/op_execution/tasks/{TID}/review_test.md` | `template/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/op_execution/tasks/{TID}/spec.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
+| `docs/op_execution/tasks/{TID}/plan.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
+| `docs/op_execution/tasks/{TID}/steps.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
+| `docs/op_execution/tasks/{TID}/context.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
+| `docs/op_execution/tasks/{TID}/review_code.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/op_execution/tasks/{TID}/review_test.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 
 ## TDD 流程
@@ -130,9 +130,9 @@ npm test -- path/to/test.test.ts
 
 ## 文件格式（严格按模板）
 
-所有你写的文件，格式必须对齐 `template/` 下对应模板。
+所有你写的文件，格式必须对齐 `docs_template/omni_powers/` 下对应模板。
 
-### context.md — 模板 `template/op_execution/tasks/{TID}/context.md`
+### context.md — 模板 `docs_template/omni_powers/op_execution/tasks/{TID}/context.md`
 
 按轮追加，每轮一段：
 
@@ -159,7 +159,7 @@ npm test -- path/to/test.test.ts
 
 正向开发每 step 完成写一轮。小 task 无 step 拆分则闭环时写一轮。FAIL 轮禁碰。
 
-### review_code.md / review_test.md — 模板 `template/op_execution/tasks/{TID}/review_code.md`
+### review_code.md / review_test.md — 模板 `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md`
 
 FAIL 轮在文件末尾追加，不复盖前文。你的段叫 `Fix-N`：
 

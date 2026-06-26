@@ -60,7 +60,7 @@ OpenSpec 可以用 CLI 因为它的 skill 只做规范管理一件事。omni_pow
         ├─ 脚本路径: bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-status.sh
         ├─ 共用脚本: bash $CLAUDE_PLUGIN_ROOT/scripts/op-status.sh
         ├─ 文档读取: cat $CLAUDE_PLUGIN_ROOT/RULES_DETAIL.md
-        ├─ 模板读取: cat $CLAUDE_PLUGIN_ROOT/template/.../spec.md
+        ├─ 模板读取: cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/.../spec.md
         ├─ 模型选择: Agent({ model: "$OMNI_POWERS_MODEL_CODER" })
         └─ 生成路径: $OMNI_POWERS_DIR_TASKS/tasks_list.json
 ```
@@ -102,7 +102,7 @@ omni_powers/
 │   ├── op-test-reviewer.md
 │   ├── op-closer.md
 │
-├── template/                    # 文档模板（按需 cat 读取）
+├── docs_template/omni_powers/ # 文档模板（按需 cat 读取）
 │   ├── op_execution/
 │   └── op_blueprint/
 │
@@ -255,8 +255,8 @@ bash $CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/start-server.sh --proje
 ```bash
 cat $CLAUDE_PLUGIN_ROOT/RULES.md
 cat $CLAUDE_PLUGIN_ROOT/RULES_DETAIL.md
-cat $CLAUDE_PLUGIN_ROOT/template/op_execution/tasks/{TID}/spec.md
-cat $CLAUDE_PLUGIN_ROOT/template/op_blueprint/architecture.md
+cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/op_execution/tasks/{TID}/spec.md
+cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/op_blueprint/architecture.md
 ```
 
 ### Agent 模型

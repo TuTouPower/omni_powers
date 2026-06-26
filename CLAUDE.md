@@ -35,7 +35,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 │   ├── op-generate-plan/    #   plan 生成
 │   └── op-debt2tasks/       #   技术债偿还
 │
-└── template/                # 文档模板（三态模型）
+└── docs_template/omni_powers/ # 文档模板（三态模型）
     ├── README.md            #   模板用法和命名约定
     ├── index.md             #   文档导航总图
     ├── op_blueprint/   #   稳定真相：prd / architecture / domain / conventions / spec / test
@@ -93,6 +93,6 @@ cd omni_powers
 | 决策记录 | `docs/op_decisions.md` |
 | 实验发现 | `docs/op_findings.md` |
 | 历史踩坑 | `docs/experience.md` |
-| 文档模板 | `template/README.md` |
-| 文档导航 | `template/index.md`（部署后为 `docs/index.md`） |
+| 文档模板 | `docs_template/omni_powers/README.md` |
+| 文档导航 | `docs_template/omni_powers/index.md`（部署后为 `docs/index.md`） |
 | DAG 依赖图 | `docs/op_execution/dag.md`（由 `dag_gen.sh` 生成） |

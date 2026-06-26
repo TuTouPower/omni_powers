@@ -34,9 +34,9 @@ description: >
 |---|---|---|
 | `tech_debt_path` | `docs/op_execution/tech_debt.md` | 技术债清单 |
 | `tasks_list_path` | `docs/op_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
-| `tasks_list_template` | `template/op_execution/tasks_list.json` | tasks_list.json 模板 |
-| `spec_template` | `template/op_execution/tasks/{TID}/spec.md` | spec 模板 |
-| `plan_template` | `template/op_execution/tasks/{TID}/plan.md` | plan 模板 |
+| `tasks_list_template` | `docs_template/omni_powers/op_execution/tasks_list.json` | tasks_list.json 模板 |
+| `spec_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板 |
+| `plan_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | plan 模板 |
 
 ## 输出
 

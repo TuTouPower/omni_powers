@@ -91,7 +91,7 @@ docs/op_execution/tasks/{TID}/
 
 **整理规则**：每 task 闭环时，leader 必须把 task spec 里当前生效的接口、数据模型、约束、行为整理进对应功能 specs 文件——不是拷贝，过程性内容留在归档 task spec。同一功能跨多个 task 时累积更新同一个文件，不为后续 task 新建文件。归档后永不再改。
 
-**新建文件规则**：一律先拷 `template/` 下对应模板再填内容。无对应模板才自建。
+**新建文件规则**：一律先拷 `docs_template/omni_powers/` 下对应模板再填内容。无对应模板才自建。
 
 ## 关键规则
 
@@ -183,7 +183,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 **恢复步骤**：读 checkpoint → 用 jq 查询 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。Sub Agent 每次重新 dispatch，不需要恢复 agent 状态。
 
-**checkpoint 格式**见 `template/op_execution/leader_checkpoint.md`，写完后跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收。
+**checkpoint 格式**见 `docs_template/omni_powers/op_execution/leader_checkpoint.md`，写完后跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收。
 
 ## 不做
 
