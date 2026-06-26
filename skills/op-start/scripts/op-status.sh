@@ -51,6 +51,12 @@ fi
 
 [ -f "$TASKS_FILE" ] || die "tasks_list.json 不存在: $TASKS_FILE"
 
+# ── 文件锁，防并发覆盖 ──
+
+LOCK_FILE="$TASKS_FILE.lock"
+exec 3>"$LOCK_FILE"
+flock 3 || die "获取文件锁失败"
+
 # ── 构造 jq ──
 
 if $batch; then
@@ -78,3 +84,4 @@ else
 fi
 
 mv "$TASKS_FILE.tmp" "$TASKS_FILE"
+exec 3>&-
