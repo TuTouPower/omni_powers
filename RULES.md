@@ -11,10 +11,9 @@
 | 角色          | 类型                 | model  | 职责                                                                                                |
 | ------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------- |
 | leader        | 主会话               | —     | 编排、收口、改共享文档                                                                              |
-| coder-1/2/3   | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
+| coder-1       | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
 | code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
-| task-splitter | **Subagent**   | sonnet | 按需启用：拆 task，不污染 leader 上下文                                                             |
 | closer        | **Subagent**   | haiku  | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
 
 ### 为什么用 Agent Team
@@ -23,15 +22,12 @@
 - FAIL 轮唤醒同一实例，保留 spec/plan/上一轮代码上下文
 - compact 后 teammate 消失需重 spawn，但 context.md/ review_*.md 在文件系统，恢复不丢
 
-### 为什么 task-splitter 和 closer 用 Subagent
+### 为什么 closer 用 Subagent
 
 - 一次性操作：执行完回报消失
 - 无需持久，无需 FAIL 轮，无需跨 task 复用
-- 中间内容不污染 leader 上下文
-- 拆 task / 收口要读原 spec/plan 全文、切片、重写——这些中间内容若在 leader 上下文跑会大量挤占编排空间
-- 确定性机械操作，sonnet 足够。leader 只给指令，subagent 干完回报结果，leader 不读中间过程
-
-> doc-updater 角色已砍——共享文件应由 leader 串行收口，额外 agent 增加复杂度。
+- 收口要读原 spec/plan 全文——这些中间内容若在 leader 上下文跑会大量挤占编排空间
+- 确定性机械操作，haiku 足够。leader 只给指令，subagent 干完回报结果，leader 不读中间过程
 
 ## 状态机
 
@@ -122,7 +118,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖 task 自动顺延到下一波次——status 改为 `跳过`，等待阻塞解除后恢复。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回 coder-1 → coder-1 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-1 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**下游传播**：FAIL task 的下游依赖 task status 改为 `跳过`，等待阻塞解除后恢复。
 
 ### commit 时机
 
@@ -145,21 +141,25 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### DAG 与 depends_on
 
-每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。**所有新增 task 的入口**（op-task、op-debt2tasks、task-splitter）都必须填 `depends_on`。
+每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。**所有新增 task 的入口**（op-task、op-debt2tasks）都必须填 `depends_on`。
 
 每次 `/op-start` 从 `depends_on` 重算拓扑分层，生成 `docs/op_execution/dag.md`（Mermaid 图 + 分层表），给人看。dag.md 是衍生文件，不存 checkpoint。
 
-### 并发与 worktree
+### 工作区与 worktree
 
-- 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 同层并发（上限 3），若同层 task 数 > 3，按 ID 升序取前 3，其余等下个波次。
-- 不做文件冲突预检——worktree 隔离已经防止互相覆盖，合并冲突在收口时由 leader 按依赖优先规则解决。
-- 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
-- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线。层宽 1（串行）→ `git merge feat/{TID} --ff-only`，只留功能 commit；层宽 > 1（并发）→ `git merge feat/{TID} --no-ff`，保留 merge commit 作为归并标记。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑测试确认，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
-- **控制平面文件仅在主 repo 由 leader 串行写**——closer 和 feat 分支不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md / leader_checkpoint.md。并发安全由串行收口保证。
+task 串行执行，一次只跑一个 task。每个 task 在独立 git worktree 中开发：
+
+```bash
+git worktree add .worktrees/{TID} -b feat/{TID}
+```
+
+收口时 `git merge feat/{TID} --ff-only` 合回主线，然后 `git worktree remove .worktrees/{TID}`。
+
+**控制平面文件仅在主 repo 由 leader 串行写**——closer 和 feat 分支不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md / leader_checkpoint.md。
 
 ### Agent Team 管理
 
-coder-1/2/3、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
+coder-1、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
 
 **创建**（首次 /op-start 时，必须显式传 model 和 team_name 参数）：
 
@@ -178,7 +178,7 @@ Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "o
 
 team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
-**通信**：`SendMessage(to: "coder-N", message: "...")`。teammate 之间不直接通信。
+**通信**：`SendMessage(to: "coder-1", message: "...")`。teammate 之间不直接通信。
 
 **完成通知**：标记文件是唯一真相源，SendMessage 是加速器。teammate 完成工作后**先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）。
 
@@ -214,7 +214,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
 compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoint.md`。
 
-**checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
+**checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG，不能吃 checkpoint 惯性。
 
 **恢复步骤**：读 checkpoint → 用 jq 查询 tasks_list → 读本协议 → 建/复用 team → **清理残留标记**（compact 后旧标记文件不可信，全部 `进行中`/`审阅中` task 的 `signals/` 目录清空，从 context.md/review_*.md 重建状态）→ 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。
 
@@ -228,7 +228,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 ## Quick Reference（compact 后速查）
 
-**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder-1 TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder-1 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
 
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 

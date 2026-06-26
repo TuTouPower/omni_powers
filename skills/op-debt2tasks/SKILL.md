@@ -200,5 +200,5 @@ tech_debt.md 已清理。
 
 - leader 是本 skill 的唯一调用者。coder/reviewer/test-reviewer 不调用本 skill。
 - 偿还 task 走标准开发循环（spec/plan/coder/review/收口），与功能 task 流程完全一致。
-- 不在功能 task 跑到一半插偿还 task——等当前波次收口。
+- 不在功能 task 跑到一半插偿还 task——等当前 task 收口。
 - 环境债的 blocked_by 在环境就位后由 leader 手动改为 null，然后走标准循环。

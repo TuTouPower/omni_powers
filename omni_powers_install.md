@@ -102,7 +102,6 @@ omni_powers/
 │   ├── op-code-reviewer.md
 │   ├── op-test-reviewer.md
 │   ├── op-closer.md
-│   └── op-task-splitter.md
 │
 ├── template/                    # 文档模板（按需 cat 读取）
 │   ├── op_execution/

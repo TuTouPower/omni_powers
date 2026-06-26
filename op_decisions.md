@@ -98,7 +98,32 @@
 - SendMessage 仍保留：到达时触发提前扫描，省去 3 分钟等待
 - 删除标记文件确保下一轮不会误读上一轮的旧标记
 
-## D11：删除文件冲突预检，并发直接按 DAG 同层（2026-06-26）
+## D13：放弃 task 拆分（2026-06-26）
+
+**变更**：删除 task-splitter subagent，删除所有 task 拆分逻辑。
+
+**理由**：
+- task 拆分是运行时动态行为，无法在 /op-start 的循环中可靠执行——拆后 tasks_list.json 变化，循环已跑过半
+- task-splitter 要读原 spec/plan 全文、切片、重写——中间内容大量挤占 leader 上下文
+- 实际使用中需要拆分的场景极少。真需要拆时，用户直接 /op-task 拆好了再 /op-start
+
+**影响**：
+- 删除 `agents/op-task-splitter.md`
+- RULES.md / SKILL.md / CLAUDE.md 中所有相关段落删除
+
+## D14：放弃 coder 并发（2026-06-26）
+
+**变更**：只保留 coder-1，删除 coder-2/3。所有 task 串行执行。
+
+**理由**：
+- worktree 并发收口时的合并冲突、控制平面竞争、FF 策略选择——复杂度远超收益
+- omni_powers 自身是单项目开发，不存在 trivially parallelizable 的 task
+- 串行简化整个系统：无同层波次、无下游顺延、无并发 merge 冲突
+
+**影响**：
+- 花名册 coder-1/2/3 → coder-1
+- RULES.md / SKILL.md 中所有"并发"、"波次"、"同层"段落重写
+- DAG 仍保留给串行 task 的拓扑顺序计算
 
 **变更**：删除并发判定算法（从 plan.md 提取文件列表→算冲突图→定联通分量）。并发直接按 DAG 拓扑同层，上限 3，不做文件冲突预检。
 

@@ -8,7 +8,7 @@
 ⚠️ 严禁 Read 整文件 `tasks_list.json`，必须用 jq 查询。
 
 ```bash
-# 查所有待开始 task（选波次）
+# 查所有待开始 task（选 task）
 jq '.tasks[] | select(.status=="待开始")' docs/op_execution/tasks_list.json
 
 # 查某 task 依赖是否全完成
@@ -68,33 +68,11 @@ jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | in
 
 ### 下游传播规则
 
-- 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`，退出当前波次。
+- 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`。
 - **绕过**：若下游 task 实际上不依赖被阻塞 task 的产出，leader 可修改该下游 task 的 `depends_on` 移除阻塞节点，并在 decisions.md 记录理由。无此记录则不可绕过。
 - 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
 
 **阻塞汇总**：所有可跑 task 跑完后，若仍有阻塞 task，leader 才停下报告阻塞项、缺什么、需用户提供什么。
-
-## 拆 task
-
-task 太大时派 task-splitter。agent 定义见 `agents/op-task-splitter.md`。
-
-**判断标准**：
-
-| 情况 | 处理 |
-|---|---|
-| 多改动各自需独立 review + 能独立回滚 | 拆成多 task（T{n}a/T{n}b），各自 spec/plan/review/commit |
-| 多改动是一个连贯交付、一起 review 才有意义 | 一个 task 多 step，一次收口一次 commit |
-
-**时机**：在拆 steps.md 那一刻判断，不能等 coder 写一半再拆——已落盘代码要回切会乱。
-
-**机制**（task-splitter 子代理执行，不污染 leader 上下文）：
-1. leader 定边界（哪些 step 归 T{n}a、哪些归 T{n}b、依赖关系），Agent 调 task-splitter subagent
-2. task-splitter 执行：建子目录、切原 spec/plan（不重跑 generator）、已写代码归入 context.md、改 tasks_list.json（删原未完成 task 行、加子 task 行）
-3. task-splitter 回报结果，leader 不读中间过程，按新 tasks_list 重走选 task 规则
-
-**未完成原 task 可替换**：已完成 task 不删是为保依赖链；被重新 scope 的未完成 task 可删原 task 加子 task，避免永不完成的原 task 误导选 task。
-
-**例外**：拆分时发现原 spec 本身漏/错，错的部分由 leader 走 op-task 重跑，正确部分仍交 splitter 切。
 
 ## plan 分段派活
 
@@ -116,7 +94,7 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 
 | 环节 | 谁做 | 协议段只记规则 |
 |---|---|---|
-| 需求→task | `/op-task` | 先改 ref 再拆 task |
+| 需求→task | `/op-task` | 先改 ref 再建 task |
 | 开发循环 | `/op-start` | 自治循环，收口后自动选下一个 |
 | review | Agent Team（code-reviewer + test-reviewer） | 双 review 并行，leader 读 verdict |
 | 收口 | op-start 收口段 | closer stage 全部产出，leader commit |

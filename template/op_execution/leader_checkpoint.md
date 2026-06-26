@@ -19,7 +19,7 @@
 - reviewer / test-reviewer: 常驻
 
 ## 依赖 DAG
-（拓扑分层，波次编排用。⚠️ 恢复后必须重算 DAG 层宽，不吃 checkpoint 惯性）
+（拓扑分层。⚠️ 恢复后必须重算 DAG，不吃 checkpoint 惯性）
 
 ## 关键上下文（给人读）
 - 当前目标：...

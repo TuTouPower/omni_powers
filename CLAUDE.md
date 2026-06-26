@@ -21,7 +21,6 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 │   ├── op-coder.md             #   开发者（TDD、review 反馈处理）
 │   ├── op-code-reviewer.md     #   代码审查（安全/架构/错误处理）
 │   ├── op-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
-│   └── op-task-splitter.md     #   task 拆分（按需启用）
 │   └── op-closer.md            #   收口机械步骤（按需启用）
 │
 ├── skills/                  # Claude Code Skills
@@ -80,14 +79,14 @@ cd harness
 
 - Claude Code（Teams + SendMessage）
 - `jq`（tasks_list.json 查询）
-- `git`（worktree 并发隔离）
+- `git`（worktree 隔离）
 
 ## 相关文档
 
 | 要查什么 | 去哪看 |
 |---|---|
 | 完整协议规则 | `RULES.md` |
-| 操作细则（jq/回滚/拆task/阻塞） | `RULES_DETAIL.md` |
+| 操作细则（jq/回滚/阻塞） | `RULES_DETAIL.md` |
 | 决策记录 | `op_decisions.md` |
 | 实验发现 | `op_findings.md` |
 | 历史踩坑 | `experience.md` |
