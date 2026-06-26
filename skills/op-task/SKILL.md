@@ -87,11 +87,7 @@ T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 ## 建目录拷模板
 
 ```bash
-mkdir -p docs/harness_execution/tasks/{TID}
-cp template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
-cp template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
-cp template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
-cp template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
+bash skills/op-start/scripts/op-new-task.sh {TID}
 ```
 
 context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）。

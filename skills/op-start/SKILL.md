@@ -55,7 +55,7 @@ description: >
 while (存在 status 为 待开始/进行中/审阅中/收口中 的 task) {
   0. 按状态分发：
      收口中 → 恢复收口流程
-     审阅中/进行中 → 扫标记文件 → 推进
+     审阅中/进行中 → for TID in 进行中+审阅中: op-scan-signals.sh {TID} → 推进
      待开始 → 跳过（下面处理）
   1. 选波次
   2. 拆 task（task 太大时）
@@ -124,11 +124,12 @@ bash skills/op-start/scripts/op-status.sh --batch "{TID1},{TID2}" 进行中
 
 **不等全波次完成。** 每个 coder 完成后立即派 review，先到先审。
 
-完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `RULES.md` 通知机制）。coder 报错/阻塞 → `bash skills/op-start/scripts/op-status.sh {TID} 阻塞 spawn`，退出波次。
+完成判断：`bash skills/op-start/scripts/op-scan-signals.sh {TID}` 输出 `coder_done` 即完成（唯一判定依据，详见 `RULES.md` 通知机制）。coder 报错/阻塞 → `bash skills/op-start/scripts/op-status.sh {TID} 阻塞 spawn`，退出波次。
 
-**leader 扫到标记文件 → 删 `coder_done` → 更新状态 → 派 review：**
+**leader 扫到 coder_done → 删信号文件 → 更新状态 → 派 review：**
 
 ```bash
+rm -f .worktrees/{TID}/.harness/signals/coder_done
 bash skills/op-start/scripts/op-status.sh {TID} 审阅中
 ```
 
@@ -139,9 +140,17 @@ SendMessage({ to: "test-reviewer", message: "cd <project_root>/.worktrees/{TID} 
 
 ### 5. review 返回 → 处理结果（事件驱动）
 
-review 完成判断：`.worktrees/{TID}/.harness/signals/reviewer_code_done` 和 `reviewer_test_done` 同时存在（唯一判定依据）。leader 扫到两文件 → 删两文件 → 读 review_code.md 和 review_test.md 首行 verdict。
+review 完成判断：`bash skills/op-start/scripts/op-scan-signals.sh {TID}` 输出 `reviews_done` 即完成（唯一判定依据）。leader 扫到两文件 → 删除信号：
 
-leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `RULES.md`）。
+```bash
+rm -f .worktrees/{TID}/.harness/signals/reviewer_code_done .worktrees/{TID}/.harness/signals/reviewer_test_done
+```
+
+然后读 verdict：
+```bash
+bash skills/op-start/scripts/op-read-verdict.sh {TID}
+# exit 0 = PASS, exit 1 = FAIL
+```
 
 **双 PASS → 收口**：
 ```bash
@@ -275,5 +284,10 @@ Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "o
 | `op_findings.md` | 实验发现 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |
 | `docs/harness_execution/leader_checkpoint.md` | 断点 |
-| `skills/op-start/scripts/close_check.sh` | 收口验收脚本 |
+| `skills/op-start/scripts/close_check.sh` | 收口验收 |
+| `skills/op-start/scripts/op-status.sh` | 状态流转 |
+| `skills/op-start/scripts/op-scan-signals.sh` | 信号扫描 |
+| `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 |
+| `skills/op-start/scripts/op-new-task.sh` | 工作区创建 |
+| `skills/op-start/scripts/dag_gen.sh` | DAG 生成 |
 | `skills/op-debt2tasks/SKILL.md` | 技术债偿还 |
