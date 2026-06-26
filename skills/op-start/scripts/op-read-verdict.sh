@@ -14,8 +14,8 @@ die() { echo "[FAIL] $*" >&2; exit 2; }
 read_verdict() {
     local file="$1"
     [ -f "$file" ] || die "$file 不存在"
-    # 读最后一条 verdict 行（支持多轮 FAIL）
-    tail -1 "$file" | grep -oP 'verdict:\s*\K(PASS|FAIL)' || die "$file 中未找到 verdict 行"
+    # 读最后一条 verdict 行（支持多轮 FAIL + 尾部空行）
+    grep -oP 'verdict:\s*\K(PASS|FAIL)' "$file" | tail -1 || die "$file 中未找到 verdict 行"
 }
 
 code_v=$(read_verdict "$TASK_DIR/review_code.md")
