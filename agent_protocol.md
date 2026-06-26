@@ -156,20 +156,21 @@ team_name 规则：`harness-<项目目录名>`，如 `harness-omni_powers`。
 
 **完成通知**：标记文件是唯一真相源，SendMessage 是加速器。teammate 完成工作后**先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）。
 
+标记文件统一路径：`.worktrees/{TID}/.harness/signals/`，不在 git 跟踪区（worktree 目录不入主 repo）。
+
 | 角色 | 标记文件 | 写入时机 |
 |------|---------|---------|
-| coder | `.coder_done` | 当前 step/FAIL 修改完成后 |
-| code-reviewer | `.reviewer_code_done` | review_code.md 写完后 |
-| test-reviewer | `.reviewer_test_done` | review_test.md 写完后 |
+| coder | `coder_done` | 当前 step/FAIL 修改完成后 |
+| code-reviewer | `reviewer_code_done` | review_code.md 写完后 |
+| test-reviewer | `reviewer_test_done` | review_test.md 写完后 |
 
 **leader 判定**：
-- 每次进入自治循环顶部时，扫所有 `进行中`/`审阅中` task 的标记文件。存在即完成，不依赖 SendMessage 内容。
-- 扫到 `.coder_done` → 删文件 → 派 review。
-- 扫到 `.reviewer_code_done` + `.reviewer_test_done` 同时存在 → 删两文件 → 读 verdict。
+- 每次进入自治循环顶部时，扫所有 `进行中`/`审阅中` task 的 `signals/` 目录。存在即完成，不依赖 SendMessage 内容。
+- 扫到 `coder_done` → 删文件 → 派 review。
+- 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict。
 - 只有一 reviewer 标记 → 不删，继续等。
 - FAIL 轮重新派 coder 前，leader 确保三个标记文件已清空（上一轮处理时已删）。
 - **idle 兜底**：所有 task 都在等（无待开始、无 review 可处理），`ScheduleWakeup(180s)` 唤醒，重新扫标记文件。
-- SendMessage 到达 → 可提前触发一次扫描，但仍以文件存在为判定依据。
 
 **生命周期**（D5）：
 - teammate 全程复用，不主动 shutdown，不监控上下文
@@ -194,7 +195,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 **checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
 
-**恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 context.md 续（判断 coder 进行到哪了），否则重新选 task → 重建/复用 team。
+**恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 建/复用 team → **清理残留标记**（compact 后旧标记文件不可信，全部 `进行中`/`审阅中` task 的 `signals/` 目录清空，从 context.md/review_*.md 重建状态）→ 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。
 
 **checkpoint 格式**（`docs/harness_execution/leader_checkpoint.md`，模板见 `template/harness_execution/leader_checkpoint.md`）：
 

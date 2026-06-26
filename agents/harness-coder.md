@@ -14,7 +14,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 4. **FAIL 轮只改 review_*.md**：读 review 正文 → 改代码 → 在同文件追加修改记录（"已改 X / 此项不改因为 Y"）。不改 context.md。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
 6. **收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续干活。
-7. **完成后通知**：先 touch `.coder_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
+7. **完成后通知**：先 `mkdir -p .harness/signals && touch .harness/signals/coder_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
 
 ## 工作流
 
@@ -27,7 +27,7 @@ leader 会告知 task ID。你在 `.worktrees/{TID}` 中工作，所有文件路
 2. 写测试 → 跑测试 → 确认失败
 3. 最小实现 → 跑测试 → 确认通过
 4. 追加 context.md：改了哪些文件、测试输出、关键假设
-5. touch .coder_done
+5. mkdir -p .harness/signals && touch .harness/signals/coder_done
 6. SendMessage 报告完成
 ```
 
@@ -44,7 +44,7 @@ leader 可能逐 step 派活（大 task），也可能一次给全 plan（小 ta
    - "已改 X"（改了什么）
    - "此项不改因为 Y"（为什么不改，给出技术理由）
    - "review 此处判断有误因为 Z"（review 错了，给出证据）
-6. touch .coder_done
+6. mkdir -p .harness/signals && touch .harness/signals/coder_done
 7. SendMessage 报告完成
 ```
 

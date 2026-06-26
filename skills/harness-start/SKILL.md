@@ -52,10 +52,11 @@ description: >
 ## 自治循环
 
 ```
-while (存在待开始 task 且依赖全完成) {
-  0. 扫标记文件——遍历所有 进行中/审阅中 task
-     标记文件存在 → 判定完成 → 推进（派 review 或处理 verdict）
-     SendMessage 到了 → 可提前触发扫描，但仍以文件为准
+while (存在 status 为 待开始/进行中/审阅中/收口中 的 task) {
+  0. 按状态分发：
+     收口中 → 恢复收口流程
+     审阅中/进行中 → 扫标记文件 → 推进
+     待开始 → 跳过（下面处理）
   1. 选波次
   2. 拆 task（task 太大时）
   3. 派 coder
@@ -64,7 +65,7 @@ while (存在待开始 task 且依赖全完成) {
   6. 收口 → 自动下一波次
 }
 
-→ 无待开始 task 且全在等（无标记文件可扫）
+→ 无 task 可推进（都在等）
   → ScheduleWakeup(180s) → 唤醒后跳回步骤 0
 ```
 
@@ -120,9 +121,9 @@ tasks_list.json 波次内所有 task status → 进行中。
 
 **不等全波次完成。** 每个 coder 完成后立即派 review，先到先审。
 
-完成判断：检查 `.coder_done` 文件存在（唯一判定依据，详见 `agent_protocol.md` 通知机制）。coder 报错/阻塞 → status=阻塞，退出波次。
+完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `agent_protocol.md` 通知机制）。coder 报错/阻塞 → status=阻塞，退出波次。
 
-**leader 扫到标记文件 → 删 `.coder_done` → 派 review：**
+**leader 扫到标记文件 → 删 `coder_done` → 派 review：**
 
 ```js
 SendMessage({ to: "code-reviewer", message: "cd <project_root>/.worktrees/{TID} && pwd\nreview T{a}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
@@ -133,7 +134,7 @@ tasks_list.json status → 审阅中。leader idle 等返回。
 
 ### 5. review 返回 → 处理结果（事件驱动）
 
-review 完成判断：`.reviewer_code_done` 和 `.reviewer_test_done` 同时存在（唯一判定依据）。leader 扫到两文件 → 删两文件 → 读 review_code.md 和 review_test.md 首行 verdict。
+review 完成判断：`.worktrees/{TID}/.harness/signals/reviewer_code_done` 和 `reviewer_test_done` 同时存在（唯一判定依据）。leader 扫到两文件 → 删两文件 → 读 review_code.md 和 review_test.md 首行 verdict。
 
 leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `agent_protocol.md`）。
 

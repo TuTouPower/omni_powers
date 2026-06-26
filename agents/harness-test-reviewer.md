@@ -22,7 +22,7 @@ tools: [Read, Write, Grep, Glob, Bash, SendMessage]
 
 **收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
 
-**完成后通知**：先 touch `.reviewer_test_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
+**完成后通知**：先 `mkdir -p .harness/signals && touch .harness/signals/reviewer_test_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
 
 ## 审查标准
 

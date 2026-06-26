@@ -84,9 +84,10 @@
 
 **规则**：
 - teammate **先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）
+- 标记文件路径：`.worktrees/{TID}/.harness/signals/` 下，不在 git 跟踪区
 - leader 每次主循环迭代前扫标记文件。文件存在即完成，不依赖 SendMessage
-- 扫到 `.coder_done` → 删文件 → 派 review
-- 扫到 `.reviewer_code_done` + `.reviewer_test_done` 同时存在 → 删两文件 → 读 verdict
+- 扫到 `coder_done` → 删文件 → 派 review
+- 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict
 - 全在等时 `ScheduleWakeup(180s)` 兜底轮询
 - FAIL 轮重新派 coder 前标记文件已在上一轮处理时删空
 

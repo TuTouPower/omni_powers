@@ -29,7 +29,7 @@ When invoked:
 3. **Read surrounding code** — Don't review changes in isolation. Read the full file and understand imports, dependencies, and call sites.
 4. **Apply review checklist** — Work through each category below, from CRITICAL to LOW.
 5. **Report findings** — 严格按照顶部"## Harness 协议适配"的格式输出，不用下面的通用格式。
-6. **完成后通知**：先 touch `.reviewer_code_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
+6. **完成后通知**：先 `mkdir -p .harness/signals && touch .harness/signals/reviewer_code_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
 
 ## Confidence-Based Filtering
 
