@@ -2,7 +2,7 @@
 
 > 记录架构和设计决策及其依据。最终规则见 RULES.md。
 
-## D1：Agent Team vs Workflow（2026-06-25）— ⚠️ 已被 D4 取代
+## D1：Agent Team vs Workflow（2026-06-25）— ⚠️ 已被 D15 取代
 
 | | Workflow（task_review.js） | Agent Team（teammate） |
 |---|---|---|
@@ -24,7 +24,7 @@
 
 **理由**：agent 训练数据和实际部署配置不一致。agent 不知道自己跑的 variant 和窗口大小。leader 应解析 teammate 系统提示中的 `powered by the model` 字符串，结合 settings.json 推导。
 
-## D4：放弃 Workflow，全面使用 Agent Team（2026-06-25）
+## D4：放弃 Workflow，全面使用 Agent Team（2026-06-25）— ⚠️ 已被 D15 取代
 
 **变更**：review 从 Workflow（task_review.js）迁移到 Agent Team（op-code-reviewer + op-test-reviewer）。
 
@@ -38,7 +38,7 @@
 - `docs/omni_powers/workflows/` 已删除
 - review 流程改为：leader SendMessage 派 review → op-code-reviewer/op-test-reviewer 写 review_*.md → leader 读首行 verdict
 
-## D5：放弃上下文监控，全面复用（2026-06-25）
+## D5：放弃上下文监控，全面复用（2026-06-25）— ⚠️ 已被 D15 取代
 
 **变更**：不监控 teammate 上下文占用，不主动 shutdown 重建，所有 teammate 全程复用直到 session 结束。
 
@@ -78,7 +78,7 @@
 
 **理由**：op-generate-spec 和 op-generate-plan 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
 
-## D10：标记文件为完成判定唯一真相源，去双通道（2026-06-26）
+## D10：标记文件为完成判定唯一真相源，去双通道（2026-06-26）— ⚠️ 已被 D15 取代
 
 **变更**：取消"双通道确认"（SendMessage + 标记文件必须同时满足）。完成判定以标记文件为唯一依据，SendMessage 降级为加速信号。
 
@@ -147,3 +147,24 @@
 - 并发波次两个 worktree 各自有基线的 tasks_list.json / specs 等共享文件，各自改→merge 必冲突
 - 控制平面文件应当在唯一位置（主 repo）由唯一写入者（leader）串行操作
 - 两个 commit 语义清晰：代码 commit 是 task 产出，控制平面 commit 是收口记录
+
+## D15：全线改用 Sub Agent，放弃 Agent Team（2026-06-27）
+
+**变更**：op-coder、op-code-reviewer、op-test-reviewer 从 Agent Team 迁移为 Sub Agent。删除标记文件机制、Team 生命周期管理、CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 依赖。
+
+**理由**：
+
+1. **上下文加载几乎一样**——Sub Agent 也加载 CLAUDE.md 全层级、git status、skills、tools、MCP。和 Teammate 的启动上下文差异极小。Agent Team "跨 task 上下文复用"记住的是旧 worktree 细节，对新 task 是噪音不是帮助。
+2. **更简单**——删除标记文件（touch/rm/扫描/轮询）、TeamCreate/TeamDelete/spawn/config/shutdown、SendMessage 通信、ScheduleWakeup 兜底。通信改为 dispatch→返回结果。
+3. **更稳定**——Agent Team 是实验性功能，API 在变化（TeamCreate/TeamDelete 已废弃、team_name 参数被忽略）。Sub Agent 是成熟 API。
+4. **更便宜**——harness 只有 2-4 个并发 Agent，属于小规模。Sub Agent 每次按需 spawn，无 Team 常驻 token 开销。
+5. **Superpowers 已验证**——社区最大 Claude Code 插件全线使用 Sub Agent，证明了该模式在小规模多 Agent 协作中的可靠性。
+
+**影响**：
+- 删除 `skills/op-start/scripts/op-scan-signals.sh`
+- agents/*.md 删 SendMessage 工具和标记文件相关指令
+- RULES.md 删除 Agent Team 管理节、标记文件节、idle 兜底、compact teammate 恢复
+- SKILL.md 删除环境变量校验、Team 创建、标记扫描、SendMessage 派活
+- 不再需要 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+
+**详见**：`docs/agent_team_vs_subagent.md` 第十二节

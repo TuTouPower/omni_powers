@@ -387,3 +387,180 @@ brainstorming → writing-plans → subagent-driven-development
 **Superpowers 证明了 Sub Agent 模式是可行的**——它全线使用 Sub Agent，社区大量用户在用。如果 #56869 真的那么频繁，Superpowers 不可能成为最流行的 Claude Code 插件。
 
 这动摇了之前"Agent Team 更可靠"的结论——Superpowers 的实践证明，Sub Agent 的 bug 可能没想象中那么致命，或者说触发条件比较特定。同时 Superpowers 的文件交接 + Fresh subagent 模式在很多方面比 omni_powers 当前设计更优。
+
+---
+
+## 十一、上下文继承机制——官方文档核实
+
+> 以下全部基于 [Claude Code 官方文档](https://code.claude.com/docs/en/sub-agents) "What loads at startup" 章节。
+
+### Sub Agent（正常，非 fork）
+
+官方原文："Each subagent starts with a fresh, isolated context window. It does not see your conversation history, the skills you've already invoked, or the files Claude has already read."
+
+但子代理**并非空白启动**。它加载以下内容：
+
+| 加载什么 | 说明 |
+|----------|------|
+| **Agent 定义的 body** | 作为 system prompt（加上 Claude Code 追加的环境信息），不是完整 Claude Code system prompt |
+| **Task message** | 主 Agent 写的委派提示词 |
+| **CLAUDE.md 全层级** | `~/.claude/CLAUDE.md`、项目 rules、`CLAUDE.local.md`、管理策略文件。**Explore 和 Plan 除外**——它们跳过 CLAUDE.md 以保持研究快速 |
+| **Git status** | 父会话启动时的快照 |
+| **Preloaded skills** | frontmatter `skills` 字段指定的 skill 全文 |
+| **工具** | 默认继承主会话的所有工具和 MCP 工具 |
+| **工作目录** | 从主会话继承，`cd` 在子代理内不持久 |
+
+**不加载什么**：主会话对话历史、已调用的 skill 内容、Claude 已经读过的文件内容。
+
+### Fork Sub Agent
+
+官方原文："A fork is a subagent that inherits the entire conversation so far instead of starting fresh. This drops the input isolation that subagents otherwise provide."
+
+**继承一切**：system prompt、tools、model、message history 全部复制。fork 自己的 tool call 仍然不进主会话上下文，只有最终结果返回。
+
+(Explore 和 Plan 内置 agent 跳过 CLAUDE.md 和 git status——它们的设计目标是快速研究。)
+
+### Agent Team Teammate
+
+对比 Teammate：
+
+| 加载什么 | 说明 |
+|----------|------|
+| **CLAUDE.md** | 自动加载（项目 + 用户配置） |
+| **Skills** | 自动加载 |
+| **MCP 服务器** | 自动加载 |
+| **Agent 定义 body** | 以追加指令形式附加到 system prompt，不替换 |
+| **主会话对话历史** | **不继承** |
+
+### 三者对比
+
+| | Sub Agent（正常） | Fork | Teammate |
+|---|---|---|---|
+| CLAUDE.md + rules | **加载**（Explore/Plan 除外） | 继承 | **加载** |
+| Skills | frontmatter 指定的才加载 | 继承 | **自动加载全部** |
+| MCP 服务器 | **继承主会话的** | 继承 | **从项目/用户配置加载** |
+| 工具 | **继承主会话的** | 继承 | frontmatter `tools` 限制 + Team 工具始终可用 |
+| 主会话对话历史 | 不继承 | **全量继承** | 不继承 |
+| Git status | 加载 | 继承 | 不明确 |
+| System prompt | Agent body + 环境信息 | 继承主会话的 | Agent body 追加到完整 system prompt |
+
+### 关键更正
+
+之前说 Sub Agent"不自动加载 CLAUDE.md"是**错的**。官方明确写：Sub Agent 加载所有层级的 CLAUDE.md 和 memory 文件。
+
+实际差异比之前描述的小得多——Sub Agent 和 Teammate 的上下文几乎一样：
+- 都加载 CLAUDE.md
+- 都加载 skills（Sub Agent 通过 frontmatter 指定，Teammate 自动全部）
+- 都不继承对话历史
+- Sub Agent 继承主会话的 tools/MCP，Teammate 有自己的一套
+
+**唯一真正加载"对话历史"的是 Fork。** 正常 Sub Agent 和 Teammate 都不继承。
+
+### 对 omni_powers 的影响
+
+既然 Sub Agent 也加载 CLAUDE.md，那之前"跨 task 上下文复用"的价值就更可疑了——teammate 唯一额外保留的是自己在旧 worktree 里的工作记忆，而 CLAUDE.md + skills 这些项目知识每次都是重新加载的。
+
+closer（Sub Agent）现在的行为是对的——它加载 CLAUDE.md（知道协议），有 agent body（知道收口步骤），每次从零执行指令。
+
+---
+
+## 十二、全量迁移到 Sub Agent 的变更方案
+
+### 子代理通信机制
+
+Sub Agent 的运行模式：
+
+| 模式 | 行为 | 用在哪 |
+|------|------|--------|
+| **前台** | leader 调用 Agent tool，阻塞等到子代理完成返回结果 | coder（一次一个） |
+| **后台** | leader 调 Agent({background: true})，子代理并发运行，完成时自动回报结果 | reviewer（并行两个） |
+
+不需要标记文件、不需要 ScheduleWakeup、不需要信号扫描。
+
+### 可以删掉的
+
+**RULES.md：**
+
+| 删什么 | 为什么 |
+|--------|--------|
+| 「为什么用 Agent Team」段落 | 不再用 |
+| 「为什么 op-closer 用 Subagent」段落 | 全线 Sub Agent，不用解释 |
+| 「Agent Team 管理」整节（~55 行） | TeamCreate/TeamDelete/config/teammate 生命周期/spawn 前查 config/compact 恢复—全部不需要 |
+| 「标记文件统一路径」+ 标记表（~15 行） | Sub Agent 直接返回结果，不需要文件信号 |
+| 「leader 判定」中的信号扫描逻辑（~12 行） | 不需要扫标记文件 |
+| 「idle 兜底 ScheduleWakeup」（3 行） | 不需要轮询，后台子代理完成自动回报 |
+| 「派新 task 前必须强制切目录」（2 行） | 每次 fresh subagent，用 prompt 里的 cd 就行 |
+| 「compact 恢复」中的 teammate 恢复步骤 | 不需要 teammate 恢复 |
+| 「review 由 Agent Team 执行」→ 改为「由 Sub Agent 执行」 | 用词 |
+| 「leader SendMessage 派」→ 改为「leader dispatch」 | 通信方式变了 |
+| 「op-coder 跨轮保留状态」 | 不再保留 |
+
+**SKILL.md：**
+
+| 删什么 | 为什么 |
+|--------|--------|
+| 1.1 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 校验 | 不需要实验性环境变量 |
+| 1.3 「确保 Agent Team」整节（~40 行） | TeamCreate/查 config/spawn 花名册—全部不需要 |
+| 「标记文件机制」整节（~20 行） | Sub Agent 直接返回结果 |
+| 「循环流程」中的信号扫描分支 | 改为简单的 dispatch→等结果→继续 |
+| 「子步骤 3.2 派 review」中的 SendMessage + touch 标记 | 改为并行后台 Sub Agent |
+| 「子步骤 3.3 处理 review 结果」中的 rm 标记 | 只需要读 verdict |
+| 「子步骤 3.5 FAIL 轮」中的 rm 标记 + SendMessage 唤醒 coder | dispatch 新 coder Sub Agent |
+| 「compact 恢复」中的查 teammate 存活 | 不需要 |
+
+**agents/ 文件：**
+
+| 文件 | 改什么 |
+|------|--------|
+| op-coder.md | 删 `SendMessage` from tools，删 `touch .omni_powers/signals/coder_done`，删 "SendMessage 回报 leader" |
+| op-code-reviewer.md | 删 `SendMessage` from tools，删 `touch .omni_powers/signals/reviewer_code_done`，删 "Agent Team" 用语 |
+| op-test-reviewer.md | 同上 |
+| op-closer.md | 几乎不变（已经是 Sub Agent） |
+
+**删除文件：**
+
+| 文件 | 原因 |
+|------|------|
+| `skills/op-start/scripts/op-scan-signals.sh` | 不需要扫标记文件 |
+
+### 保留不变的
+
+- 状态机（待开始→进行中→审阅中→收口中→完成/阻塞/跳过）
+- DAG + depends_on
+- Worktree per task
+- 两个 commit（代码 commit + 控制平面 commit）
+- review PASS/FAIL verdict + FAIL 轮 max 3
+- 控制平面文件（tasks_list.json / specs / progress / tech_debt / checkpoint）
+- specs/ 累积机制
+- task 工作区文件结构（spec/plan/context/review_code/review_test）
+- op-closer（本来就是 Sub Agent）
+- compact 恢复核心步骤（读 RULES.md + jq + checkpoint）
+
+### 新的 leader 循环
+
+```
+进入循环
+    │
+    ├─ 有可跑 task → dispatch coder（前台 subagent，等返回值）
+    │     └─ 返回 → status=审阅中
+    │
+    ├─ 需 review → dispatch code-reviewer + test-reviewer（后台 subagent ×2）
+    │     └─ 两个都返回 → 读 verdict
+    │           ├─ 双 PASS → dispatch closer（前台 subagent） → 收口
+    │           └─ FAIL → dispatch coder（前台，含 blockers） → 再 review
+    │
+    └─ 无 task 可跑 → 循环结束
+```
+
+比现在少了：标记扫描、信号文件删写、ScheduleWakeup、Team 生命周期管理。
+
+### 复杂度变化
+
+| | Agent Team（当前） | Sub Agent（建议） |
+|---|---|---|
+| SKILL.md 行数 | ~320 行 | 估计 ~180 行 |
+| RULES.md Agent 相关 | ~60 行 | 估计 ~15 行 |
+| 脚本文件 | op-scan-signals.sh | 不需要 |
+| 通信机制 | SendMessage + 标记文件 + 轮询 | dispatch → 返回 |
+| 生命周期管理 | Team/spawn/config/shutdown/compact恢复 | 无 |
+| 环境依赖 | CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 | 不需要 |

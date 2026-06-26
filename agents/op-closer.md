@@ -14,7 +14,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 ## 你做什么
 
-leader 判定某 task 双 PASS 后，SendMessage 给你收口指令。你执行以下 per-task 机械操作：
+leader 判定某 task 双 PASS 后，dispatch 给你收口指令。你执行以下 per-task 机械操作：
 
 1. **归档 spec 盖戳**：`docs/op_execution/tasks/{TID}/spec.md` 顶部加 `> ⚠️ 历史快照，以 docs/op_blueprint/specs/ 为准。`**验证**：`head -1 docs/op_execution/tasks/{TID}/spec.md | grep -q "历史快照"`，不通过则失败。
 
@@ -56,7 +56,7 @@ CEOF
 
 ## 输入格式
 
-leader 的 SendMessage：
+leader 的 dispatch prompt：
 ```
 收口 T{n} "{title}"。
 暂存项：[{列表，或"无"}]

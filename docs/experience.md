@@ -8,29 +8,3 @@
   - /grill-me 生成 prd
 
 上面三个项目的介绍在这里，/home/karon/karson_ubuntu/user_config_backup/overview
-
-
-没有生成 dag.md
-op-coder 发消息 leader 收不到
-test_reviewer 文档应该放在 worktree 但是卸载了主 repo
-op-coder context.md 写到了主 repo 而非 worktree。修复
-op-closer  没有subagent
-
-两个 FAIL：tech_debt 无 T43 段，归档缺 spec.md/plan.md。修复。
-
-● Bash(echo "" >> docs/op_execution/tech_debt.md && echo "## T43" >>
-      docs/op_execution/tech_debt.md && echo "无新增。" >>
-      docs/op_execution/tech_debt.md)
-  ⎿  (No output)
-
-● Bash(cp docs/op_execution/tasks/T43/spec.md
-      docs/op_record/tasks/T43/spec.md && cp
-      docs/op_execution/tasks/T43/plan.md docs/op_record/tasks/T43/p…)
-  ⎿  Error: Exit code 1
-     cp: cannot stat 'docs/op_execution/tasks/T43/spec.md': No such file or
-     directory
-
-● spec.md/plan.md 已被 git mv 移走了，在 worktree 的 record 里。从那里拷。
-
-
-op-closer 删了 spec.md/plan.md 但没归档到 record。从 git 恢复并归档。

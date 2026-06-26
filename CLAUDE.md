@@ -1,6 +1,6 @@
 # omni_powers
 
-Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。
+Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。全线 Sub Agent（D15）。
 
 ## 快速开始
 
@@ -63,7 +63,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
     │
     ├─ 全完成     → 提示 /op-debt2tasks
     ├─ 待开始     → 重算 DAG → 选 task → 派 op-coder
-    ├─ 进行中     → op-coder 完成 → 派 review（Agent Team）
+    ├─ 进行中     → op-coder 完成 → 派 review（Sub Agent 并行）
     ├─ 审阅中     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 op-coder
     └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
 ```
@@ -81,7 +81,6 @@ cd omni_powers
 
 ## 依赖
 
-- Claude Code（Teams + SendMessage）
 - `jq`（tasks_list.json 查询）
 - `git`（worktree 隔离）
 
