@@ -178,7 +178,8 @@ bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_c
 
 # 切回主 repo → merge → 删 worktree → 选下个 task
 cd <project_root> && pwd
-git merge feat/{TID} --no-ff -m "merge({TID}): {title}"
+git merge feat/{TID} --ff-only -m "merge({TID}): {title}"
+# 并发波次用 --no-ff，串行用 --ff-only（协议约定）
 git worktree remove .worktrees/{TID}
 ```
 

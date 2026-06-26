@@ -128,8 +128,9 @@ review 由 Agent Team 执行（D4），不用 Workflow。
   2. 两两计算交集——有公共文件即冲突对，必须串行
   3. 构建无向冲突图（节点=task，边=冲突对），每个连通分量内串行，分量间可并发
   4. 并发数 = min(3, 连通分量数)。若分量数 > 3，按分量内 task 数降序取前 3 个分量，其余等下个波次
+- **提取失败处理**：任一 task 的 plan.md 无法提取文件列表 → 输出 `[WARN]`，该层所有 task 改为串行。不阻塞——串行是安全底线，并发是吞吐优化。
 - 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
-- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线（`git merge feat/{TID}`）。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑测试确认，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
+- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线。层宽 1（串行）→ `git merge feat/{TID} --ff-only`，只留功能 commit；层宽 > 1（并发）→ `git merge feat/{TID} --no-ff`，保留 merge commit 作为归并标记。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑测试确认，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
 
 ### Agent Team 管理
 
