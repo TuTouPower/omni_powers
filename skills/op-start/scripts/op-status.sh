@@ -68,10 +68,13 @@ else
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     else
         jq --arg tid "$tid" --arg status "$status" \
-            '.tasks |= map(if .id == $tid then .status = $status else . end)' \
+            '.tasks |= map(if .id == $tid then .status = $status | .blocked_by = null else . end)' \
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     fi
-    echo "[OK] $tid → $status${blocked:+ (blocked_by=$blocked)}"
+    echo "[OK] $tid → $status"
+    if [ "$status" = "阻塞" ]; then
+        echo "[INFO]   blocked_by=$blocked"
+    fi
 fi
 
 mv "$TASKS_FILE.tmp" "$TASKS_FILE"
