@@ -1,4 +1,4 @@
-# Harness 实验发现
+# omni_powers 实验发现
 
 > 2026-06-25 实验验证。记录实验结论和决策依据，最终规则见 RULES.md。
 
@@ -62,7 +62,7 @@
 
 ## 实验 6：ctx_stats 可用性
 
-**方法**：spawn 三个 harness agent，SendMessage 要求运行 `ctx_stats`。
+**方法**：spawn 三个 omni_powers agent，SendMessage 要求运行 `ctx_stats`。
 
 **结果**：
 | teammate | model 参数 | 实际模型 | ctx_stats |

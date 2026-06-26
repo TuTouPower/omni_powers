@@ -1,4 +1,4 @@
-# harness
+# omni_powers
 
 Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。
 
@@ -71,8 +71,8 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 ## 安装
 
 ```bash
-git clone <harness_repo>
-cd harness
+git clone <omni_powers_repo>
+cd omni_powers
 ./install.sh    # 写全局配置 → 建 symlink → 设 SessionStart hook
 # 重启 Claude Code 生效
 ```

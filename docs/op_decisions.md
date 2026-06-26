@@ -1,4 +1,4 @@
-# Harness 决策记录
+# omni_powers 决策记录
 
 > 记录架构和设计决策及其依据。最终规则见 RULES.md。
 
@@ -35,7 +35,7 @@
 - teammate 输出 review_*.md，leader 读文件判 verdict，兼得复用和结构化
 
 **影响**：
-- `docs/harness/workflows/` 已删除
+- `docs/omni_powers/workflows/` 已删除
 - review 流程改为：leader SendMessage 派 review → op-code-reviewer/op-test-reviewer 写 review_*.md → leader 读首行 verdict
 
 ## D5：放弃上下文监控，全面复用（2026-06-25）
@@ -68,7 +68,7 @@
 
 ## D8：删除 agent frontmatter model 字段（2026-06-25）
 
-**变更**：三个 harness agent 定义文件（op-coder、op-code-reviewer、op-test-reviewer）删除 frontmatter 中的 `model` 字段。
+**变更**：三个 omni_powers agent 定义文件（op-coder、op-code-reviewer、op-test-reviewer）删除 frontmatter 中的 `model` 字段。
 
 **理由**：spawn 时 Agent 工具不读 frontmatter 的 model，必须显式传 `model` 参数。保留 model 字段会误导读者以为它会生效。
 
@@ -84,7 +84,7 @@
 
 **规则**：
 - teammate **先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）
-- 标记文件路径：`.worktrees/{TID}/.harness/signals/` 下，不在 git 跟踪区
+- 标记文件路径：`.worktrees/{TID}/.omni_powers/signals/` 下，不在 git 跟踪区
 - leader 每次主循环迭代前扫标记文件。文件存在即完成，不依赖 SendMessage
 - 扫到 `coder_done` → 删文件 → 派 review
 - 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict
@@ -135,7 +135,7 @@
 
 ## D12：代码平面 vs 控制平面分离，一个 task 两个 commit（2026-06-26）
 
-**变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → harness commit。
+**变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → control plane commit。
 
 **规则**：
 - 代码平面：`src/`、`tests/`、`docs/op_execution/tasks/{TID}/`、`docs/op_record/tasks/{TID}/`

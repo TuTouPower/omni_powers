@@ -28,7 +28,7 @@ Claude Code 插件系统 + SessionStart hook + 全局配置文件。
 
 ### SessionStart 注入策略
 
-SessionStart hook 每次会话都触发，**只注入环境变量配置（约 10 行）**，不注入 RULES.md。RULES.md 约 200 行，每次会话都灌入浪费上下文——用户开个会话改 README 不需要知道 harness 协议。
+SessionStart hook 每次会话都触发，**只注入环境变量配置（约 10 行）**，不注入 RULES.md。RULES.md 约 200 行，每次会话都灌入浪费上下文——用户开个会话改 README 不需要知道 omni_powers 协议。
 
 RULES.md 在 op-start skill 被调用时按需读取（`cat $CLAUDE_PLUGIN_ROOT/RULES.md`），多一次 Bash 调用换每会话省 200 行。compact 恢复时必须执行 /op-start，自然读到 RULES.md。
 

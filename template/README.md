@@ -20,7 +20,7 @@
 
 | 模板 | 路径 | 用途 |
 |---|---|---|
-| [.gitignore](.gitignore) | 项目根目录 `.gitignore` | 含 `.superpowers/` 等 harness 通用忽略项 |
+| [.gitignore](.gitignore) | 项目根目录 `.gitignore` | 含 `.superpowers/` 等 omni_powers 通用忽略项 |
 | [index.md](index.md) | `docs/index.md` | 文档导航总图（三态模型 + 目录索引） |
 | [op_execution/tasks_list.json](op_execution/tasks_list.json) | `docs/op_execution/tasks_list.json` | task 清单 + 依赖 + status（核心） |
 | [op_execution/tech_debt.md](op_execution/tech_debt.md) | `docs/op_execution/tech_debt.md` | 技术债（每 task 闭环强制追加） |

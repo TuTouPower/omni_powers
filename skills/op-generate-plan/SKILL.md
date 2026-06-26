@@ -8,7 +8,7 @@ description: >
 
 # 写实施计划
 
-> 本 skill 参考 [superpowers:writing-plans](https://github.com/obra/superpowers)（Copyright (c) 2025 Prime Radiant, Inc.），本土化适配 harness 工作流。
+> 本 skill 参考 [superpowers:writing-plans](https://github.com/obra/superpowers)（Copyright (c) 2025 Prime Radiant, Inc.），本土化适配 omni_powers 工作流。
 
 ## 概述
 

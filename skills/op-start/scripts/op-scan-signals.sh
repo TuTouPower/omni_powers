@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TID="${1:?用法: op-scan-signals.sh <TID>}"
-SIGNALS="$ROOT/.worktrees/$TID/.harness/signals"
+SIGNALS="$ROOT/.worktrees/$TID/.omni_powers/signals"
 
 cd "$SIGNALS" 2>/dev/null || { echo "none"; exit 1; }
 

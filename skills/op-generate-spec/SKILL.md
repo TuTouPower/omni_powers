@@ -8,7 +8,7 @@ description: >
 
 # 从需求到设计规格
 
-> 本 skill 参考 [superpowers:brainstorming](https://github.com/obra/superpowers)（Copyright (c) 2025 Prime Radiant, Inc.），本土化适配 harness 工作流。
+> 本 skill 参考 [superpowers:brainstorming](https://github.com/obra/superpowers)（Copyright (c) 2025 Prime Radiant, Inc.），本土化适配 omni_powers 工作流。
 > 脚本目录 `scripts/` 和 `visual-companion.md` 直接取自 superpowers，原作者保留版权。
 
 通过自然的协作对话把需求转成完整的设计规格。

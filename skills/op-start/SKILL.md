@@ -115,9 +115,9 @@ task 串行执行，一次只跑一个。选取条件（4 条全满足，取 ID 
 
 | 文件 | 谁写 | 含义 |
 |---|---|---|
-| `.worktrees/{TID}/.harness/signals/coder_done` | op-coder | 代码写完 |
-| `.worktrees/{TID}/.harness/signals/reviewer_code_done` | op-code-reviewer | 代码审查完成 |
-| `.worktrees/{TID}/.harness/signals/reviewer_test_done` | op-test-reviewer | 测试审查完成 |
+| `.worktrees/{TID}/.omni_powers/signals/coder_done` | op-coder | 代码写完 |
+| `.worktrees/{TID}/.omni_powers/signals/reviewer_code_done` | op-code-reviewer | 代码审查完成 |
+| `.worktrees/{TID}/.omni_powers/signals/reviewer_test_done` | op-test-reviewer | 测试审查完成 |
 
 > op-closer 是 sub agent（同步返回），不需要标记文件。
 
@@ -172,7 +172,7 @@ bash skills/op-start/scripts/op-status.sh {TID} 进行中
 扫到 `coder_done` 后立即派 review：
 
 ```bash
-rm -f .worktrees/{TID}/.harness/signals/coder_done
+rm -f .worktrees/{TID}/.omni_powers/signals/coder_done
 bash skills/op-start/scripts/op-status.sh {TID} 审阅中
 ```
 
@@ -188,7 +188,7 @@ SendMessage({ to: "op-test-reviewer", message: "cd <project_root>/.worktrees/{TI
 扫到 `reviews_done` 后：
 
 ```bash
-rm -f .worktrees/{TID}/.harness/signals/reviewer_code_done .worktrees/{TID}/.harness/signals/reviewer_test_done
+rm -f .worktrees/{TID}/.omni_powers/signals/reviewer_code_done .worktrees/{TID}/.omni_powers/signals/reviewer_test_done
 ```
 
 ```bash
@@ -248,7 +248,7 @@ HASH=$(git rev-parse HEAD)
 bash skills/op-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
 
 git add docs/op_execution/ docs/op_record/ docs/op_blueprint/
-git commit -m "chore(harness): {TID} 收口记录"
+git commit -m "chore(omni_powers): {TID} 收口记录"
 ```
 
 回到循环顶部。
@@ -261,9 +261,9 @@ max 3 轮。
 
 ```bash
 # 先确保三个标记文件已清空
-rm -f .worktrees/{TID}/.harness/signals/coder_done \
-      .worktrees/{TID}/.harness/signals/reviewer_code_done \
-      .worktrees/{TID}/.harness/signals/reviewer_test_done
+rm -f .worktrees/{TID}/.omni_powers/signals/coder_done \
+      .worktrees/{TID}/.omni_powers/signals/reviewer_code_done \
+      .worktrees/{TID}/.omni_powers/signals/reviewer_test_done
 ```
 
 ```js

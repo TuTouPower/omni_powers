@@ -122,7 +122,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### commit 时机
 
-**一个 task 两个 commit**。一次 task commit（仅代码平面），一次 harness commit（控制平面收口记录）。
+**一个 task 两个 commit**。一次 task commit（仅代码平面），一次 control plane commit（控制平面收口记录）。
 
 **代码平面**（per-task，不冲突，进 feat 分支）：
 
@@ -137,7 +137,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - `specs/{feature}.md` — 跨 task 累积
 - `progress.md`、`decisions.md`、`tech_debt.md` — 记录
 
-收口分两阶段：(A) op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
+收口分两阶段：(A) op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → control plane commit。
 
 ### DAG 与 depends_on
 
@@ -182,7 +182,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
 **完成通知**：标记文件是唯一真相源，SendMessage 是加速器。teammate 完成工作后**先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）。
 
-标记文件统一路径：`.worktrees/{TID}/.harness/signals/`，不在 git 跟踪区（worktree 目录不入主 repo）。
+标记文件统一路径：`.worktrees/{TID}/.omni_powers/signals/`，不在 git 跟踪区（worktree 目录不入主 repo）。
 
 | 角色          | 标记文件               | 写入时机                  |
 | ------------- | ---------------------- | ------------------------- |
