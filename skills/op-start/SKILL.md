@@ -17,19 +17,28 @@ description: >
 
 ### 1.1 确认工作目录
 
+先查仓库分支：
+
+```bash
+# 查远端默认分支
+git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
+```
+
 问用户：
 
 ```
 /op-start
 
 在哪开发？
-1. worktree 模式（推荐）：创建隔离区，搞砸一键删除
-2. master 模式：直接在 master 分支改，风险大
+1. worktree（推荐）：创建隔离区，搞砸一键删除
+2. 主分支（{main或master}）：直接在主分支改
+3. 当前分支（{当前分支名}）
 ```
 
 - **选 worktree**：`git worktree add .worktrees/op-dev -b feat/op-dev` → `cd .worktrees/op-dev`
-- **选 master**：不创建 worktree，当前目录就是工作目录
-- 记下 `<work_dir>` = 当前 `pwd`
+- **选主分支**：`git checkout {main或master}`，当前目录就是工作目录
+- **选当前分支**：不动分支，当前目录就是工作目录
+- 记下 `<work_dir>` = 当前 `pwd` + 原分支名
 
 用户也可以指定分支名：`/op-start feat/my-branch` → `git worktree add .worktrees/my-branch -b feat/my-branch`
 
@@ -225,7 +234,7 @@ git worktree remove .worktrees/op-dev
 cd <原项目根目录>
 ```
 
-**master 模式**：无额外操作。
+**主分支/当前分支模式**：无额外操作。
 
 - **全部完成**：检查 tech_debt.md，有未偿债项则提示 `/op-debt2tasks`
 - **全部阻塞**：输出原因，等外部解除
