@@ -8,14 +8,14 @@
 
 ## 角色
 
-| 角色 | 类型 | model | 职责 |
-|---|---|---|---|
-| leader | 主会话 | — | 编排、收口、改共享文档 |
-| coder-1/2/3 | **Agent Team** | haiku | TDD：写测试→写实现→跑测试→写 context.md |
-| code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
-| test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
-| task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
-| closer | **Subagent** | haiku | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
+| 角色          | 类型                 | model  | 职责                                                                                                |
+| ------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| leader        | 主会话               | —     | 编排、收口、改共享文档                                                                              |
+| coder-1/2/3   | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
+| code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
+| test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
+| task-splitter | **Subagent**   | sonnet | 按需启用：拆 task，不污染 leader 上下文                                                             |
+| closer        | **Subagent**   | haiku  | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
 
 ### 为什么用 Agent Team
 
@@ -44,27 +44,27 @@
 
 tasks_list.json status 值：
 
-| status | 含义 | blocked_by |
-|---|---|---|
-| `待开始` | spec/plan 就位，未开发 | null |
-| `进行中` | coder 开发或修复轮中 | null |
-| `审阅中` | review 进行中 | null |
-| `收口中` | 双 PASS 后，closer 执行中，leader commit 前 | null |
-| `完成` | commit + close_check 通过 | null |
-| `阻塞` | 3 轮 FAIL 或环境阻塞 | `key`/`domain`/`quality`/`spawn`（必有值） |
-| `跳过` | 因下游阻塞顺延，等待阻塞解除 | null |
+| status     | 含义                                        | blocked_by                                         |
+| ---------- | ------------------------------------------- | -------------------------------------------------- |
+| `待开始` | spec/plan 就位，未开发                      | null                                               |
+| `进行中` | coder 开发或修复轮中                        | null                                               |
+| `审阅中` | review 进行中                               | null                                               |
+| `收口中` | 双 PASS 后，closer 执行中，leader commit 前 | null                                               |
+| `完成`   | commit + close_check 通过                   | null                                               |
+| `阻塞`   | 3 轮 FAIL 或环境阻塞                        | `key`/`domain`/`quality`/`spawn`（必有值） |
+| `跳过`   | 因下游阻塞顺延，等待阻塞解除                | null                                               |
 
 **英文/中文映射**（compact 恢复、跨文档引用时对照）：
 
 | 英文（状态机/日志） | 中文（tasks_list.json） |
-|---|---|
-| pending | 待开始 |
-| coding | 进行中 |
-| reviewing | 审阅中 |
-| closing | 收口中 |
-| done | 完成 |
-| blocked | 阻塞 |
-| skipped | 跳过 |
+| ------------------- | ----------------------- |
+| pending             | 待开始                  |
+| coding              | 进行中                  |
+| reviewing           | 审阅中                  |
+| closing             | 收口中                  |
+| done                | 完成                    |
+| blocked             | 阻塞                    |
+| skipped             | 跳过                    |
 
 状态修改：`bash skills/op-start/scripts/op-status.sh <TID> <status> [blocked_by]`（详见 `RULES_DETAIL.md`）。
 
@@ -88,17 +88,17 @@ docs/op_execution/tasks/{TID}/
 
 ### 持久文件（控制平面——仅 leader 在主 repo 写）
 
-| 路径 | 谁写 | 何时 |
-|---|---|---|
-| `docs/op_execution/tasks_list.json` | leader | 状态流转（含 tasks 数组和 blockers 数组） |
-| `docs/op_blueprint/specs/{feature}.md` | leader | 每 task 闭环整理（当前生效规格，按功能聚合） |
-| `docs/op_record/progress.md` | leader | 闭环后追加 |
-| `docs/op_record/decisions.md` | leader | 有架构决策才追加 |
-| `docs/op_execution/tech_debt.md` | leader | 闭环后追加 |
-| `docs/op_execution/leader_checkpoint.md` | leader | 每 task 闭环后写 |
-| `docs/op_execution/dag.md` | leader | 每次 /op-start 从 depends_on 重算生成 |
-| `docs/op_blueprint/spec.md` | leader | 全局总纲 + specs/ 目录索引，需求变更时改 |
-| `docs/index.md` | leader | 文档导航总图（三态模型 + 目录索引），结构变动时同步 |
+| 路径                                       | 谁写   | 何时                                                |
+| ------------------------------------------ | ------ | --------------------------------------------------- |
+| `docs/op_execution/tasks_list.json`      | leader | 状态流转（含 tasks 数组和 blockers 数组）           |
+| `docs/op_blueprint/specs/{feature}.md`   | leader | 每 task 闭环整理（当前生效规格，按功能聚合）        |
+| `docs/op_record/progress.md`             | leader | 闭环后追加                                          |
+| `docs/op_record/decisions.md`            | leader | 有架构决策才追加                                    |
+| `docs/op_execution/tech_debt.md`         | leader | 闭环后追加                                          |
+| `docs/op_execution/leader_checkpoint.md` | leader | 每 task 闭环后写                                    |
+| `docs/op_execution/dag.md`               | leader | 每次 /op-start 从 depends_on 重算生成               |
+| `docs/op_blueprint/spec.md`              | leader | 全局总纲 + specs/ 目录索引，需求变更时改            |
+| `docs/index.md`                          | leader | 文档导航总图（三态模型 + 目录索引），结构变动时同步 |
 
 ### specs/ 机制
 
@@ -129,11 +129,13 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 **一个 task 两个 commit**。一次 task commit（仅代码平面），一次 harness commit（控制平面收口记录）。
 
 **代码平面**（per-task，不冲突，进 feat 分支）：
+
 - `src/`、`tests/` — coder 产出
 - `docs/op_execution/tasks/{TID}/` — task 工作区
 - 归档目录 `docs/op_record/tasks/{TID}/` — closer 归档
 
 **控制平面**（全局共享，仅 leader 在主 repo 串行写，永不进 feat 分支）：
+
 - `tasks_list.json` — 状态源
 - `leader_checkpoint.md` — 断点
 - `specs/{feature}.md` — 跨 task 累积
@@ -182,13 +184,14 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
 标记文件统一路径：`.worktrees/{TID}/.harness/signals/`，不在 git 跟踪区（worktree 目录不入主 repo）。
 
-| 角色 | 标记文件 | 写入时机 |
-|------|---------|---------|
-| coder | `coder_done` | 当前 step/FAIL 修改完成后 |
-| code-reviewer | `reviewer_code_done` | review_code.md 写完后 |
-| test-reviewer | `reviewer_test_done` | review_test.md 写完后 |
+| 角色          | 标记文件               | 写入时机                  |
+| ------------- | ---------------------- | ------------------------- |
+| coder         | `coder_done`         | 当前 step/FAIL 修改完成后 |
+| code-reviewer | `reviewer_code_done` | review_code.md 写完后     |
+| test-reviewer | `reviewer_test_done` | review_test.md 写完后     |
 
 **leader 判定**：
+
 - 每次进入自治循环顶部时，扫所有 `进行中`/`审阅中` task 的 `signals/` 目录。存在即完成，不依赖 SendMessage 内容。
 - 扫到 `coder_done` → 删文件 → 派 review。
 - 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict。
@@ -197,6 +200,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 - **idle 兜底**：所有 task 都在等（无待开始、无 review 可处理），`ScheduleWakeup({ delaySeconds: 180, prompt: "继续执行 /op-start 自治循环——扫 signals/ 标记文件、检查 task 状态、推进下一个可跑 task", reason: "所有 task 都在等 teammate 完成，180s 轮询标记文件（< 300s 保持 cache 热）" })` 唤醒，重新扫标记文件。
 
 **生命周期**（D5）：
+
 - teammate 全程复用，不主动 shutdown，不监控上下文
 - 上下文满了由 Claude Code 自动 compact/截断
 - idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态
@@ -212,7 +216,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 **checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
 
-**恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 建/复用 team → **清理残留标记**（compact 后旧标记文件不可信，全部 `进行中`/`审阅中` task 的 `signals/` 目录清空，从 context.md/review_*.md 重建状态）→ 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。
+**恢复步骤**：读 checkpoint → 用 jq 查询 tasks_list → 读本协议 → 建/复用 team → **清理残留标记**（compact 后旧标记文件不可信，全部 `进行中`/`审阅中` task 的 `signals/` 目录清空，从 context.md/review_*.md 重建状态）→ 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。
 
 **checkpoint 格式**见 `template/op_execution/leader_checkpoint.md`，写完后跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收。
 
@@ -229,6 +233,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 
 **关键规则**：
+
 - review 最后一条 `verdict: PASS/FAIL` 为最终判定，leader 读尾行不读正文
 - 每条问题标暂存标签，默认不暂存（当场修）
 - 一个 task 两个 commit（代码 → merge → 控制平面），hash 当场写入 checkpoint
