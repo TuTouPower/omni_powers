@@ -77,11 +77,12 @@ digraph brainstorming {
     "写设计文档" -> "Spec 自审\n(内联修复)";
     "Spec 自审\n(内联修复)" -> "用户审阅 spec?";
     "用户审阅 spec?" -> "写设计文档" [label="需要修改"];
-    "用户审阅 spec?" -> "调用 op-generate-plan" [label="已批准"];
+    "用户审阅 spec?" -> "调用 op-generate-plan" [label="已批准，继续实施"];
+    "用户审阅 spec?" -> "结束（用户叫停）" [label="已批准，暂不实施"];
 }
 ```
 
-**终点是调用 op-generate-plan。** 不要调用任何其他实现 skill。brainstorming 之后唯一调用的 skill 是 op-generate-plan。
+**默认终点是调用 op-generate-plan。** 用户在审阅 spec 后可以说"先停"退出。
 
 ## 过程细节
 
@@ -145,12 +146,15 @@ spec 自审通过后，要求用户在继续前审阅 spec：
 
 > "Spec 已写入 `docs/op_execution/tasks/{TID}/spec.md`。请审阅，如需修改告诉我，然后我们开始写实施计划。"
 
-等用户回复。如果他们要改，改完重新自审。只有用户批准后才继续。
+等用户回复：
+- 用户要改 → 改完重新自审
+- 用户批准且继续 → 进入实施
+- **用户说"先停"/"暂不实施"/"就这样"** → 退出，本次只生成 spec，不进 plan
 
 **实施：**
 
-- 调用 op-generate-plan skill 创建详细实施计划
-- 不要调用任何其他 skill。op-generate-plan 是下一步。
+- 仅在用户明确批准且要继续时，调用 op-generate-plan skill 创建详细实施计划
+- 不要调用任何其他 skill
 
 ## 快速模式
 
@@ -216,5 +220,4 @@ scripts/stop-server.sh $SESSION_DIR
 | `docs/op_blueprint/architecture.md` | 系统架构 |
 | `docs/op_blueprint/domain.md` | 领域模型 |
 | `skills/op-generate-spec/visual-companion.md` | Visual companion 详细指南 |
-| `skills/op-generate-spec/spec-document-reviewer-prompt.md` | Spec 审阅提示词模板 |
 | `skills/op-generate-plan/SKILL.md` | 下一步：op-generate-plan |
