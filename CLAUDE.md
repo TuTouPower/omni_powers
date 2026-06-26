@@ -76,6 +76,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | 要查什么 | 去哪看 |
 |---|---|
 | 完整协议规则 | `RULES.md` |
+| 操作细则（jq/回滚/拆task/阻塞） | `RULES_DETAIL.md` |
 | 决策记录 | `op_decisions.md` |
 | 实验发现 | `op_findings.md` |
 | 历史踩坑 | `experience.md` |

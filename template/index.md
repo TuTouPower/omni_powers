@@ -29,6 +29,9 @@
 | `op_execution/tasks/{TID}/` | 进行中 task 的 spec/plan/steps/context/review_* |
 | `op_execution/tech_debt.md` | 已知技术债（每 task 闭环强制追加） |
 | `op_execution/leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |
+| `../RULES.md` | 核心协议（compact 恢复必读） |
+| `../RULES_DETAIL.md` | 操作细则（jq 示例/回滚/拆 task/阻塞项） |
+| `../op_decisions.md` | 决策记录 |
 | `op_execution/issues/{TID}_quality.md` | 质量阻塞记录 |
 
 ## op_record/ — 冻结历史

@@ -2,7 +2,7 @@
 
 > **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
 > compact 恢复：读本文件 + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
-> 决策依据见 `op_decisions.md`，实验记录见 `op_findings.md`。
+> 操作细则见 `RULES_DETAIL.md`，决策依据见 `op_decisions.md`，实验记录见 `op_findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，teammate 和 leader 上下文都是可重建缓存。
 
@@ -66,31 +66,7 @@ tasks_list.json status 值：
 | blocked | 阻塞 |
 | skipped | 跳过 |
 
-**状态修改脚本**：`skills/op-start/scripts/op-status.sh`，单 task 或批量修改 tasks_list.json 中 status 和 blocked_by 字段。
-
-**jq 查询示例**（compact 恢复必备，⚠️ 严禁 Read 整文件）：
-
-```bash
-# 查所有待开始 task（选波次）
-jq '.tasks[] | select(.status=="待开始")' docs/op_execution/tasks_list.json
-
-# 查某 task 依赖是否全完成
-TID=T02
-DEPS=$(jq -r '.tasks[] | select(.id=="'$TID'") | .depends_on[]?' docs/op_execution/tasks_list.json)
-for d in $DEPS; do
-  jq -r '.tasks[] | select(.id=="'$d'") | .status' docs/op_execution/tasks_list.json
-done
-
-# 查所有阻塞 task
-jq '.tasks[] | select(.status=="阻塞") | {id, blocked_by}' docs/op_execution/tasks_list.json
-
-# 查所有跳过 task
-jq '.tasks[] | select(.status=="跳过") | {id, title}' docs/op_execution/tasks_list.json
-
-# 查某 task 的下游（谁依赖它）
-TID=T02
-jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | index($tid))) | .id' docs/op_execution/tasks_list.json
-```
+状态修改：`bash skills/op-start/scripts/op-status.sh <TID> <status> [blocked_by]`（详见 `RULES_DETAIL.md`）。
 
 ## 文件分层
 
@@ -165,20 +141,11 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 收口分两阶段：(A) closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
 
-**WIP sub-commit**（大 task 防中途崩溃丢进度）：大 task 跑很久时，允许 `wip({TID}): step{N}` 性质的纯代码落盘 sub-commit——**不触发任何收口动作**（不改 status、不归档、不写 checkpoint、不整理 ref）。收口时由 leader 定 squash 还是保留。与收口完全脱钩。
-
 ### DAG 与 depends_on
 
 每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。**所有新增 task 的入口**（op-task、op-debt2tasks、task-splitter）都必须填 `depends_on`。
 
 每次 `/op-start` 从 `depends_on` 重算拓扑分层，生成 `docs/op_execution/dag.md`（Mermaid 图 + 分层表），给人看。dag.md 是衍生文件，不存 checkpoint。
-
-**tasks_list 拆分预案**（task 量大到单文件过大、查询变慢时启用）：默认不拆，单文件靠 jq 查询。量真大到几百时才拆：
-
-- `docs/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
-- `docs/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
-- 依赖检查：活表查不到的依赖 → 查 done 表确认完成
-- 收口时 task 从活表移到 done 表
 
 ### 并发与 worktree
 
@@ -239,13 +206,6 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
 **compact 后恢复**：teammate 消失需重 spawn。恢复前查 config.json，isActive=false 的先清残留再 spawn。恢复后从 spec/plan/context.md 重建上下文。
 
-
-### tech_debt
-
-只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行）。不允许只口头说"记 tech_debt"，必须真写文件，否则 task 不算闭环。
-
-格式：按 task 分节，表格列 `| ID | 来源(review-code/review-test/环境) | 债项 | 严重度 | 暂存原因 |`。
-
 ### compact 恢复
 
 compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoint.md`。
@@ -254,108 +214,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 **恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 建/复用 team → **清理残留标记**（compact 后旧标记文件不可信，全部 `进行中`/`审阅中` task 的 `signals/` 目录清空，从 context.md/review_*.md 重建状态）→ 若有未归档 `tasks/{TID}/` 则从 context.md 续，否则重新选 task。
 
-**checkpoint 格式**（`docs/op_execution/leader_checkpoint.md`，模板见 `template/op_execution/leader_checkpoint.md`）：
-
-```markdown
-# Leader Checkpoint
-
-## 已完成 task
-- {TID} "{title}" ✅ {commit_hash}
-
-## tasks_list.json 状态
-- 完成：{TID}...
-- 下一个：{TID}
-- 阻塞跳过：{TID}（blocked_by=key/quality/domain）...
-
-## team 状态
-- team: op-{project}-team
-- team config 路径: ~/.claude/teams/op-{project}-team/config.json
-- coder: {活跃/需重 spawn}
-- code-reviewer / test-reviewer: 常驻
-
-## compact 计数
-- 已完成 N task
-
-## 依赖 DAG
-（拓扑分层，⚠️ 恢复后必须重算，不吃 checkpoint 惯性）
-
-## 关键上下文（给人读）
-- 当前目标：...
-- 下一步：...
-- 卡点 / 待决策：...
-- 易踩的坑 / 背景须知：...
-```
-
-## 阻塞项处理
-
-| 类型 | blocked_by | 处理 |
-|---|---|---|
-| 外部密钥/凭据缺失 | `key` | 跳过，标阻塞 |
-| 域名/外部端点缺失 | `domain` | 同上 |
-| 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
-| spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
-
-回滚：不用 reset（会丢历史）。
-
-1. `git revert <代码commit_hash>` — 反向提交（代码平面）
-2. `git revert <控制平面commit_hash>` — 反向提交（控制平面）
-3. `bash skills/op-start/scripts/op-status.sh {TID} 待开始` — 该 task status 回退
-4. 用 jq 查下游 task（`select(.depends_on | index("{TID}"))`），逐一 `op-status.sh {下游TID} 待开始`
-5. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
-6. 重新进入开发循环
-
-不连锁回滚下游，只重置状态。下游 status 回退后依赖链完整，选 task 规则自然重新调度。
-
-**下游传播规则**：
-- 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`，退出当前波次。
-- **绕过**：若下游 task 实际上不依赖被阻塞 task 的产出，leader 可修改该下游 task 的 `depends_on` 移除阻塞节点，并在 decisions.md 记录理由。无此记录则不可绕过。
-- 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
-
-**阻塞汇总**：所有可跑 task 跑完后，若仍有阻塞 task，leader 才停下报告阻塞项、缺什么、需用户提供什么。
-
-### 拆 task（task 太大时，派 task-splitter）
-
-leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。agent 定义见 `agents/op-task-splitter.md`。
-
-**判断标准**：
-
-| 情况 | 处理 |
-|---|---|
-| 多改动各自需独立 review + 能独立回滚 | 拆成多 task（T{n}a/T{n}b），各自 spec/plan/review/commit |
-| 多改动是一个连贯交付、一起 review 才有意义 | 一个 task 多 step，一次收口一次 commit |
-
-**时机**：在拆 steps.md 那一刻判断，不能等 coder 写一半再拆——已落盘代码要回切会乱。
-
-**机制**（task-splitter 子代理执行，不污染 leader 上下文）：
-1. leader 定边界（哪些 step 归 T{n}a、哪些归 T{n}b、依赖关系），Agent 调 task-splitter subagent
-2. task-splitter 执行：建子目录、切原 spec/plan（不重跑 generator）、已写代码归入 context.md、改 tasks_list.json（删原未完成 task 行、加子 task 行）
-3. task-splitter 回报结果，leader 不读中间过程，按新 tasks_list 重走选 task 规则
-
-**未完成原 task 可替换**：已完成 task 不删是为保依赖链；被重新 scope 的未完成 task 可删原 task 加子 task，避免永不完成的原 task 误导选 task。
-
-**例外**：拆分时发现原 spec 本身漏/错，错的部分由 leader 走 op-task 重跑，正确部分仍交 splitter 切。
-
-### plan 分段派活
-
-leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，由 leader 维护进度）。每个 step 是一组相关文件改动。
-
-**派活方式**：leader 只给 coder 当前 step + 相关 spec 段，不给整份 plan。coder 每 step 完成后 leader 再派下一个。小 task 可一次给全 plan。
-
-**steps.md**：leader 维护，记录当前 step 编号和进度。coder 只读不写。
-
-## 执行体系（指向 skill）
-
-协议的**操作**已固化到 skill。此处只列映射关系：
-
-| 环节 | 谁做 | 协议段只记规则 |
-|---|---|---|
-| 需求→task | `/op-task` | 先改 ref 再拆 task |
-| 开发循环 | `/op-start` | 自治循环，收口后自动选下一个 |
-| review | Agent Team（code-reviewer + test-reviewer） | 双 review 并行，leader 读 verdict |
-| 收口 | op-start 收口段 | closer stage 全部产出，leader commit |
-| 技术债偿还 | `/op-debt2tasks` | 功能 task 全 done 后触发 |
-| spec 生成 | `/op-generate-spec`（或 intake 调用） | op-generate-spec skill |
-| plan 生成 | `/op-generate-plan`（或 intake 调用） | op-generate-plan skill |
+**checkpoint 格式**见 `template/op_execution/leader_checkpoint.md`，写完后跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收。
 
 ## 不做
 

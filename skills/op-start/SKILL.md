@@ -210,7 +210,7 @@ bash skills/op-start/scripts/op-status.sh {TID} 完成
 # 6. 整理 specs/{feature}.md（closer_output 中的 spec 摘要）
 # 7. 写 leader_checkpoint.md（HASH 为上面代码提交的 hash）
 HASH=$(git rev-parse HEAD)
-# checkpoint 格式见 RULES.md compact 恢复段
+# checkpoint 格式见 template/op_execution/leader_checkpoint.md
 
 # 8. 验收
 bash skills/op-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
