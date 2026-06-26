@@ -2,7 +2,7 @@
 
 > **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
 > compact 恢复：读本文件 + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
-> 操作细则见 `RULES_DETAIL.md`，决策依据见 `docs/omni_powers/op_decisions.md`，实验记录见 `docs/omni_powers/op_findings.md`。
+> 决策依据见 `docs/omni_powers/op_decisions.md`，实验记录见 `docs/omni_powers/op_findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，所有 agent 上下文都是可重建缓存。全线 Sub Agent，每次 fresh dispatch。
 
@@ -51,7 +51,33 @@ tasks_list.json status 值：
 | blocked             | 阻塞                    |
 | skipped             | 跳过                    |
 
-状态修改：`bash scripts/op_status.sh <TID> <status> [blocked_by]`（详见 `RULES_DETAIL.md`）。
+状态修改：`bash scripts/op_status.sh <TID> <status> [blocked_by]`。
+
+### 阻塞项处理
+
+| 类型 | blocked_by | 处理 |
+|---|---|---|
+| 外部资源缺失（密钥/端点等） | `resource` | 跳过，标阻塞 |
+| 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
+| spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
+
+### 下游传播
+
+- 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`。
+- **绕过**：若下游 task 实际上不依赖被阻塞 task 的产出，leader 可修改该下游 task 的 `depends_on` 移除阻塞节点，并在 decisions.md 记录理由。无此记录则不可绕过。
+- 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
+- 所有可跑 task 跑完后仍有阻塞，leader 才停下报告阻塞项、缺什么、需用户提供什么。
+
+### 回滚
+
+不用 reset（会丢历史）。
+
+1. `git revert <commit_hash>` — 反向提交
+2. `bash scripts/op_status.sh {TID} 待开始` — 该 task status 回退
+3. `bash scripts/op_jq.sh downstream {TID}` 查下游 task，逐一 `op_status.sh {下游TID} 待开始`
+4. 若该 task 已归档到 `docs/omni_powers/op_record/tasks/{TID}/`：`git mv docs/omni_powers/op_record/tasks/{TID} docs/omni_powers/op_execution/tasks/{TID}` — 移回工作区
+
+不连锁回滚下游，只重置状态。下游 status 回退后依赖链完整，选 task 规则自然重新调度。
 
 ## 文件分层
 
@@ -91,6 +117,10 @@ docs/omni_powers/op_execution/tasks/{TID}/
 
 **新建文件规则**：一律先拷 `docs_template/omni_powers` 下对应模板再填内容。无对应模板才自建。
 
+### tech_debt
+
+只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行 "无新增"）。不允许只口头说"记 tech_debt"，必须真写文件，否则 task 不算闭环。
+
 ## 关键规则
 
 ### review 判定
@@ -113,13 +143,35 @@ docs/omni_powers/op_execution/tasks/{TID}/
 - master 模式：直接在 master 分支工作，不创建 worktree
 - leader 将当前工作目录传给所有 subagent 的 dispatch prompt
 
+大 task 跑很久时，允许 `wip({TID})` 性质的纯代码落盘 sub-commit——**不触发任何收口动作**（不改 status、不归档、不写 checkpoint、不整理 ref）。收口时由 leader 定 squash 还是保留。
+
 ### DAG 与 depends_on
 
 每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。每次 `/op-start` 从 `depends_on` 重算拓扑分层，生成 `docs/omni_powers/op_execution/dag.md`。
 
+### tasks_list 拆分预案
+
+默认不拆，单文件靠 jq 查询。task 量大到单文件过大、查询变慢时启用：
+
+- `docs/omni_powers/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
+- `docs/omni_powers/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
+- 依赖检查：活表查不到的依赖 → 查 done 表确认完成
+- 收口时 task 从活表移到 done 表
+
 ### compact 恢复
 
 compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoint.md`。
+
+⚠️ 严禁 Read 整文件 `tasks_list.json`，用 `scripts/op_jq.sh` 或 jq 查询。
+
+```bash
+bash scripts/op_jq.sh pending      # 查所有待开始 task
+bash scripts/op_jq.sh deps {TID}   # 查某 task 依赖
+bash scripts/op_jq.sh blocked      # 查阻塞
+bash scripts/op_jq.sh skipped      # 查跳过
+bash scripts/op_jq.sh downstream {TID}  # 查下游
+bash scripts/op_jq.sh all          # 全部概览
+```
 
 **checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG。
 

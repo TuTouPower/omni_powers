@@ -241,8 +241,7 @@ cd <原项目根目录>
 
 | 文件 | 用途 |
 |---|---|
-| `RULES.md` | 规则手册 |
-| `RULES_DETAIL.md` | 操作细则 |
+| `RULES.md` | 规则手册 + 操作细则 |
 | `template/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
 | `skills/op-start/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |

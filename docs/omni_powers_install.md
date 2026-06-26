@@ -4,7 +4,7 @@
 
 用户在任意项目中调用 `/op-start` 等 skill 时，需要能：
 
-1. **读到通用文档**：RULES.md、RULES_DETAIL.md 等协议文档，compact 恢复必读
+1. **读到通用文档**：RULES.md 等协议文档，compact 恢复必读
 2. **执行脚本**：skill 自带脚本 + 多个 skill 共用的通用脚本
 3. **配置 Agent 模型**：op-coder 用 haiku/sonnet、op-code-reviewer 用哪个模型，用户可改
 4. **配置生成目录**：task 工作区、蓝图文档、记录归档的目录名，用户可改
@@ -59,7 +59,7 @@ OpenSpec 可以用 CLI 因为它的 skill 只做规范管理一件事。omni_pow
         ├─ 读协议:   cat $CLAUDE_PLUGIN_ROOT/RULES.md（op-start 调用时）
         ├─ 脚本路径: bash $CLAUDE_PLUGIN_ROOT/scripts/op_status.sh
         ├─ 查询:     bash $CLAUDE_PLUGIN_ROOT/scripts/op_jq.sh
-        ├─ 文档读取: cat $CLAUDE_PLUGIN_ROOT/RULES_DETAIL.md
+        ├─ 文档读取: cat $CLAUDE_PLUGIN_ROOT/RULES.md
         ├─ 模板读取: cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/.../spec.md
         ├─ 模型选择: Agent({ model: "$OMNI_POWERS_MODEL_CODER" })
         └─ 生成路径: $OMNI_POWERS_DIR_TASKS/tasks_list.json
@@ -108,8 +108,7 @@ omni_powers/
 │   ├── op_execution/
 │   └── op_blueprint/
 │
-├── RULES.md                     # 核心协议（op-start 调用时 cat 读取）
-├── RULES_DETAIL.md              # 操作细则（按需 cat 读取）
+├── RULES.md                     # 核心协议 + 操作细则（op-start 调用时 cat 读取）
 └── CLAUDE.md
 ```
 
@@ -268,7 +267,6 @@ bash $CLAUDE_PLUGIN_ROOT/scripts/op_jq.sh deps {TID}
 
 ```bash
 cat $CLAUDE_PLUGIN_ROOT/RULES.md
-cat $CLAUDE_PLUGIN_ROOT/RULES_DETAIL.md
 cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/op_execution/tasks/{TID}/spec.md
 cat $CLAUDE_PLUGIN_ROOT/docs_template/omni_powers/op_blueprint/architecture.md
 ```

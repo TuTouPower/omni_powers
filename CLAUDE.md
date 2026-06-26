@@ -12,8 +12,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 ## 目录结构
 
 ```
-├── RULES.md        # 核心协议（规则手册）
-├── RULES_DETAIL.md # 操作细则
+├── RULES.md        # 核心协议（规则手册 + 操作细则）
 │
 ├── docs/                    # 项目文档
 │   ├── op_decisions.md      #   决策记录
@@ -88,8 +87,7 @@ cd omni_powers
 
 | 要查什么 | 去哪看 |
 |---|---|
-| 完整协议规则 | `RULES.md` |
-| 操作细则（jq/回滚/阻塞） | `RULES_DETAIL.md` |
+| 完整协议规则 + 操作细则 | `RULES.md` |
 | 决策记录 | `docs/omni_powers/op_decisions.md` |
 | 实验发现 | `docs/omni_powers/op_findings.md` |
 | 历史踩坑 | `docs/experience.md` |
