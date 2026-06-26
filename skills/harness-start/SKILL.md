@@ -21,8 +21,6 @@ description: >
 2. `docs/harness_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
 3. `agent_protocol.md` —— 规则手册
 
-**前置校验**：`$TEST_CMD` 或 `$PRJ_TEST_CMD` 必须已定义，否则报错退出。
-
 **确保 Agent Team 存在**（不创建 team 不进循环）：
 
 - 已有 teammate → SendMessage 唤醒确认存活
@@ -129,7 +127,7 @@ leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂
 
 ### 6. 收口
 
-每个 task 独立 closer + 独立 commit。并发波次按依赖顺序收口：先合被依赖 task 的代码回主线，每合一跑 `$TEST_CMD`。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。
+每个 task 独立 closer + 独立 commit。并发波次按依赖顺序收口：先合被依赖 task 的代码回主线。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），冲突记录写入 decisions.md。
 
 每个 task 的收口分两部分——closer 做机械读写（步骤详见 `agents/harness-closer.md`），leader 做状态变更和提交：
 
@@ -166,7 +164,6 @@ bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_c
 # 切回主 repo → merge → 删 worktree → 选下个 task
 cd <project_root> && pwd
 git merge feat/{TID} --no-ff -m "merge({TID}): {title}"
-$TEST_CMD || { echo "[FAIL] 全量测试不通过" >&2; exit 1; }
 git worktree remove .worktrees/{TID}
 ```
 

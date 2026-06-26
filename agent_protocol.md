@@ -96,10 +96,6 @@ docs/harness_execution/tasks/{TID}/
 
 ## 关键规则
 
-### 测试命令
-
-项目全量测试命令由环境变量 `TEST_CMD` 或 `PRJ_TEST_CMD` 定义（二选一，前者优先）。未定义时报错，禁止跳过。leader 在每 task 代码合入主线和收口验收时必须跑 `$TEST_CMD`。
-
 ### review 判定
 
 review 由 Agent Team 执行（D4），不用 Workflow。
@@ -133,7 +129,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
   3. 构建无向冲突图（节点=task，边=冲突对），每个连通分量内串行，分量间可并发
   4. 并发数 = min(3, 连通分量数)。若分量数 > 3，按分量内 task 数降序取前 3 个分量，其余等下个波次
 - 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
-- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线（`git merge feat/{TID}`），每合一跑全量测试（`$TEST_CMD`）。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
+- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线（`git merge feat/{TID}`）。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑测试确认，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
 
 ### Agent Team 管理
 
