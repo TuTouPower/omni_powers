@@ -224,7 +224,7 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 | 需求→task | `/intake` | 先改 ref 再拆 task |
 | 开发循环 | `/harness-start` | 自治循环，收口后自动选下一个 |
 | review | Agent Team（code-reviewer + test-reviewer） | 双 review 并行，leader 读 verdict |
-| 收口 | harness-start 收口段 | git add 禁 `-A`，跑 close_check.sh |
+| 收口 | harness-start 收口段 | closer stage 全部产出，leader commit |
 | 技术债偿还 | `/debt-to-tasks` | 功能 task 全 done 后触发 |
 | spec 生成 | `/spec-gen`（或 intake 调用） | spec-generator skill |
 | plan 生成 | `/plan-gen`（或 intake 调用） | plan-generator skill |

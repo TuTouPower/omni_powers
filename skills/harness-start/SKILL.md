@@ -144,6 +144,7 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 4. 整理 specs/{feature}.md（读 task spec 全文，整理当前生效规格进功能 specs）
 5. 归档 spec 盖戳
 6. git mv 归档到 record/tasks/{TID}
+7. git add -A 把所有产出 stage 好（worktree 只有 closer 产出，不会误伤）
 
 ```js
 Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: .worktrees/{TID}。" })
@@ -152,7 +153,7 @@ Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt:
 **leader 执行（closer 回报后）**：
 7. 更新 tasks_list.json：status → 完成
 8. 写 leader_checkpoint.md
-9. git 提交（严禁 `git add -A`，一个 task 一次 commit）
+9. git 提交（closer 已 stage 所有产出，直接 commit；一个 task 一次 commit）
 10. 验收：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`
 11. hash 回填（延迟到下一个 task）
 
