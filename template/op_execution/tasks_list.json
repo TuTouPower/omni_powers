@@ -6,7 +6,9 @@
       "depends_on": null,
       "status": "完成",
       "verification": "{验收标准}",
-      "blocked_by": null
+      "blocked_by": null,
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
     },
     {
       "id": "T02",
@@ -14,7 +16,9 @@
       "depends_on": ["T01"],
       "status": "审阅中",
       "verification": "{验收标准}",
-      "blocked_by": null
+      "blocked_by": null,
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
     },
     {
       "id": "T03",
@@ -22,7 +26,9 @@
       "depends_on": ["T01"],
       "status": "进行中",
       "verification": "{验收标准}",
-      "blocked_by": null
+      "blocked_by": null,
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
     },
     {
       "id": "T04",
@@ -30,7 +36,9 @@
       "depends_on": ["T01"],
       "status": "待开始",
       "verification": "{验收标准}",
-      "blocked_by": null
+      "blocked_by": null,
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
     },
     {
       "id": "T05",
