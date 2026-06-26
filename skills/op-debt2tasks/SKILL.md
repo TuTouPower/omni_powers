@@ -15,7 +15,7 @@ description: >
 
 ## 模式选择
 
-**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 spec/op-generate-planerator（快速）。
+**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 op-generate-spec/op-generate-plan（快速）。
 
 **深度模式**：仅当用户**明确说**以下关键词时才走深度：
 - "深度模式"、"深度讨论"、"逐项讨论"、"详细讨论"

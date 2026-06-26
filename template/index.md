@@ -25,6 +25,7 @@
 | 文档 | 内容 |
 |---|---|
 | `harness_execution/tasks_list.json` | task 清单 + 依赖 + status（用查询不整体读） |
+| `harness_execution/dag.md` | DAG 依赖图（Mermaid + 分层表，由 dag_gen.sh 生成） |
 | `harness_execution/tasks/{TID}/` | 进行中 task 的 spec/plan/steps/context/review_* |
 | `harness_execution/tech_debt.md` | 已知技术债（每 task 闭环强制追加） |
 | `harness_execution/leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |

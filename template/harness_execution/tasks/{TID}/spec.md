@@ -1,7 +1,7 @@
 # {TID} {title} Spec
 
 > 来源：`docs/harness_blueprint/prd.md`、`docs/harness_blueprint/spec.md`、`docs/harness_blueprint/architecture.md`、`docs/harness_blueprint/domain.md`。
-> 生成方式：`superpowers:brainstorming`。
+> 生成方式：`op-generate-spec` skill。
 
 ## 目标
 

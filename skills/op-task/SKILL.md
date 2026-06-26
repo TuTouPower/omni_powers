@@ -101,9 +101,9 @@ context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）
 ```
 /intake（默认深度模式）
     │
-    ├── 深度：op-generate-spec（深度讨论）→ 拆 task → spec/op-generate-planerator（深度）
+    ├── 深度：op-generate-spec（深度讨论）→ 拆 task → op-generate-spec/op-generate-plan（深度）
     │
-    └── 快速：确认范围 → 拆 task → spec/op-generate-planerator（快速）
+    └── 快速：确认范围 → 拆 task → op-generate-spec/op-generate-plan（快速）
                 │
                 ▼
          /op-start

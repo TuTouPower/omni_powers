@@ -9,8 +9,8 @@
 
 | 模板 | 用途 | 谁写 |
 |---|---|---|
-| [harness_execution/tasks/{TID}/spec.md](harness_execution/tasks/{TID}/spec.md) | 单 task 规格（brainstorming 生成） | leader |
-| [harness_execution/tasks/{TID}/plan.md](harness_execution/tasks/{TID}/plan.md) | 实施计划（writing-plans 生成） | leader |
+| [harness_execution/tasks/{TID}/spec.md](harness_execution/tasks/{TID}/spec.md) | 单 task 规格（op-generate-spec 生成） | leader |
+| [harness_execution/tasks/{TID}/plan.md](harness_execution/tasks/{TID}/plan.md) | 实施计划（op-generate-plan 生成） | leader |
 | [harness_execution/tasks/{TID}/steps.md](harness_execution/tasks/{TID}/steps.md) | 大 plan 拆分（可选） | leader |
 | [harness_execution/tasks/{TID}/context.md](harness_execution/tasks/{TID}/context.md) | coder 开发记录，每轮追加 | coder |
 | [harness_execution/tasks/{TID}/review_code.md](harness_execution/tasks/{TID}/review_code.md) | 代码审查 + coder 修改记录（只追加） | reviewer + coder |

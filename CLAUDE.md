@@ -42,7 +42,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 
 ## 核心概念
 
-**状态机**：task 生命周期为 `待开始 → 进行中 → 审阅中 → 完成`（或 `阻塞`）。
+**状态机**：task 生命周期为 `待开始 → 进行中 → 审阅中 → 收口中 → 完成`（或 `阻塞`/`跳过`）。
 
 **三态文档**：
 | 层 | 含义 | 例子 |
@@ -80,3 +80,5 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | 实验发现 | `op_findings.md` |
 | 历史踩坑 | `experience.md` |
 | 文档模板 | `template/README.md` |
+| 文档导航 | `template/index.md`（部署后为 `docs/index.md`） |
+| DAG 依赖图 | `docs/harness_execution/dag.md`（由 `dag_gen.sh` 生成） |
