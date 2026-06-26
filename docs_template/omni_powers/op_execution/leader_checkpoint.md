@@ -1,27 +1,18 @@
 # Leader Checkpoint
 
-> 每 task 闭环后写。compact 后从此文件恢复。也作会话交接——人读"关键上下文"段即可接手。
+> 每 task 闭环后由 `op-checkpoint.sh {TID}` 自动生成机械部分，leader 补填"关键上下文"段。
 > 写完应跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
 
-## 已完成 task 列表
-（按完成顺序列出 TID，compact 恢复后据此判断进度）
-- {TID} "{title}" ✅ {commit_hash}
+## 已完成 task
 
-## tasks_list.json 状态
-- 完成：{TID}...
-- 下一个：{TID}
-- 阻塞跳过：{TID}（blocked_by=key/quality/domain）...
+<!-- AUTO: op-checkpoint.sh 自动追加 -->
 
-## team 状态
-- team: {name}
-- team config 路径: `~/.claude/teams/{team-name}/config.json`（compact 恢复时查 team 还在不在、paneId 在哪）
-- op-coder: {复用/重 spawn 决策}
-- op-code-reviewer / op-test-reviewer: 常驻
+## tasks_list 状态
 
-## 依赖 DAG
-（拓扑分层。⚠️ 恢复后必须重算 DAG，不吃 checkpoint 惯性）
+<!-- AUTO: op-checkpoint.sh 自动生成 -->
 
-## 关键上下文（给人读）
+## 关键上下文（leader 手动填）
+
 - 当前目标：...
 - 下一步：...
 - 卡点 / 待决策：...

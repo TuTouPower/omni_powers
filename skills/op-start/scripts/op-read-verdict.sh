@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
-# op-read-verdict：读 review 文件的最终 verdict
+# op-read-verdict：读 review 文件的最终 verdict，并判断当前轮次
 # 用法: op-read-verdict.sh <TID>
-# 分别读 review_code.md 和 review_test.md 的最后一条 verdict 行
-# 输出: 轮次、各文件 verdict、最终结果
-# exit 0 = 双 PASS, exit 1 = 任一 FAIL
+# 输出: round + 各文件 verdict + result
+# 无 review 文件时输出 round: 1, result: NONE，仍 exit 0
+# exit 0 = 双 PASS 或无 review 文件, exit 1 = 任一 FAIL
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TID="${1:?用法: op-read-verdict.sh <TID>}"
 TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
 
-die() { echo "[FAIL] $*" >&2; exit 1; }
-
 read_verdict() {
     local file="$1"
-    [ -f "$file" ] || die "$file 不存在"
-    grep -oP 'verdict:\s*\K(PASS|FAIL)' "$file" | tail -1 || die "$file 中未找到 verdict 行"
+    [ -f "$file" ] || { echo "NONE"; return; }
+    grep -oP 'verdict:\s*\K(PASS|FAIL)' "$file" | tail -1 || echo "NONE"
 }
 
 code_v=$(read_verdict "$TASK_DIR/review_code.md")
 test_v=$(read_verdict "$TASK_DIR/review_test.md")
 
-# 轮次 = review_code.md 中 verdict 行数（两个文件应一致）
+# 轮次 = review_code.md 中 verdict 行数（无文件则为 0）
 round=$(grep -c '^verdict:' "$TASK_DIR/review_code.md" 2>/dev/null || echo 0)
+
+if [ "$code_v" = "NONE" ] && [ "$test_v" = "NONE" ]; then
+    echo "round: 0"
+    echo "code_review: NONE"
+    echo "test_review: NONE"
+    echo "result: NONE"
+    exit 0
+fi
 
 echo "round: $round"
 echo "code_review: $code_v"

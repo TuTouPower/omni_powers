@@ -50,7 +50,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 leader 的 dispatch prompt：
 ```
-收口 T{n} "{title}"。
+收口 {TID} "{title}"。
 暂存项：[{列表，或"无"}]
 决策：[{内容，或"无"}]
 specs 归属：{feature 文件名，或"不确定"}

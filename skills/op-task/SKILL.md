@@ -80,7 +80,7 @@ description: >
 ```
 === 待追加 task ===
 
-T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
+{TID}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 共 {m} 个 task。追加？
 ```
 
