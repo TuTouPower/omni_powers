@@ -1,6 +1,6 @@
 # harness
 
-Claude Code 多 Agent 协作工作流系统。leader 编排、op-op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。
+Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。
 
 ## 快速开始
 
@@ -13,9 +13,13 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-op-coder 开发
 
 ```
 ├── RULES.md        # 核心协议（规则手册）
-├── op_decisions.md     # 决策记录
-├── op_findings.md              # 实验发现
-├── experience.md            # 踩坑笔记
+├── RULES_DETAIL.md # 操作细则
+│
+├── docs/                    # 项目文档
+│   ├── op_decisions.md      #   决策记录
+│   ├── op_findings.md       #   实验发现
+│   ├── experience.md        #   踩坑笔记
+│   └── omni_powers_install.md # 通用化方案
 │
 ├── agents/                  # Agent 角色提示词
 │   ├── op-coder.md             #   开发者（TDD、review 反馈处理）
@@ -73,7 +77,7 @@ cd harness
 # 重启 Claude Code 生效
 ```
 
-> 通用化方案详见 `omni_powers_install.md`
+> 通用化方案详见 `docs/omni_powers_install.md`
 
 ## 依赖
 
@@ -87,9 +91,9 @@ cd harness
 |---|---|
 | 完整协议规则 | `RULES.md` |
 | 操作细则（jq/回滚/阻塞） | `RULES_DETAIL.md` |
-| 决策记录 | `op_decisions.md` |
-| 实验发现 | `op_findings.md` |
-| 历史踩坑 | `experience.md` |
+| 决策记录 | `docs/op_decisions.md` |
+| 实验发现 | `docs/op_findings.md` |
+| 历史踩坑 | `docs/experience.md` |
 | 文档模板 | `template/README.md` |
 | 文档导航 | `template/index.md`（部署后为 `docs/index.md`） |
 | DAG 依赖图 | `docs/op_execution/dag.md`（由 `dag_gen.sh` 生成） |

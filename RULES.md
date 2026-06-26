@@ -2,7 +2,7 @@
 
 > **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
 > compact 恢复：读本文件 + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
-> 操作细则见 `RULES_DETAIL.md`，决策依据见 `op_decisions.md`，实验记录见 `op_findings.md`。
+> 操作细则见 `RULES_DETAIL.md`，决策依据见 `docs/op_decisions.md`，实验记录见 `docs/op_findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，teammate 和 leader 上下文都是可重建缓存。
 

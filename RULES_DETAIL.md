@@ -1,7 +1,7 @@
 # 操作细则
 
 > 编排操作细节，compact 恢复时不需要，按需查阅。
-> 核心规则见 `RULES.md`，决策依据见 `op_decisions.md`。
+> 核心规则见 `RULES.md`，决策依据见 `docs/op_decisions.md`。
 
 ## jq 查询示例
 
