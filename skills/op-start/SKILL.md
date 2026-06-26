@@ -115,22 +115,27 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 SendMessage({ to: "coder-1", message: "cd <project_root>/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
 ```
 
-tasks_list.json 波次内所有 task status → 进行中。
+```bash
+# 波次内所有 task → 进行中
+bash skills/op-start/scripts/op-status.sh --batch "{TID1},{TID2}" 进行中
+```
 
 ### 4. coder 完成 → 立即派 review（事件驱动）
 
 **不等全波次完成。** 每个 coder 完成后立即派 review，先到先审。
 
-完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `RULES.md` 通知机制）。coder 报错/阻塞 → status=阻塞，退出波次。
+完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `RULES.md` 通知机制）。coder 报错/阻塞 → `bash skills/op-start/scripts/op-status.sh {TID} 阻塞 spawn`，退出波次。
 
-**leader 扫到标记文件 → 删 `coder_done` → 派 review：**
+**leader 扫到标记文件 → 删 `coder_done` → 更新状态 → 派 review：**
+
+```bash
+bash skills/op-start/scripts/op-status.sh {TID} 审阅中
+```
 
 ```js
 SendMessage({ to: "code-reviewer", message: "cd <project_root>/.worktrees/{TID} && pwd\nreview T{a}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
 SendMessage({ to: "test-reviewer", message: "cd <project_root>/.worktrees/{TID} && pwd\nreview T{a} tests。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
 ```
-
-tasks_list.json status → 审阅中。leader idle 等返回。
 
 ### 5. review 返回 → 处理结果（事件驱动）
 
@@ -138,7 +143,12 @@ review 完成判断：`.worktrees/{TID}/.harness/signals/reviewer_code_done` 和
 
 leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `RULES.md`）。
 
-**双 PASS → 收口**，**任一 FAIL → FAIL 轮**。
+**双 PASS → 收口**：
+```bash
+bash skills/op-start/scripts/op-status.sh {TID} 收口中
+```
+
+**任一 FAIL → FAIL 轮**。
 
 ### 6. 收口
 
@@ -183,9 +193,7 @@ git status --short | grep -qv '^$' && { echo "[FAIL] 主 repo 不干净" >&2; ex
 CLOSER_OUT="$(cat .worktrees/{TID}/.harness/signals/closer_output)"   # worktree 未删时先读
 
 # 2. 更新 tasks_list.json：status → 完成
-jq --arg tid "{TID}" '.tasks |= map(if .id == $tid then .status = "完成" else . end)' \
-  docs/harness_execution/tasks_list.json > docs/harness_execution/tasks_list.json.tmp \
-  && mv docs/harness_execution/tasks_list.json.tmp docs/harness_execution/tasks_list.json
+bash skills/op-start/scripts/op-status.sh {TID} 完成
 
 # 3. 追加 progress.md（用 closer_output 内容）
 # 4. 追加 decisions.md（leader 给的决策内容）
@@ -208,9 +216,14 @@ git commit -m "chore(harness): {TID} 收口记录"
 按协议 FAIL 轮规则执行（max 3 轮，下游顺延，详见 `RULES.md`）。
 
 - 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "cd <project_root>/.worktrees/{TID} && pwd\nT{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
-- 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 issues/{TID}_quality.md，退出波次
+- 第 3 轮仍 FAIL → `bash skills/op-start/scripts/op-status.sh {TID} 阻塞 quality`，写 issues/{TID}_quality.md，退出波次
 
-波次内所有 task 收口完成（或阻塞退出）→ 自动回到步骤 1。
+波次内所有 task 收口完成（或阻塞退出）→ **下游传播**：
+```bash
+# 阻塞 task 的所有下游 → 跳过
+bash skills/op-start/scripts/op-status.sh --batch "{下游TID1},{下游TID2}" 跳过
+```
+→ 自动回到步骤 1。
 
 ## 循环结束
 
