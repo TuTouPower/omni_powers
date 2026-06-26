@@ -128,16 +128,9 @@ leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂
 
 并发时按依赖顺序收口，先合被依赖的 task，每合一跑全量测试，全部合并完再做共享文档收口。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。
 
-每个 task 的收口分两部分——closer 做机械读写，leader 做状态变更和提交：
+每个 task 的收口分两部分——closer 做机械读写（步骤详见 `agents/harness-closer.md`），leader 做状态变更和提交：
 
 **closer 执行（Subagent，一次性，不加入 team）**：
-1. 追加 progress.md
-2. 有决策追加 decisions.md
-3. 提取 review_*.md 中标了【暂存】的项写入 tech_debt.md
-4. 整理 specs/{feature}.md（读 task spec 全文，整理当前生效规格进功能 specs）
-5. 归档 spec 盖戳
-6. git mv 归档到 record/tasks/{TID}
-7. git add -A 把所有产出 stage 好（worktree 只有 closer 产出，不会误伤）
 
 ```js
 Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd <project_root>/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })

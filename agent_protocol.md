@@ -172,11 +172,41 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 
 compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoint.md`。
 
-**checkpoint 字段**：刚完成 task + commit hash、tasks_list 状态快照、下一个 task、team teammate 状态、team config 路径。
-
 **checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG 层宽，不能吃 checkpoint 惯性。
 
 **恢复步骤**：读 checkpoint → 读 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 context.md 续（判断 coder 进行到哪了），否则重新选 task → 重建/复用 team。
+
+**checkpoint 格式**（`docs/harness_execution/leader_checkpoint.md`，模板见 `template/harness_execution/leader_checkpoint.md`）：
+
+```markdown
+# Leader Checkpoint
+
+## 已完成 task
+- {TID} ... ✅ {commit_hash}
+
+## tasks_list.json 状态
+- 完成：...
+- 下一个：{TID}
+- 阻塞跳过：...
+
+## team 状态
+- team: {name}
+- team config 路径: ~/.claude/teams/{team-name}/config.json
+- coder: {复用/重 spawn 决策}
+- reviewer / test-reviewer: 常驻
+
+## compact 计数
+- 已完成 N task
+
+## 依赖 DAG
+（拓扑分层，⚠️ 恢复后必须重算，不吃 checkpoint 惯性）
+
+## 关键上下文（给人读）
+- 当前目标：...
+- 下一步：...
+- 卡点 / 待决策：...
+- 易踩的坑 / 背景须知：...
+```
 
 ## 阻塞项处理
 

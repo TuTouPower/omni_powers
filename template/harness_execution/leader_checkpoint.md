@@ -1,7 +1,7 @@
 # Leader Checkpoint
 
 > 每 task 闭环后写。compact 后从此文件恢复。也作会话交接——人读"关键上下文"段即可接手。
-> 写完必须跑 `bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
+> 写完应跑 `bash skills/harness-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
 
 ## 已完成 task
 - {TID} ... ✅ {hash}
