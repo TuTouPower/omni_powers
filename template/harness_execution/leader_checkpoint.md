@@ -4,7 +4,7 @@
 > 写完应跑 `bash skills/harness-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
 
 ## 已完成 task
-- {TID} ... ✅ {hash}
+- {TID} ... ✅ {commit_hash}
 
 ## tasks_list.json 状态
 - 完成：...

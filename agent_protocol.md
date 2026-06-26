@@ -36,7 +36,7 @@
 ## 状态机
 
 ```
-待开始 → 进行中 → 审阅中 → 完成
+待开始 → 进行中 → 审阅中 → 收口中 → 完成
                 ↑        ↓ (FAIL，max 3 轮)
                 └────────┘
                 第 3 轮仍 FAIL → 阻塞(blocked_by=quality)
@@ -49,8 +49,10 @@ tasks_list.json status 值：
 | `待开始` | spec/plan 就位，未开发 | null |
 | `进行中` | coder 开发或修复轮中 | null |
 | `审阅中` | review 进行中 | null |
-| `完成` | 双 PASS + 收口提交 | null |
+| `收口中` | 双 PASS 后，closer 执行中，leader commit 前 | null |
+| `完成` | commit + close_check 通过 | null |
 | `阻塞` | 3 轮 FAIL 或环境阻塞 | `key`/`domain`/`quality`/`spawn`（必有值） |
+| `跳过` | 因下游阻塞顺延，等待阻塞解除 | null |
 
 ## 文件分层
 
@@ -94,6 +96,10 @@ docs/harness_execution/tasks/{TID}/
 
 ## 关键规则
 
+### 测试命令
+
+项目全量测试命令由环境变量 `TEST_CMD` 或 `PRJ_TEST_CMD` 定义（二选一，前者优先）。未定义时报错，禁止跳过。leader 在每 task 代码合入主线和收口验收时必须跑 `$TEST_CMD`。
+
 ### review 判定
 
 review 由 Agent Team 执行（D4），不用 Workflow。
@@ -106,11 +112,11 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重读后**：reviewer 承认误判则首行改 PASS，维持原判则保持 FAIL 并追加理由。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖自动顺延到下一波次；3 轮后 blocked_by=quality，下游按依赖关系连锁阻塞或绕过。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回原 coder-N → coder-N 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-N 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，该 task 退出波次，波次内其他 task 继续。**下游顺延**：FAIL task 的下游依赖 task 自动顺延到下一波次——status 改为 `跳过`，等待阻塞解除后恢复。
 
 ### commit 时机
 
-**一个 task 一次 commit**。hash 回填延迟到下一个 task 收口时一并提交。收口是 task 级语义动作——step 不收口、不单 commit（step 互相依赖，review 应看整个 task diff；回滚以 task 为粒度，一个 task 一个 commit 便于 revert）。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
+**一个 task 一次 commit**。收口时 commit 后当场将 commit hash 写入 checkpoint。收口是 task 级语义动作——step 不收口、不单 commit（step 互相依赖，review 应看整个 task diff；回滚以 task 为粒度，一个 task 一个 commit 便于 revert）。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
 
 ### DAG 与 depends_on
 
@@ -127,24 +133,28 @@ review 由 Agent Team 执行（D4），不用 Workflow。
   3. 构建无向冲突图（节点=task，边=冲突对），每个连通分量内串行，分量间可并发
   4. 并发数 = min(3, 连通分量数)。若分量数 > 3，按分量内 task 数降序取前 3 个分量，其余等下个波次
 - 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
-- 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
+- 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线（`git merge feat/{TID}`），每合一跑全量测试（`$TEST_CMD`）。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
 
 ### Agent Team 管理
 
 coder-1/2/3、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
 
-**创建**（首次 /harness-start 时，必须显式传 model 参数）：
+**创建**（首次 /harness-start 时，必须显式传 model 和 team_name 参数）：
 
 ```
-Agent({ name: "coder-1", subagent_type: "harness-coder", model: "haiku",
+TeamCreate({ team_name: "harness-{project}" })
+
+Agent({ name: "coder-1", team_name: "harness-{project}", subagent_type: "harness-coder", model: "haiku",
   prompt: "等待 leader 派 TDD 任务..." })
 
-Agent({ name: "code-reviewer", subagent_type: "harness-code-reviewer", model: "sonnet",
+Agent({ name: "code-reviewer", team_name: "harness-{project}", subagent_type: "harness-code-reviewer", model: "sonnet",
   prompt: "等待 leader 派 review 任务..." })
 
-Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "sonnet",
+Agent({ name: "test-reviewer", team_name: "harness-{project}", subagent_type: "harness-test-reviewer", model: "sonnet",
   prompt: "等待 leader 派 review 任务..." })
 ```
+
+team_name 规则：`harness-<项目目录名>`，如 `harness-omni_powers`。
 
 **通信**：`SendMessage(to: "coder-N", message: "...")`。teammate 之间不直接通信。
 
@@ -182,18 +192,18 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 # Leader Checkpoint
 
 ## 已完成 task
-- {TID} ... ✅ {commit_hash}
+- {TID} "{title}" ✅ {commit_hash}
 
 ## tasks_list.json 状态
-- 完成：...
+- 完成：{TID}...
 - 下一个：{TID}
-- 阻塞跳过：...
+- 阻塞跳过：{TID}（blocked_by=key/quality/domain）...
 
 ## team 状态
-- team: {name}
-- team config 路径: ~/.claude/teams/{team-name}/config.json
-- coder: {复用/重 spawn 决策}
-- reviewer / test-reviewer: 常驻
+- team: harness-{project}
+- team config 路径: ~/.claude/teams/harness-{project}/config.json
+- coder: {活跃/需重 spawn}
+- code-reviewer / test-reviewer: 常驻
 
 ## compact 计数
 - 已完成 N task
@@ -218,6 +228,11 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
 回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset（会丢历史）。不连锁回滚下游，只重置状态。
+
+**下游传播规则**：
+- 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`，退出当前波次。
+- **绕过**：若下游 task 实际上不依赖被阻塞 task 的产出，leader 可修改该下游 task 的 `depends_on` 移除阻塞节点，并在 decisions.md 记录理由。无此记录则不可绕过。
+- 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
 
 **阻塞汇总**：所有可跑 task 跑完后，若仍有阻塞 task，leader 才停下报告阻塞项、缺什么、需用户提供什么。
 
@@ -273,12 +288,12 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 
 ## Quick Reference（compact 后速查）
 
-**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读 verdict 首行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（progress/decisions/tech_debt/specs/tasks_list/归档）→ commit → 下一个
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer → commit → close_check）→ 下一个
 
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 
 **关键规则**：
-- review 首行 `verdict: PASS/FAIL`，leader 只取首行不读正文
+- review 最后一条 `verdict: PASS/FAIL` 为最终判定，leader 读尾行不读正文
 - 每条问题标暂存标签，默认不暂存（当场修）
-- 一个 task 一次 commit，hash 回填延迟到下一个 task
+- 一个 task 一次 commit，hash 当场写入 checkpoint
 - 磁盘是真状态，上下文都是可重建缓存

@@ -3,7 +3,7 @@
     {
       "id": "T01",
       "title": "{title}",
-      "dependencies": [],
+      "depends_on": null,
       "status": "完成",
       "verification": "{验收标准}",
       "blocked_by": null
@@ -11,7 +11,7 @@
     {
       "id": "T02",
       "title": "{title}",
-      "dependencies": ["T01"],
+      "depends_on": ["T01"],
       "status": "审阅中",
       "verification": "{验收标准}",
       "blocked_by": null
@@ -19,7 +19,7 @@
     {
       "id": "T03",
       "title": "{title}",
-      "dependencies": ["T01"],
+      "depends_on": ["T01"],
       "status": "进行中",
       "verification": "{验收标准}",
       "blocked_by": null
@@ -27,7 +27,7 @@
     {
       "id": "T04",
       "title": "{title}",
-      "dependencies": ["T01"],
+      "depends_on": ["T01"],
       "status": "待开始",
       "verification": "{验收标准}",
       "blocked_by": null
@@ -35,7 +35,7 @@
     {
       "id": "T05",
       "title": "{title}",
-      "dependencies": ["T02"],
+      "depends_on": ["T02"],
       "status": "阻塞",
       "verification": "{验收标准}",
       "blocked_by": "key"

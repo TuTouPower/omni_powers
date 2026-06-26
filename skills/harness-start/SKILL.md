@@ -21,6 +21,8 @@ description: >
 2. `docs/harness_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
 3. `agent_protocol.md` —— 规则手册
 
+**前置校验**：`$TEST_CMD` 或 `$PRJ_TEST_CMD` 必须已定义，否则报错退出。
+
 **确保 Agent Team 存在**（不创建 team 不进循环）：
 
 - 已有 teammate → SendMessage 唤醒确认存活
@@ -32,10 +34,11 @@ description: >
 | 条件 | 动作 |
 |---|---|
 | 所有 task status=完成 | → 循环结束 |
+| 存在 status=收口中 | → 恢复：从 checkpoint 判断 closer 完成否，未完成则重走收口 |
 | 存在 status=审阅中 | → 恢复：等 review 返回 |
 | 存在 status=进行中 | → 恢复：等 coder 完成 |
 | 存在可跑 task（待开始 + 依赖全完成） | → 进入自治循环 |
-| 全部阻塞 | → 输出阻塞原因，等外部解除 |
+| 全部阻塞/跳过 | → 输出阻塞原因，等外部解除 |
 
 ## 自治循环
 
@@ -126,7 +129,7 @@ leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂
 
 ### 6. 收口
 
-并发时按依赖顺序收口，先合被依赖的 task，每合一跑全量测试，全部合并完再做共享文档收口。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。
+每个 task 独立 closer + 独立 commit。并发波次按依赖顺序收口：先合被依赖 task 的代码回主线，每合一跑 `$TEST_CMD`。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。
 
 每个 task 的收口分两部分——closer 做机械读写（步骤详见 `agents/harness-closer.md`），leader 做状态变更和提交：
 
@@ -141,21 +144,30 @@ Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt:
 > closer 的 `git add -A` 操作的是 worktree 的 index。leader 必须切到 worktree 再 commit，回主 repo 后看不到那些 staged 内容。
 
 ```
-main_root=<project_root>
+cd <project_root>/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2; exit 1; }
 
-# 7-10 步全部在 worktree 内执行
-cd $main_root/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2; exit 1; }
+# 1. 更新 tasks_list.json：status → 完成
+jq --arg tid "{TID}" '.tasks |= map(if .id == $tid then .status = "完成" else . end)' \
+  docs/harness_execution/tasks_list.json > docs/harness_execution/tasks_list.json.tmp \
+  && mv docs/harness_execution/tasks_list.json.tmp docs/harness_execution/tasks_list.json
 
-# 7. 更新 tasks_list.json：status → 完成
-# 8. 写 leader_checkpoint.md
-# 9. git 提交（closer 已 stage 所有产出，直接 commit；一个 task 一次 commit）
-# 10. 验收
+# 2. 提交（closer 已 stage 全部产出）
+git commit -m "feat({TID}): {title}"
+
+# 3. 写 leader_checkpoint.md（当场写入 hash，不延迟）
+HASH=$(git rev-parse HEAD)
+
+# 更新 checkpoint：追加已完成 task 行 + 更新其他段
+# （checkpoint 格式见 agent_protocol.md compact 恢复段）
+
+# 4. 验收
 bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
 
-# 11. hash 回填（延迟到下一个 task）
-
-# 切回主 repo 再 merge / 删 worktree / 选下个 task
-cd $main_root && pwd
+# 切回主 repo → merge → 删 worktree → 选下个 task
+cd <project_root> && pwd
+git merge feat/{TID} --no-ff -m "merge({TID}): {title}"
+$TEST_CMD || { echo "[FAIL] 全量测试不通过" >&2; exit 1; }
+git worktree remove .worktrees/{TID}
 ```
 
 ### 7. FAIL 轮
@@ -193,12 +205,12 @@ cat ~/.claude/teams/{team}/config.json | jq '.members[] | select(.name == "coder
 
 首次启动：
 ```js
-Agent({ name: "coder-1", subagent_type: "harness-coder", model: "haiku", prompt: "..." })
-Agent({ name: "code-reviewer", subagent_type: "harness-code-reviewer", model: "sonnet", prompt: "..." })
-Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "sonnet", prompt: "..." })
+Agent({ name: "coder-1", team_name: "harness-{project}", subagent_type: "harness-coder", model: "haiku", prompt: "..." })
+Agent({ name: "code-reviewer", team_name: "harness-{project}", subagent_type: "harness-code-reviewer", model: "sonnet", prompt: "..." })
+Agent({ name: "test-reviewer", team_name: "harness-{project}", subagent_type: "harness-test-reviewer", model: "sonnet", prompt: "..." })
 ```
 
-并发扩展：查 config 确认不存在后 `Agent({ name: "coder-2", subagent_type: "harness-coder", model: "haiku", prompt: "..." })`
+并发扩展：查 config 确认不存在后 `Agent({ name: "coder-2", team_name: "harness-{project}", subagent_type: "harness-coder", model: "haiku", prompt: "..." })`
 
 ### 复用与 shutdown
 
