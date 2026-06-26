@@ -54,6 +54,44 @@ tasks_list.json status 值：
 | `阻塞` | 3 轮 FAIL 或环境阻塞 | `key`/`domain`/`quality`/`spawn`（必有值） |
 | `跳过` | 因下游阻塞顺延，等待阻塞解除 | null |
 
+**英文/中文映射**（compact 恢复、跨文档引用时对照）：
+
+| 英文（状态机/日志） | 中文（tasks_list.json） |
+|---|---|
+| pending | 待开始 |
+| coding | 进行中 |
+| reviewing | 审阅中 |
+| closing | 收口中 |
+| done | 完成 |
+| blocked | 阻塞 |
+| skipped | 跳过 |
+
+**状态修改脚本**：`skills/op-start/scripts/op-status.sh`，单 task 或批量修改 tasks_list.json 中 status 和 blocked_by 字段。
+
+**jq 查询示例**（compact 恢复必备，⚠️ 严禁 Read 整文件）：
+
+```bash
+# 查所有待开始 task（选波次）
+jq '.tasks[] | select(.status=="待开始")' docs/op_execution/tasks_list.json
+
+# 查某 task 依赖是否全完成
+TID=T02
+DEPS=$(jq -r '.tasks[] | select(.id=="'$TID'") | .depends_on[]?' docs/op_execution/tasks_list.json)
+for d in $DEPS; do
+  jq -r '.tasks[] | select(.id=="'$d'") | .status' docs/op_execution/tasks_list.json
+done
+
+# 查所有阻塞 task
+jq '.tasks[] | select(.status=="阻塞") | {id, blocked_by}' docs/op_execution/tasks_list.json
+
+# 查所有跳过 task
+jq '.tasks[] | select(.status=="跳过") | {id, title}' docs/op_execution/tasks_list.json
+
+# 查某 task 的下游（谁依赖它）
+TID=T02
+jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | index($tid))) | .id' docs/op_execution/tasks_list.json
+```
+
 ## 文件分层
 
 ### task 工作区（全部进 git，不删）
@@ -127,11 +165,20 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 收口分两阶段：(A) closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
 
+**WIP sub-commit**（大 task 防中途崩溃丢进度）：大 task 跑很久时，允许 `wip({TID}): step{N}` 性质的纯代码落盘 sub-commit——**不触发任何收口动作**（不改 status、不归档、不写 checkpoint、不整理 ref）。收口时由 leader 定 squash 还是保留。与收口完全脱钩。
+
 ### DAG 与 depends_on
 
 每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。**所有新增 task 的入口**（op-task、op-debt2tasks、task-splitter）都必须填 `depends_on`。
 
 每次 `/op-start` 从 `depends_on` 重算拓扑分层，生成 `docs/op_execution/dag.md`（Mermaid 图 + 分层表），给人看。dag.md 是衍生文件，不存 checkpoint。
+
+**tasks_list 拆分预案**（task 量大到单文件过大、查询变慢时启用）：默认不拆，单文件靠 jq 查询。量真大到几百时才拆：
+
+- `docs/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
+- `docs/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
+- 依赖检查：活表查不到的依赖 → 查 done 表确认完成
+- 收口时 task 从活表移到 done 表
 
 ### 并发与 worktree
 
@@ -248,7 +295,16 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 | 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
-回滚：`git revert <task_commit>` + 该 task 及下游 status 回 `待开始`。不用 reset（会丢历史）。不连锁回滚下游，只重置状态。
+回滚：不用 reset（会丢历史）。
+
+1. `git revert <代码commit_hash>` — 反向提交（代码平面）
+2. `git revert <控制平面commit_hash>` — 反向提交（控制平面）
+3. `bash skills/op-start/scripts/op-status.sh {TID} 待开始` — 该 task status 回退
+4. 用 jq 查下游 task（`select(.depends_on | index("{TID}"))`），逐一 `op-status.sh {下游TID} 待开始`
+5. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
+6. 重新进入开发循环
+
+不连锁回滚下游，只重置状态。下游 status 回退后依赖链完整，选 task 规则自然重新调度。
 
 **下游传播规则**：
 - 某 task 阻塞后，其直接/间接下游 status 改为 `跳过`，退出当前波次。

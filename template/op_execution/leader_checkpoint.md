@@ -3,23 +3,20 @@
 > 每 task 闭环后写。compact 后从此文件恢复。也作会话交接——人读"关键上下文"段即可接手。
 > 写完应跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
 
-## 已完成 task
-- {TID} ... ✅ {commit_hash}
+## 已完成 task 列表
+（按完成顺序列出 TID，compact 恢复后据此判断进度）
+- {TID} "{title}" ✅ {commit_hash}
 
 ## tasks_list.json 状态
-- 完成：...
+- 完成：{TID}...
 - 下一个：{TID}
-- 阻塞跳过：...
+- 阻塞跳过：{TID}（blocked_by=key/quality/domain）...
 
 ## team 状态
 - team: {name}
 - team config 路径: `~/.claude/teams/{team-name}/config.json`（compact 恢复时查 team 还在不在、paneId 在哪）
 - coder: {复用/重 spawn 决策}
 - reviewer / test-reviewer: 常驻
-
-## 已完成 task 列表
-（按完成顺序列出 TID，compact 恢复后据此判断进度）
-- {TID} ... ✅ {commit_hash}
 
 ## 依赖 DAG
 （拓扑分层，波次编排用。⚠️ 恢复后必须重算 DAG 层宽，不吃 checkpoint 惯性）

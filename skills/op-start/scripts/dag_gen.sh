@@ -16,8 +16,9 @@ cat > "$jq_script" << 'JQEOF'
 "",
 "```mermaid",
 "graph TD",
-(.tasks[] | "  \(.id)[\(.id)<br/>\(.status)]"),
-(.tasks[] | select(.depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d) --> \(.id)"),
+(.tasks[] | select(.status != "完成") | "  \(.id)[\(.id)<br/>\(.status)]"),
+(.tasks[] | select(.status != "完成" and .depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d) --> \(.id)"),
+
 "```",
 "",
 "## 依赖关系",
