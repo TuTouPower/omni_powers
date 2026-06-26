@@ -15,7 +15,7 @@
 | code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
 | task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
-| closer | **Subagent** | haiku | 按需启用：收口机械步骤（progress/decisions/tech_debt/specs 整理/归档），不污染 leader 上下文 |
+| closer | **Subagent** | haiku | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
 
 ### 为什么用 Agent Team
 
@@ -72,7 +72,7 @@ docs/harness_execution/tasks/{TID}/
 - task 闭环后 git mv 到 `docs/harness_record/tasks/{TID}/` 归档。
 - `docs/harness_execution/issues/{TID}_quality.md` 记录质量阻塞（3 轮 FAIL）和 spawn 失败等阻塞原因。
 
-### 持久文件
+### 持久文件（控制平面——仅 leader 在主 repo 写）
 
 | 路径 | 谁写 | 何时 |
 |---|---|---|
@@ -112,7 +112,20 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### commit 时机
 
-**一个 task 一次 commit**。收口时 commit 后当场将 commit hash 写入 checkpoint。收口是 task 级语义动作——step 不收口、不单 commit（step 互相依赖，review 应看整个 task diff；回滚以 task 为粒度，一个 task 一个 commit 便于 revert）。大到需多次收口 → 拆 task。WIP sub-commit 允许但脱钩收口（纯代码落盘，不改 status/不归档）。
+**一个 task 两个 commit**。一次 task commit（仅代码平面），一次 harness commit（控制平面收口记录）。
+
+**代码平面**（per-task，不冲突，进 feat 分支）：
+- `src/`、`tests/` — coder 产出
+- `docs/harness_execution/tasks/{TID}/` — task 工作区
+- 归档目录 `docs/harness_record/tasks/{TID}/` — closer 归档
+
+**控制平面**（全局共享，仅 leader 在主 repo 串行写，永不进 feat 分支）：
+- `tasks_list.json` — 状态源
+- `leader_checkpoint.md` — 断点
+- `specs/{feature}.md` — 跨 task 累积
+- `progress.md`、`decisions.md`、`tech_debt.md` — 记录
+
+收口分两阶段：(A) closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
 
 ### DAG 与 depends_on
 
@@ -126,6 +139,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - 不做文件冲突预检——worktree 隔离已经防止互相覆盖，合并冲突在收口时由 leader 按依赖优先规则解决。
 - 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
 - 收口时按依赖顺序处理：先合被依赖 task 的 worktree 代码回主线。层宽 1（串行）→ `git merge feat/{TID} --ff-only`，只留功能 commit；层宽 > 1（并发）→ `git merge feat/{TID} --no-ff`，保留 merge commit 作为归并标记。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑测试确认，冲突记录写入 decisions.md。每个 task 仍独立 closer + 独立 commit。波次全部收口后开下一波次。
+- **控制平面文件仅在主 repo 由 leader 串行写**——closer 和 feat 分支不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md / leader_checkpoint.md。并发安全由串行收口保证。
 
 ### Agent Team 管理
 
@@ -295,12 +309,13 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 
 ## Quick Reference（compact 后速查）
 
-**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer → commit → close_check）→ 下一个
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
 
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 
 **关键规则**：
 - review 最后一条 `verdict: PASS/FAIL` 为最终判定，leader 读尾行不读正文
 - 每条问题标暂存标签，默认不暂存（当场修）
-- 一个 task 一次 commit，hash 当场写入 checkpoint
+- 一个 task 两个 commit（代码 → merge → 控制平面），hash 当场写入 checkpoint
+- 控制平面文件仅 leader 在主 repo 串行写，不进 feat 分支
 - 磁盘是真状态，上下文都是可重建缓存

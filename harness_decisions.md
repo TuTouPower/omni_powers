@@ -107,3 +107,18 @@
 - 合并冲突在收口时由 leader 按依赖优先规则解决，不是灾难
 - 文件冲突预检依赖 AI 读 plan.md"文件结构"段提取路径——格式不可靠，脆弱
 - 同层直接并发的逻辑可全脚本化（dag_gen.sh 已算拓扑），无需 AI 推理
+
+## D12：代码平面 vs 控制平面分离，一个 task 两个 commit（2026-06-26）
+
+**变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → harness commit。
+
+**规则**：
+- 代码平面：`src/`、`tests/`、`docs/harness_execution/tasks/{TID}/`、`docs/harness_record/tasks/{TID}/`
+- 控制平面：`tasks_list.json`、`specs/{feature}.md`、`progress.md`、`decisions.md`、`tech_debt.md`、`leader_checkpoint.md`
+- closer 绝不碰控制平面文件，输出 `closer_output` 供 leader 使用
+- leader 在主 repo 串行处理收口，A 阶段 merge 后，B 阶段改控制平面
+
+**理由**：
+- 并发波次两个 worktree 各自有基线的 tasks_list.json / specs 等共享文件，各自改→merge 必冲突
+- 控制平面文件应当在唯一位置（主 repo）由唯一写入者（leader）串行操作
+- 两个 commit 语义清晰：代码 commit 是 task 产出，控制平面 commit 是收口记录

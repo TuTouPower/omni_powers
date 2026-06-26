@@ -142,45 +142,65 @@ leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂
 
 ### 6. 收口
 
-每个 task 独立 closer + 独立 commit。并发波次按依赖顺序收口：先合被依赖 task 的代码回主线。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），冲突记录写入 decisions.md。
+收口分两阶段：A. worktree 内代码提交 + merge；B. 主 repo 控制平面更新。
 
-每个 task 的收口分两部分——closer 做机械读写（步骤详见 `agents/harness-closer.md`），leader 做状态变更和提交：
+每个 task 独立收口。并发波次按依赖顺序收口：先合被依赖 task 的代码回主线。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），冲突记录写入 decisions.md。
 
-**closer 执行（Subagent，一次性，不加入 team）**：
+#### A. worktree 内（closer + leader）
+
+**closer 执行**（per-task 操作，详见 `agents/harness-closer.md`）：
+- spec 盖戳 + git mv 归档 + git add -A
+- 输出 `.harness/signals/closer_output`：暂存项列表、spec 摘要、feature 归属
+- 不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md
 
 ```js
 Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd <project_root>/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
 ```
 
-**leader 执行（closer 回报后，全程在 worktree 内操作）**：
-
-> closer 的 `git add -A` 操作的是 worktree 的 index。leader 必须切到 worktree 再 commit，回主 repo 后看不到那些 staged 内容。
-
+**leader 执行**（closer 回报后）：
 ```
 cd <project_root>/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2; exit 1; }
 
-# 1. 更新 tasks_list.json：status → 完成
-jq --arg tid "{TID}" '.tasks |= map(if .id == $tid then .status = "完成" else . end)' \
-  docs/harness_execution/tasks_list.json > docs/harness_execution/tasks_list.json.tmp \
-  && mv docs/harness_execution/tasks_list.json.tmp docs/harness_execution/tasks_list.json
-
-# 2. 提交（closer 已 stage 全部产出）
+# 代码提交（只含 per-task 文件）
 git commit -m "feat({TID}): {title}"
 
-# 3. 写 leader_checkpoint.md（当场写入 hash，不延迟）
-HASH=$(git rev-parse HEAD)
-
-# 更新 checkpoint：追加已完成 task 行 + 更新其他段
-# （checkpoint 格式见 agent_protocol.md compact 恢复段）
-
-# 4. 验收
-bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
-
-# 切回主 repo → merge → 删 worktree → 选下个 task
+# 切回主 repo → merge → 删 worktree
 cd <project_root> && pwd
 git merge feat/{TID} --ff-only -m "merge({TID}): {title}"
 # 并发波次用 --no-ff，串行用 --ff-only（协议约定）
 git worktree remove .worktrees/{TID}
+```
+
+#### B. 主 repo 内（leader，串行）
+
+> 以下全部在主 repo 操作，控制平面文件仅在此处改。
+
+```bash
+# 验证主 repo 干净（无未提交改动）
+git status --short | grep -qv '^$' && { echo "[FAIL] 主 repo 不干净" >&2; exit 1; }
+
+# 1. 从 closer_output 读取暂存项等内容
+CLOSER_OUT="$(cat .worktrees/{TID}/.harness/signals/closer_output)"   # worktree 未删时先读
+
+# 2. 更新 tasks_list.json：status → 完成
+jq --arg tid "{TID}" '.tasks |= map(if .id == $tid then .status = "完成" else . end)' \
+  docs/harness_execution/tasks_list.json > docs/harness_execution/tasks_list.json.tmp \
+  && mv docs/harness_execution/tasks_list.json.tmp docs/harness_execution/tasks_list.json
+
+# 3. 追加 progress.md（用 closer_output 内容）
+# 4. 追加 decisions.md（leader 给的决策内容）
+# 5. 追加 tech_debt.md（closer_output 中的暂存项）
+# 6. 整理 specs/{feature}.md（closer_output 中的 spec 摘要）
+# 7. 写 leader_checkpoint.md（HASH 为上面代码提交的 hash）
+HASH=$(git rev-parse HEAD)
+# checkpoint 格式见 agent_protocol.md compact 恢复段
+
+# 8. 验收
+bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
+
+# 9. 控制平面提交
+git add docs/harness_execution/ docs/harness_record/ docs/harness_blueprint/
+git commit -m "chore(harness): {TID} 收口记录"
 ```
 
 ### 7. FAIL 轮
