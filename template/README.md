@@ -1,6 +1,6 @@
 # 文档模板
 
-> 对照 `docs/harness/agent_protocol.md` 的文件分层。新建文件时拷对应模板。
+> 对照 `RULES.md` 的文件分层。新建文件时拷对应模板。
 > 模板里 `{TID}` `{title}` `{feature}` 等是占位符，用实际值替换。
 
 ## 目录

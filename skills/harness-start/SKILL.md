@@ -11,7 +11,7 @@ description: >
 
 **用户再触发 `/harness-start` 只在**：compact 恢复、crash 恢复、想查进度。
 
-协议规则、状态机、review 判定、并发约束等见 `agent_protocol.md`。
+协议规则、状态机、review 判定、并发约束等见 `RULES.md`。
 
 ## 步骤 0：前置校验 + 读状态 + 确保 Agent Team
 
@@ -30,7 +30,7 @@ description: >
 
 1. `docs/harness_execution/leader_checkpoint.md` —— 上次断在哪
 2. `docs/harness_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
-3. `agent_protocol.md` —— 规则手册
+3. `RULES.md` —— 规则手册
 
 **确保 Agent Team 存在**（不创建 team 不进循环）：
 
@@ -121,7 +121,7 @@ tasks_list.json 波次内所有 task status → 进行中。
 
 **不等全波次完成。** 每个 coder 完成后立即派 review，先到先审。
 
-完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `agent_protocol.md` 通知机制）。coder 报错/阻塞 → status=阻塞，退出波次。
+完成判断：检查 `.worktrees/{TID}/.harness/signals/coder_done` 存在（唯一判定依据，详见 `RULES.md` 通知机制）。coder 报错/阻塞 → status=阻塞，退出波次。
 
 **leader 扫到标记文件 → 删 `coder_done` → 派 review：**
 
@@ -136,7 +136,7 @@ tasks_list.json status → 审阅中。leader idle 等返回。
 
 review 完成判断：`.worktrees/{TID}/.harness/signals/reviewer_code_done` 和 `reviewer_test_done` 同时存在（唯一判定依据）。leader 扫到两文件 → 删两文件 → 读 review_code.md 和 review_test.md 首行 verdict。
 
-leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `agent_protocol.md`）。
+leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `RULES.md`）。
 
 **双 PASS → 收口**，**任一 FAIL → FAIL 轮**。
 
@@ -193,7 +193,7 @@ jq --arg tid "{TID}" '.tasks |= map(if .id == $tid then .status = "完成" else 
 # 6. 整理 specs/{feature}.md（closer_output 中的 spec 摘要）
 # 7. 写 leader_checkpoint.md（HASH 为上面代码提交的 hash）
 HASH=$(git rev-parse HEAD)
-# checkpoint 格式见 agent_protocol.md compact 恢复段
+# checkpoint 格式见 RULES.md compact 恢复段
 
 # 8. 验收
 bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
@@ -205,7 +205,7 @@ git commit -m "chore(harness): {TID} 收口记录"
 
 ### 7. FAIL 轮
 
-按协议 FAIL 轮规则执行（max 3 轮，下游顺延，详见 `agent_protocol.md`）。
+按协议 FAIL 轮规则执行（max 3 轮，下游顺延，详见 `RULES.md`）。
 
 - 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "cd <project_root>/.worktrees/{TID} && pwd\nT{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
 - 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 issues/{TID}_quality.md，退出波次
@@ -247,17 +247,17 @@ Agent({ name: "test-reviewer", team_name: "harness-{project}", subagent_type: "h
 
 ### 复用与 shutdown
 
-按协议 Agent Team 生命周期规则（详见 `agent_protocol.md`）。仅在 teammate 完全无响应时 shutdown。
+按协议 Agent Team 生命周期规则（详见 `RULES.md`）。仅在 teammate 完全无响应时 shutdown。
 
 ### compact 后恢复
 
-按协议 compact 恢复步骤（详见 `agent_protocol.md`）。
+按协议 compact 恢复步骤（详见 `RULES.md`）。
 
 ## 相关文件
 
 | 文件 | 用途 |
 |---|---|
-| `agent_protocol.md` | 规则手册 |
+| `RULES.md` | 规则手册 |
 | `harness_decisions.md` | 决策记录 |
 | `findings.md` | 实验发现 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |

@@ -12,7 +12,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 ## 目录结构
 
 ```
-├── agent_protocol.md        # 核心协议（规则手册）
+├── RULES.md        # 核心协议（规则手册）
 ├── harness_decisions.md     # 决策记录
 ├── findings.md              # 实验发现
 ├── experience.md            # 踩坑笔记
@@ -51,7 +51,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | `harness_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
 | `harness_record/` | 冻结历史（只追加） | decisions, progress |
 
-**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `agent_protocol.md` + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
+**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `RULES.md` + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 
 ## 工作流一览
 
@@ -75,7 +75,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 
 | 要查什么 | 去哪看 |
 |---|---|
-| 完整协议规则 | `agent_protocol.md` |
+| 完整协议规则 | `RULES.md` |
 | 决策记录 | `harness_decisions.md` |
 | 实验发现 | `findings.md` |
 | 历史踩坑 | `experience.md` |

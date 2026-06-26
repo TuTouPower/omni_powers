@@ -1,6 +1,6 @@
 # Harness 决策记录
 
-> 记录架构和设计决策及其依据。最终规则见 agent_protocol.md。
+> 记录架构和设计决策及其依据。最终规则见 RULES.md。
 
 ## D1：Agent Team vs Workflow（2026-06-25）— ⚠️ 已被 D4 取代
 
