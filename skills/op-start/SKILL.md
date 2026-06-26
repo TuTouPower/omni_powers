@@ -37,10 +37,10 @@ description: >
 
 ```bash
 # 上次断在哪
-cat docs/op_execution/leader_checkpoint.md
+cat docs/omni_powers/op_execution/leader_checkpoint.md
 
 # 当前 task 状态（⚠️ 严禁 Read 整文件，用 jq 查）
-jq '[.tasks[] | {id, status, depends_on}]' docs/op_execution/tasks_list.json
+jq '[.tasks[] | {id, status, depends_on}]' docs/omni_powers/op_execution/tasks_list.json
 
 # 规则手册（compact 恢复必读）
 cat RULES.md
@@ -123,7 +123,7 @@ bash scripts/op_status.sh {TID} 进行中
 
 ```js
 Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
-  prompt: "cd <work_dir> && pwd\nT{n}。先跑 op-coder-check.sh {TID} 确定模式。读 docs/op_execution/tasks/{TID}/ 下的 spec/plan/steps。" })
+  prompt: "cd <work_dir> && pwd\nT{n}。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan/steps。" })
 ```
 
 coder 返回后，验证产出（context.md 已更新），进入子步骤 3.3。
@@ -171,7 +171,7 @@ bash skills/op-start/scripts/op-read-verdict.sh {TID}
 
 ```bash
 bash scripts/op_status.sh {TID} 阻塞 quality
-# 写 docs/op_execution/issues/{TID}_quality.md
+# 写 docs/omni_powers/op_execution/issues/{TID}_quality.md
 ```
 
 **下游传播**：
@@ -197,13 +197,13 @@ Agent({ name: "op-closer", subagent_type: "op-closer", model: "haiku",
 
 op-closer 做：
 
-1. spec 盖戳（"历史快照，以 docs/op_blueprint/specs/ 为准"）
-2. git mv `docs/op_execution/tasks/{TID}` → `docs/op_record/tasks/{TID}`
+1. spec 盖戳（"历史快照，以 docs/omni_powers/op_blueprint/specs/ 为准"）
+2. git mv `docs/omni_powers/op_execution/tasks/{TID}` → `docs/omni_powers/op_record/tasks/{TID}`
 3. 更新 `tasks_list.json`（status→完成）
-4. 整理 `docs/op_blueprint/specs/{feature}.md`
+4. 整理 `docs/omni_powers/op_blueprint/specs/{feature}.md`
 5. 追加 `progress.md`、`decisions.md`（有决策时）、`tech_debt.md`
-6. 按需更新 `docs/op_blueprint/` 下受影响文档
-7. `git add docs/op_execution/ docs/op_record/ docs/op_blueprint/`
+6. 按需更新 `docs/omni_powers/op_blueprint/` 下受影响文档
+7. `git add docs/omni_powers/op_execution/ docs/omni_powers/op_record/ docs/omni_powers/op_blueprint/`
 
 返回 closer_output 完整内容。leader 审查：
 

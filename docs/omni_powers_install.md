@@ -187,13 +187,13 @@ OMNI_POWERS_MODEL_CLOSER="${OMNI_POWERS_MODEL_CLOSER:-$(_awk_val models op-close
 OMNI_POWERS_MODEL_CLOSER="${OMNI_POWERS_MODEL_CLOSER:-haiku}"
 
 OMNI_POWERS_DIR_TASKS="${OMNI_POWERS_DIR_TASKS:-$(_awk_val dirs tasks)}"
-OMNI_POWERS_DIR_TASKS="${OMNI_POWERS_DIR_TASKS:-docs/op_execution}"
+OMNI_POWERS_DIR_TASKS="${OMNI_POWERS_DIR_TASKS:-docs/omni_powers/op_execution}"
 
 OMNI_POWERS_DIR_BLUEPRINT="${OMNI_POWERS_DIR_BLUEPRINT:-$(_awk_val dirs blueprint)}"
-OMNI_POWERS_DIR_BLUEPRINT="${OMNI_POWERS_DIR_BLUEPRINT:-docs/op_blueprint}"
+OMNI_POWERS_DIR_BLUEPRINT="${OMNI_POWERS_DIR_BLUEPRINT:-docs/omni_powers/op_blueprint}"
 
 OMNI_POWERS_DIR_RECORD="${OMNI_POWERS_DIR_RECORD:-$(_awk_val dirs record)}"
-OMNI_POWERS_DIR_RECORD="${OMNI_POWERS_DIR_RECORD:-docs/op_record}"
+OMNI_POWERS_DIR_RECORD="${OMNI_POWERS_DIR_RECORD:-docs/omni_powers/op_record}"
 
 # 只注入环境变量，不注入 RULES.md（约 200 行省掉）
 # RULES.md 在 skill 调用时按需 cat 读取
@@ -221,9 +221,9 @@ models:
   op-closer: haiku
 
 dirs:
-  tasks: docs/op_execution
-  blueprint: docs/op_blueprint
-  record: docs/op_record
+  tasks: docs/omni_powers/op_execution
+  blueprint: docs/omni_powers/op_blueprint
+  record: docs/omni_powers/op_record
 ```
 
 | 字段 | 说明 | 默认值 |
@@ -232,9 +232,9 @@ dirs:
 | `models.op-code-reviewer` | 代码审查 Agent 模型 | sonnet |
 | `models.op-test-reviewer` | 测试审查 Agent 模型 | sonnet |
 | `models.op-closer` | 收口 Agent 模型 | haiku |
-| `dirs.tasks` | task 工作区目录（相对于用户项目根） | docs/op_execution |
-| `dirs.blueprint` | 蓝图文档目录 | docs/op_blueprint |
-| `dirs.record` | 记录归档目录 | docs/op_record |
+| `dirs.tasks` | task 工作区目录（相对于用户项目根） | docs/omni_powers/op_execution |
+| `dirs.blueprint` | 蓝图文档目录 | docs/omni_powers/op_blueprint |
+| `dirs.record` | 记录归档目录 | docs/omni_powers/op_record |
 
 ## Skill 内引用改写
 
@@ -317,9 +317,9 @@ models:
   op-test-reviewer: sonnet
   op-closer: haiku
 dirs:
-  tasks: docs/op_execution
-  blueprint: docs/op_blueprint
-  record: docs/op_record
+  tasks: docs/omni_powers/op_execution
+  blueprint: docs/omni_powers/op_blueprint
+  record: docs/omni_powers/op_record
 EOF
 
 # 重启 Claude Code
@@ -336,9 +336,9 @@ export OMNI_POWERS_MODEL_CODER=haiku
 export OMNI_POWERS_MODEL_CODE_REVIEWER=sonnet
 export OMNI_POWERS_MODEL_TEST_REVIEWER=sonnet
 export OMNI_POWERS_MODEL_CLOSER=haiku
-export OMNI_POWERS_DIR_TASKS=docs/op_execution
-export OMNI_POWERS_DIR_BLUEPRINT=docs/op_blueprint
-export OMNI_POWERS_DIR_RECORD=docs/op_record
+export OMNI_POWERS_DIR_TASKS=docs/omni_powers/op_execution
+export OMNI_POWERS_DIR_BLUEPRINT=docs/omni_powers/op_blueprint
+export OMNI_POWERS_DIR_RECORD=docs/omni_powers/op_record
 ```
 
 ## 改造清单

@@ -20,7 +20,7 @@ description: >
 
 **上下文：** 工作目录由 leader 在 op-start 时确定（worktree 或 master 模式）。
 
-**保存 plan 到：** `docs/op_execution/tasks/{TID}/plan.md`
+**保存 plan 到：** `docs/omni_powers/op_execution/tasks/{TID}/plan.md`
 
 ## 模式选择
 
@@ -184,7 +184,7 @@ git commit -m "feat: add specific feature"
 
 保存 plan 后，指向下一步：
 
-**"Plan 已写入 `docs/op_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
+**"Plan 已写入 `docs/omni_powers/op_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
 
 op-start 会接管后续：选 task → 派 op-coder → review → 收口。
 

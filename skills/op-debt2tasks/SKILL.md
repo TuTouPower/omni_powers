@@ -32,8 +32,8 @@ description: >
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `tech_debt_path` | `docs/op_execution/tech_debt.md` | 技术债清单 |
-| `tasks_list_path` | `docs/op_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
+| `tech_debt_path` | `docs/omni_powers/op_execution/tech_debt.md` | 技术债清单 |
+| `tasks_list_path` | `docs/omni_powers/op_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
 | `tasks_list_template` | `docs_template/omni_powers/op_execution/tasks_list.json` | tasks_list.json 模板 |
 | `spec_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板 |
 | `plan_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | plan 模板 |
@@ -42,7 +42,7 @@ description: >
 
 1. 归类报告（终端输出，不落盘）
 2. 更新 `tasks_list.json`（追加偿还 task）
-3. 为每个偿还 task 生成 `docs/op_execution/tasks/{TID}/spec.md` + `plan.md`
+3. 为每个偿还 task 生成 `docs/omni_powers/op_execution/tasks/{TID}/spec.md` + `plan.md`
 
 ## 步骤
 

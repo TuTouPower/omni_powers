@@ -9,7 +9,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TID="${1:?用法: op-coder-check.sh <TID>}"
-TASK_DIR="$ROOT/docs/op_execution/tasks/$TID"
+TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
 
 has_file() { [ -f "$TASK_DIR/$1" ] && return 0 || return 1; }
 

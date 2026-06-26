@@ -49,7 +49,7 @@ description: >
 3. **提出澄清问题**——一次一个，理解目的/约束/成功标准
 4. **提出 2-3 个方案**——带 trade-off 和你的推荐
 5. **呈现设计**——各段按复杂度调整篇幅，每段后获取用户确认
-6. **写设计文档**——保存到 `docs/op_execution/tasks/{TID}/spec.md`
+6. **写设计文档**——保存到 `docs/omni_powers/op_execution/tasks/{TID}/spec.md`
 7. **spec 自审**——快速内联检查占位符、矛盾、歧义、范围（见下文）
 8. **用户审阅 spec**——要求用户在继续前审阅 spec 文件
 9. **过渡到实施**——调用 op-generate-plan skill 创建实施计划
@@ -127,7 +127,7 @@ digraph brainstorming {
 
 **文档：**
 
-- 把验证过的设计（spec）写到 `docs/op_execution/tasks/{TID}/spec.md`
+- 把验证过的设计（spec）写到 `docs/omni_powers/op_execution/tasks/{TID}/spec.md`
 - 使用 `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` 模板结构
 - 提交设计文档到 git
 
@@ -144,7 +144,7 @@ digraph brainstorming {
 **用户审阅关卡：**
 spec 自审通过后，要求用户在继续前审阅 spec：
 
-> "Spec 已写入 `docs/op_execution/tasks/{TID}/spec.md`。请审阅，如需修改告诉我，然后我们开始写实施计划。"
+> "Spec 已写入 `docs/omni_powers/op_execution/tasks/{TID}/spec.md`。请审阅，如需修改告诉我，然后我们开始写实施计划。"
 
 等用户回复：
 - 用户要改 → 改完重新自审
@@ -215,9 +215,9 @@ scripts/stop-server.sh $SESSION_DIR
 | 文件 | 用途 |
 |---|---|
 | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板 |
-| `docs/op_blueprint/prd.md` | 产品需求 |
-| `docs/op_blueprint/spec.md` | 全局总纲 |
-| `docs/op_blueprint/architecture.md` | 系统架构 |
-| `docs/op_blueprint/domain.md` | 领域模型 |
+| `docs/omni_powers/op_blueprint/prd.md` | 产品需求 |
+| `docs/omni_powers/op_blueprint/spec.md` | 全局总纲 |
+| `docs/omni_powers/op_blueprint/architecture.md` | 系统架构 |
+| `docs/omni_powers/op_blueprint/domain.md` | 领域模型 |
 | `skills/op-generate-spec/visual-companion.md` | Visual companion 详细指南 |
 | `skills/op-generate-plan/SKILL.md` | 下一步：op-generate-plan |

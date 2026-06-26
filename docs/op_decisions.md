@@ -138,7 +138,7 @@
 **变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → control plane commit。
 
 **规则**：
-- 代码平面：`src/`、`tests/`、`docs/op_execution/tasks/{TID}/`、`docs/op_record/tasks/{TID}/`
+- 代码平面：`src/`、`tests/`、`docs/omni_powers/op_execution/tasks/{TID}/`、`docs/omni_powers/op_record/tasks/{TID}/`
 - 控制平面：`tasks_list.json`、`specs/{feature}.md`、`progress.md`、`decisions.md`、`tech_debt.md`、`leader_checkpoint.md`
 - closer 绝不碰控制平面文件，输出 `closer_output` 供 leader 使用
 - leader 在主 repo 串行处理收口，A 阶段 merge 后，B 阶段改控制平面

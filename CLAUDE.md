@@ -90,9 +90,9 @@ cd omni_powers
 |---|---|
 | 完整协议规则 | `RULES.md` |
 | 操作细则（jq/回滚/阻塞） | `RULES_DETAIL.md` |
-| 决策记录 | `docs/op_decisions.md` |
-| 实验发现 | `docs/op_findings.md` |
+| 决策记录 | `docs/omni_powers/op_decisions.md` |
+| 实验发现 | `docs/omni_powers/op_findings.md` |
 | 历史踩坑 | `docs/experience.md` |
 | 文档模板 | `docs_template/omni_powers/README.md` |
 | 文档导航 | `docs_template/omni_powers/index.md`（部署后为 `docs/index.md`） |
-| DAG 依赖图 | `docs/op_execution/dag.md`（由 `dag_gen.sh` 生成） |
+| DAG 依赖图 | `docs/omni_powers/op_execution/dag.md`（由 `dag_gen.sh` 生成） |

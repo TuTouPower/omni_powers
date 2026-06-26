@@ -20,9 +20,9 @@ warn=0
 echo "=== 收口检查: $TID ==="
 
 # 1. tech_debt.md 必须有本 task 段（含"无新增"标注）
-if grep -qE "^## ${TID}" docs/op_execution/tech_debt.md 2>/dev/null; then
+if grep -qE "^## ${TID}" docs/omni_powers/op_execution/tech_debt.md 2>/dev/null; then
     echo "[PASS] tech_debt.md 含 ${TID} 段"
-elif grep -qE "${TID}.*无新增" docs/op_execution/tech_debt.md 2>/dev/null; then
+elif grep -qE "${TID}.*无新增" docs/omni_powers/op_execution/tech_debt.md 2>/dev/null; then
     echo "[PASS] tech_debt.md 已标 ${TID} 无新增"
 else
     echo "[FAIL] tech_debt.md 无 ${TID} 段，也未标'无新增'——必须追加（无债也要写一行)"
@@ -30,7 +30,7 @@ else
 fi
 
 # 2. leader_checkpoint.md 含本 task
-if grep -q "$TID" docs/op_execution/leader_checkpoint.md 2>/dev/null; then
+if grep -q "$TID" docs/omni_powers/op_execution/leader_checkpoint.md 2>/dev/null; then
     echo "[PASS] leader_checkpoint.md 含 ${TID}"
 else
     echo "[FAIL] leader_checkpoint.md 未更新 ${TID}"
@@ -38,7 +38,7 @@ else
 fi
 
 # 3. 归档目录五件齐全且非空（steps.md 可选）
-arch="docs/op_record/tasks/${TID}"
+arch="docs/omni_powers/op_record/tasks/${TID}"
 missing=()
 for f in spec.md plan.md context.md review_code.md review_test.md; do
     [ -s "$arch/$f" ] || missing+=("$f")
@@ -67,7 +67,7 @@ if [ -s "$arch/spec.md" ]; then
 fi
 
 # 4. git status 提醒（非本 task 改动）——不拦，只报
-task_dir="docs/op_execution/tasks/${TID}"
+task_dir="docs/omni_powers/op_execution/tasks/${TID}"
 others=$(git status --short 2>/dev/null | grep -v "^[MADRC? ]\+ ${task_dir}" || true)
 if [ -n "$others" ]; then
     echo "[WARN] git status 有非 ${TID} 的改动，leader 请检查是否本 task 残留或需 stash 隔离:"

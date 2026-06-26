@@ -1,7 +1,7 @@
 # 操作细则
 
 > 编排操作细节，compact 恢复时不需要，按需查阅。
-> 核心规则见 `RULES.md`，决策依据见 `docs/op_decisions.md`。
+> 核心规则见 `RULES.md`，决策依据见 `docs/omni_powers/op_decisions.md`。
 
 ## jq 查询示例
 
@@ -35,8 +35,8 @@ bash scripts/op_jq.sh all
 
 默认不拆，单文件靠 jq 查询。task 量大到单文件过大、查询变慢时启用：
 
-- `docs/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
-- `docs/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
+- `docs/omni_powers/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
+- `docs/omni_powers/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
 - 依赖检查：活表查不到的依赖 → 查 done 表确认完成
 - 收口时 task 从活表移到 done 表
 
@@ -56,7 +56,7 @@ bash scripts/op_jq.sh all
 1. `git revert <commit_hash>` — 反向提交
 2. `bash scripts/op_status.sh {TID} 待开始` — 该 task status 回退
 3. `bash scripts/op_jq.sh downstream {TID}` 查下游 task，逐一 `op_status.sh {下游TID} 待开始`
-4. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
+4. 若该 task 已归档到 `docs/omni_powers/op_record/tasks/{TID}/`：`git mv docs/omni_powers/op_record/tasks/{TID} docs/omni_powers/op_execution/tasks/{TID}` — 移回工作区
 5. 重新进入开发循环
 
 不连锁回滚下游，只重置状态。下游 status 回退后依赖链完整，选 task 规则自然重新调度。

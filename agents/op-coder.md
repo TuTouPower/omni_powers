@@ -57,12 +57,12 @@ FAIL 轮**绝对不碰** context.md。
 
 | 文件 | 模板 | 谁写 | 何时 |
 |---|---|---|---|
-| `docs/op_execution/tasks/{TID}/spec.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
-| `docs/op_execution/tasks/{TID}/plan.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
-| `docs/op_execution/tasks/{TID}/steps.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
-| `docs/op_execution/tasks/{TID}/context.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `docs/op_execution/tasks/{TID}/review_code.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
-| `docs/op_execution/tasks/{TID}/review_test.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/omni_powers/op_execution/tasks/{TID}/spec.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
+| `docs/omni_powers/op_execution/tasks/{TID}/plan.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
+| `docs/omni_powers/op_execution/tasks/{TID}/steps.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
+| `docs/omni_powers/op_execution/tasks/{TID}/context.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
+| `docs/omni_powers/op_execution/tasks/{TID}/review_code.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/omni_powers/op_execution/tasks/{TID}/review_test.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 
 ## TDD 流程

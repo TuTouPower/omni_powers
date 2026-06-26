@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TID="${1:?用法: op_new_task.sh <TID>}"
-TASK_DIR="$ROOT/docs/op_execution/tasks/$TID"
+TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
 TEMPLATE_DIR="$ROOT/template/op_execution/tasks/{TID}"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }

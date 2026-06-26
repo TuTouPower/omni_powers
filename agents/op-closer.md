@@ -14,26 +14,26 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 ## 你做什么
 
-1. **归档 spec 盖戳**：`docs/op_execution/tasks/{TID}/spec.md` 顶部加 `> ⚠️ 历史快照，以 docs/op_blueprint/specs/ 为准。`**验证**：`head -1 docs/op_execution/tasks/{TID}/spec.md | grep -q "历史快照"`
+1. **归档 spec 盖戳**：`docs/omni_powers/op_execution/tasks/{TID}/spec.md` 顶部加 `> ⚠️ 历史快照，以 docs/omni_powers/op_blueprint/specs/ 为准。`**验证**：`head -1 docs/omni_powers/op_execution/tasks/{TID}/spec.md | grep -q "历史快照"`
 
-2. **读 review 提取暂存项**：从 `docs/op_execution/tasks/{TID}/review_code.md` 和 `review_test.md` 中提取标了【暂存】的项。
+2. **读 review 提取暂存项**：从 `docs/omni_powers/op_execution/tasks/{TID}/review_code.md` 和 `review_test.md` 中提取标了【暂存】的项。
 
-3. **读 spec 识别 feature 归属**：读 `docs/op_execution/tasks/{TID}/spec.md` 全文，提取当前生效内容，判断归属哪个 feature 文件。
+3. **读 spec 识别 feature 归属**：读 `docs/omni_powers/op_execution/tasks/{TID}/spec.md` 全文，提取当前生效内容，判断归属哪个 feature 文件。
 
-4. **git mv 归档**：`ls docs/op_execution/tasks/{TID}/spec.md` 确认存在 → `git mv docs/op_execution/tasks/{TID} docs/op_record/tasks/{TID}`。**验证**：`ls docs/op_record/tasks/{TID}/spec.md`
+4. **git mv 归档**：`ls docs/omni_powers/op_execution/tasks/{TID}/spec.md` 确认存在 → `git mv docs/omni_powers/op_execution/tasks/{TID} docs/omni_powers/op_record/tasks/{TID}`。**验证**：`ls docs/omni_powers/op_record/tasks/{TID}/spec.md`
 
 5. **更新 tasks_list.json**：用 jq 将该 task status 改为 `完成`。`jq '(.tasks[] | select(.id=="{TID}") | .status) = "完成"'`
 
-6. **整理 specs/{feature}.md**：把步骤 3 提取的生效内容整理进 `docs/op_blueprint/specs/{feature}.md`。同一功能文件已存在则追加/更新段落，不存在则新建。
+6. **整理 specs/{feature}.md**：把步骤 3 提取的生效内容整理进 `docs/omni_powers/op_blueprint/specs/{feature}.md`。同一功能文件已存在则追加/更新段落，不存在则新建。
 
-7. **追加文档**：`progress.md`（task 完成记录）、`tech_debt.md`（如有暂存项）、`decisions.md`（如有决策）。按需更新 `docs/op_blueprint/` 下其他受影响文档。
+7. **追加文档**：`progress.md`（task 完成记录）、`tech_debt.md`（如有暂存项）、`decisions.md`（如有决策）。按需更新 `docs/omni_powers/op_blueprint/` 下其他受影响文档。
 
 8. **git add -A**：stage 所有产出（不含 src/tests——coder 已 stage）。**验证**：`git diff --staged --name-only | head -1 | grep -q .`
 
 9. **写 closer_output**（最后输出给 leader）：
 ```
 收口完成。
-- 归档: docs/op_record/tasks/{TID}/
+- 归档: docs/omni_powers/op_record/tasks/{TID}/
 - 暂存项: [N 项，或"无"]
 - feature 归属: {feature}
 - 决策: [内容，或"无"]

@@ -11,7 +11,7 @@ description: >
 ## 触发
 
 - `/intake "做用户登录功能"`
-- `/intake docs/op_blueprint/prd.md`（已有文档）
+- `/intake docs/omni_powers/op_blueprint/prd.md`（已有文档）
 - `/intake`（然后粘贴需求描述）
 - 用户说"新需求"、"拆 task"、"需求入轨"
 

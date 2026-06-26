@@ -12,7 +12,7 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASKS="$ROOT/docs/op_execution/tasks_list.json"
+TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
 CMD="${1:?用法: op_jq.sh <pending|deps|blocked|skipped|downstream|status|all> [args...]}"
 shift 2>/dev/null || true
 

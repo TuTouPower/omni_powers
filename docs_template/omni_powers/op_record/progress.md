@@ -18,7 +18,7 @@
 - 测试审查：PASS / FAIL
 
 ### 已知技术债
-（指向 docs/op_execution/tech_debt.md 的条目 ID）
+（指向 docs/omni_powers/op_execution/tech_debt.md 的条目 ID）
 
 ### commit
 {commit_hash}

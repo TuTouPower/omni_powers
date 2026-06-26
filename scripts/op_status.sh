@@ -9,7 +9,7 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASKS_FILE="$ROOT/docs/op_execution/tasks_list.json"
+TASKS_FILE="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
