@@ -168,3 +168,25 @@
 - 不再需要 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
 **详见**：`docs/agent_team_vs_subagent.md` 第十二节
+
+## D16：从 per-task worktree 改为单 dev worktree，取消控制平面/代码平面分离（2026-06-27）
+
+**变更**：
+
+1. 所有 task 共用一个 worktree（`git worktree add .worktrees/op-dev -b feat/op-dev`），全 session 共享，不再每 task 创建独立 worktree
+2. 取消"控制平面 vs 代码平面"分离——串行无并发，不存在 merge 冲突
+3. leader、coder、reviewer、closer 全在同一目录工作
+4. 一个 task 一个 commit（不是两个）
+5. 收口在 session 结束时统一：merge + 删 worktree
+6. `/op-start` 启动时问用户选 worktree 模式还是 master 模式
+
+**理由**：
+- 串行执行下 per-task worktree 的隔离收益为零——没有并发竞争
+- 控制平面和代码平面分离是并发时代的遗产，串行下所有文件在一个目录，谁都可以写
+- 简化收口流程：不需要 per-task merge/删 worktree/主 repo 不干净检查
+
+**影响**：
+- RULES.md 删除 commit 时机节、控制平面节、工作区与 worktree 节
+- SKILL.md 收口从 5 小步简化为：op-closer 一步（spec 盖戳 + git mv + 更新 tasks_list.json + specs + tech_debt + git add -A + commit）
+- agent prompt 中的 `.worktrees/{TID}` 路径改为项目根目录
+- `close_check.sh` 不再检查主 repo 不干净（无此概念）

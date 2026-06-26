@@ -6,7 +6,7 @@
 #   2. leader_checkpoint.md 含本 task                → 必须通过
 #   3. 归档目录六件齐全                              → 必须通过
 #   4. git status 非本 task 残留                     → 仅提醒，不拦
-# 注意: 调用前应先 commit 本 task 改动，否则 git status 会混入未提交项
+# 注意: 调用前 leader 应先审查 closer 产出并 commit，否则 git status 混入未提交项
 
 set -euo pipefail
 
@@ -67,8 +67,8 @@ if [ -s "$arch/spec.md" ]; then
 fi
 
 # 4. git status 提醒（非本 task 改动）——不拦，只报
-worktree_task="docs/op_execution/tasks/${TID}"
-others=$(git status --short 2>/dev/null | grep -v "^[MADRC? ]\+ ${worktree_task}" || true)
+task_dir="docs/op_execution/tasks/${TID}"
+others=$(git status --short 2>/dev/null | grep -v "^[MADRC? ]\+ ${task_dir}" || true)
 if [ -n "$others" ]; then
     echo "[WARN] git status 有非 ${TID} 的改动，leader 请检查是否本 task 残留或需 stash 隔离:"
     echo "$others" | sed 's/^/    /'

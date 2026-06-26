@@ -13,14 +13,14 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 3. **context.md 只记正向进度**：每 step 完成追加（改了哪些文件、测试输出、关键假设）。FAIL 轮**禁碰** context.md。
 4. **FAIL 轮只改 review_*.md**：读 review 正文 → 改代码 → 在同文件追加修改记录（"已改 X / 此项不改因为 Y"）。不改 context.md。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
-6. **收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续干活。
+6. **收到任务第一件事**：`cd <work_dir> && pwd`。**硬校验**：pwd 输出必须等于 leader 指定的工作目录。不匹配 → 立即回报 "路径错误"，不继续干活。
 7. **完成后回报**：返回结果给 leader（你是 Sub Agent，结果自动返回主会话）。
 
 ## 工作流
 
 ### 正向开发（coding 阶段）
 
-leader 会告知 task ID。你在 `.worktrees/{TID}` 中工作，所有文件路径相对于项目根。读 `docs/op_execution/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
+leader 会告知 task ID 和工作目录。你在该目录中工作，所有文件路径相对于项目根。读 `docs/op_execution/tasks/{TID}/` 下的 spec.md + plan.md（+ steps.md 如果有）。
 
 ```
 1. 读 spec/plan，理解当前 step 要做什么

@@ -57,12 +57,11 @@ jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | in
 
 不用 reset（会丢历史）。
 
-1. `git revert <代码commit_hash>` — 反向提交（代码平面）
-2. `git revert <控制平面commit_hash>` — 反向提交（控制平面）
-3. `bash skills/op-start/scripts/op-status.sh {TID} 待开始` — 该 task status 回退
-4. 用 jq 查下游 task（`select(.depends_on | index("{TID}"))`），逐一 `op-status.sh {下游TID} 待开始`
-5. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
-6. 重新进入开发循环
+1. `git revert <commit_hash>` — 反向提交
+2. `bash skills/op-start/scripts/op-status.sh {TID} 待开始` — 该 task status 回退
+3. 用 jq 查下游 task（`select(.depends_on | index("{TID}"))`），逐一 `op-status.sh {下游TID} 待开始`
+4. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
+5. 重新进入开发循环
 
 不连锁回滚下游，只重置状态。下游 status 回退后依赖链完整，选 task 规则自然重新调度。
 

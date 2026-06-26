@@ -18,7 +18,7 @@ description: >
 
 **开始时声明：** "我用 op-generate-plan 来创建实施计划。"
 
-**上下文：** 如果在隔离的 worktree 中工作，应由 leader 在执行时通过 `git worktree` 创建。
+**上下文：** 工作目录由 leader 在 op-start 时确定（worktree 或 master 模式）。
 
 **保存 plan 到：** `docs/op_execution/tasks/{TID}/plan.md`
 

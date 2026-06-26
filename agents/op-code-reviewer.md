@@ -20,7 +20,7 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 
 ## Review Process
 
-**收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
+**收到任务第一件事**：`cd <work_dir> && pwd`。**硬校验**：pwd 输出必须等于 leader 指定的工作目录。不匹配 → 立即回报 "路径错误"，不继续。
 
 When invoked:
 

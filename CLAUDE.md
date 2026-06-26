@@ -82,7 +82,7 @@ cd omni_powers
 ## 依赖
 
 - `jq`（tasks_list.json 查询）
-- `git`（worktree 隔离）
+- `git`（worktree 隔离，可选）
 
 ## 相关文档
 

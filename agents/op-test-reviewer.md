@@ -20,7 +20,7 @@ tools: [Read, Write, Grep, Glob, Bash]
 - **只追加不覆盖**：后续轮次在文件末尾续写，不改前文
 - **先读 task 目标**：审查前先读 `docs/op_execution/tasks/{TID}/` 下的 `spec.md` / `plan.md` / `context.md`，据此确定"测试该覆盖什么、正确结果是什么"
 
-**收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
+**收到任务第一件事**：`cd <work_dir> && pwd`。**硬校验**：pwd 输出必须等于 leader 指定的工作目录。不匹配 → 立即回报 "路径错误"，不继续。
 
 **完成后回报**：返回结果给 leader（你是 Sub Agent，结果自动返回主会话）。
 
