@@ -17,8 +17,9 @@
 - coder: {复用/重 spawn 决策}
 - reviewer / test-reviewer: 常驻
 
-## compact 计数
-- 已完成 N task
+## 已完成 task 列表
+（按完成顺序列出 TID，compact 恢复后据此判断进度）
+- {TID} ... ✅ {commit_hash}
 
 ## 依赖 DAG
 （拓扑分层，波次编排用。⚠️ 恢复后必须重算 DAG 层宽，不吃 checkpoint 惯性）
