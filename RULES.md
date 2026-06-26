@@ -8,15 +8,15 @@
 
 ## 角色
 
-| 角色          | 类型       | model  | 派发     | 职责                                                                                                |
-| ------------- | ---------- | ------ | -------- | --------------------------------------------------------------------------------------------------- |
-| leader        | 主会话     | —     | —        | 编排、收口、改共享文档                                                                              |
-| op-coder       | Sub Agent | haiku  | 前台     | TDD：写测试→写实现→跑测试→写 context.md。dispatch 前跑 `op-coder-check.sh` 判定模式          |
-| op-code-reviewer | Sub Agent | sonnet | 后台并行 | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
-| op-test-reviewer | Sub Agent | sonnet | 后台并行 | 审测试是否真能发现问题，写 review_test.md                                                           |
-| op-closer        | Sub Agent | haiku  | 前台     | 收口：spec 盖戳 + git mv 归档 + 更新 tasks_list.json + specs/ + tech_debt + git add -A + commit |
+| 角色             | 类型      | model  | 派发     | 职责                                                                                            |
+| ---------------- | --------- | ------ | -------- | ----------------------------------------------------------------------------------------------- |
+| leader           | 主会话    | —     | —       | 编排、commit、写 checkpoint                                                                     |
+| op-coder         | Sub Agent | haiku  | 前台     | TDD：写测试→写实现→跑测试→写 context.md。                                                    |
+| op-code-reviewer | Sub Agent | sonnet | 后台并行 | 审 git diff + 安全/架构/错误处理，写 review_code.md                                             |
+| op-test-reviewer | Sub Agent | sonnet | 后台并行 | 审测试是否真能发现问题，写 review_test.md                                                       |
+| op-closer        | Sub Agent | haiku  | 前台     | 收口全流程：spec 盖戳 + git mv 归档 + 更新 tasks_list.json + 整理 op_blueprint/ 下所有相关文档 + tech_debt + progress/decisions + git add -A + commit |
 
-全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。所有 agent 共用一个 worktree。收到任务第一件事：`cd <work_dir> && pwd` 硬校验。
+全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。
 
 ## 状态机
 
@@ -29,15 +29,15 @@
 
 tasks_list.json status 值：
 
-| status     | 含义                                        | blocked_by                                         |
-| ---------- | ------------------------------------------- | -------------------------------------------------- |
-| `待开始` | spec/plan 就位，未开发                      | null                                               |
-| `进行中` | op-coder 开发或修复轮中                        | null                                               |
-| `审阅中` | review 进行中                               | null                                               |
-| `收口中` | 双 PASS 后，op-closer 执行中                 | null                                               |
-| `完成`   | op-closer 返回后 commit + close_check 通过     | null                                               |
-| `阻塞`   | 3 轮 FAIL 或环境阻塞                        | `resource`/`quality`/`spawn`（必有值） |
-| `跳过`   | 因下游阻塞顺延，等待阻塞解除                | null                                               |
+| status     | 含义                                       | blocked_by                                   |
+| ---------- | ------------------------------------------ | -------------------------------------------- |
+| `待开始` | spec/plan 就位，未开发                     | null                                         |
+| `进行中` | op-coder 开发或修复轮中                    | null                                         |
+| `审阅中` | review 进行中                              | null                                         |
+| `收口中` | 双 PASS 后，op-closer 执行中               | null                                         |
+| `完成`   | op-closer 返回后 commit + close_check 通过 | null                                         |
+| `阻塞`   | 3 轮 FAIL 或环境阻塞                       | `resource`/`quality`/`spawn`（必有值） |
+| `跳过`   | 因下游阻塞顺延，等待阻塞解除               | null                                         |
 
 **英文/中文映射**（compact 恢复、跨文档引用时对照）：
 
@@ -55,11 +55,11 @@ tasks_list.json status 值：
 
 ### 阻塞项处理
 
-| 类型 | blocked_by | 处理 |
-|---|---|---|
-| 外部资源缺失（密钥/端点等） | `resource` | 跳过，标阻塞 |
-| 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
-| spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
+| 类型                        | blocked_by   | 处理                             |
+| --------------------------- | ------------ | -------------------------------- |
+| 外部资源缺失（密钥/端点等） | `resource` | 跳过，标阻塞                     |
+| 3 轮 FAIL                   | `quality`  | 写 issues/{TID}_quality.md，跳过 |
+| spawn 失败                  | `spawn`    | 退避重试 2 次，仍败则标阻塞      |
 
 ### 下游传播
 
@@ -98,22 +98,22 @@ docs/omni_powers/op_execution/tasks/{TID}/
 
 ### 持久文件
 
-| 路径                                       | 谁写   | 何时                                                |
-| ------------------------------------------ | ------ | --------------------------------------------------- |
-| `docs/omni_powers/op_execution/tasks_list.json`      | op-closer / leader | 状态流转                                         |
-| `docs/omni_powers/op_blueprint/specs/{feature}.md`   | op-closer / leader | 每 task 闭环整理（当前生效规格，按功能聚合）        |
-| `docs/omni_powers/op_record/progress.md`             | op-closer / leader | 闭环后追加                                          |
-| `docs/omni_powers/op_record/decisions.md`            | op-closer / leader | 有架构决策才追加                                    |
-| `docs/omni_powers/op_execution/tech_debt.md`         | op-closer / leader | 闭环后追加                                          |
-| `docs/omni_powers/op_execution/leader_checkpoint.md` | leader | 每 task 闭环后写                                    |
-| `docs/omni_powers/op_execution/dag.md`               | leader | 每次 /op-start 从 depends_on 重算生成               |
-| `docs/omni_powers/op_blueprint/` 下其他文档          | op-closer / leader | 按需更新                                          |
+| 路径                                                   | 谁写               | 何时                                         |
+| ------------------------------------------------------ | ------------------ | -------------------------------------------- |
+| `docs/omni_powers/op_execution/tasks_list.json`      | op-closer | 状态流转                                     |
+| `docs/omni_powers/op_blueprint/specs/{feature}.md`   | op-closer | 每 task 闭环整理（当前生效规格，按功能聚合） |
+| `docs/omni_powers/op_record/progress.md`             | op-closer | 闭环后追加                                   |
+| `docs/omni_powers/op_record/decisions.md`            | op-closer | 有架构决策才追加                             |
+| `docs/omni_powers/op_execution/tech_debt.md`         | op-closer | 闭环后追加                                   |
+| `docs/omni_powers/op_execution/leader_checkpoint.md` | leader    | 每 task 闭环后写                             |
+| `docs/omni_powers/op_execution/dag.md`               | leader    | 每次 /op-start 从 depends_on 重算生成        |
+| `docs/omni_powers/op_blueprint/` 下其他文档          | op-closer | 按需更新                                     |
 
-### specs/ 机制
+### 闭环整理
 
-当前真相在 `docs/omni_powers/op_blueprint/specs/{feature}.md`，按功能聚合。task 闭环时把当前生效规格整理进去，只留"现在是什么"，不留方案比较/被否方案。归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 specs/ 文件。
+task 闭环时，op-closer 检查 `docs/omni_powers/op_blueprint/` 下所有相关文档（specs/{feature}.md、prd.md、architecture.md、domain.md、conventions.md 等），把本 task 当前生效的接口、数据模型、约束、行为整理进去。只留"现在是什么"，不留方案比较/被否方案。
 
-**整理规则**：每 task 闭环时，把 task spec 里当前生效的接口、数据模型、约束、行为整理进 `docs/omni_powers/op_blueprint` 里相关文档和对应功能 specs 文件和。归档后永不再改。
+归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 `op_blueprint/` 下的文件。
 
 **新建文件规则**：一律先拷 `docs_template/omni_powers` 下对应模板再填内容。无对应模板才自建。
 

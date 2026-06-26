@@ -42,31 +42,6 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
     └── op_record/      #   冻结历史：decisions / progress
 ```
 
-## 核心概念
-
-**状态机**：task 生命周期为 `待开始 → 进行中 → 审阅中 → 收口中 → 完成`（或 `阻塞`/`跳过`）。
-
-**三态文档**：
-| 层 | 含义 | 例子 |
-|---|---|---|
-| `op_blueprint/` | 稳定真相（很少变） | prd, architecture, conventions |
-| `op_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
-| `op_record/` | 冻结历史（只追加） | decisions, progress |
-
-**compact 恢复**：上下文窗口满了自动 compact，恢复时读 `RULES.md` + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
-
-## 工作流一览
-
-```
-/op-start
-    │
-    ├─ 全完成     → 提示 /op-debt2tasks
-    ├─ 待开始     → 重算 DAG → 选 task → 派 op-coder
-    ├─ 进行中     → op-coder 完成 → 派 review（Sub Agent 并行）
-    ├─ 审阅中     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 op-coder
-    └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
-```
-
 ## 安装
 
 ```bash
