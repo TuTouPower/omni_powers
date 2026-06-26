@@ -154,9 +154,9 @@ bash skills/op-start/scripts/op-new-task.sh {TID}
 
 3. 调 op-generate-plan 生成 plan.md
 
-**快速模式（默认）**：每个偿还 task 必须用 Skill 工具调用 op-generate-spec（快速模式）→ 再调 op-generate-plan（快速模式）。批量 task 时用子代理并发，每个子代理对一个 task 依次完成 spec+plan。
+**快速模式（默认）**：每个偿还 task 用子代理并发调用 op-generate-spec（快速模式）→ op-generate-plan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。
 
-**深度模式**（用户明确说"深度"时才走）：op-generate-spec 走深度模式逐债项讨论，op-generate-plan 走深度模式逐 step 确认。
+**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("op-generate-spec")`（深度模式）→ `Skill("op-generate-plan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。
 
 ### step 7：更新 tech_debt.md
 
