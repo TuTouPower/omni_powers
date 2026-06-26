@@ -90,4 +90,4 @@ specs 归属：{feature 文件名，或"不确定"}
 ## 注意
 
 - 所有路径相对于 `.worktrees/{TID}/`
-- 控制平面文件由 leader 在主 repo 串行操作，closer 绝不碰
+- 控制平面文件由 leader 在主 repo 串行操作，op-closer 绝不碰

@@ -90,7 +90,7 @@ T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 bash skills/op-start/scripts/op-new-task.sh {TID}
 ```
 
-context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）。
+context.md 和 steps.md 暂不填（空模板，op-coder 和 leader 后续维护）。
 
 ## 与其他 skill 的关系
 

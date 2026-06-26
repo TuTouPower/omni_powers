@@ -74,7 +74,7 @@ task 是携带自己测试周期、值得一个新审查者审视的最小单元
 ```markdown
 # {TID} {title} Implementation Plan
 
-> **给 coder：** 按 step 顺序执行，每 step 勾选完成。step 使用 `- [ ]` checkbox 语法跟踪进度。
+> **给 op-coder：** 按 step 顺序执行，每 step 勾选完成。step 使用 `- [ ]` checkbox 语法跟踪进度。
 
 **目标：** {一句话描述要做什么}
 
@@ -186,7 +186,7 @@ git commit -m "feat: add specific feature"
 
 **"Plan 已写入 `docs/op_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
 
-op-start 会接管后续：选 task → 派 coder → review → 收口。
+op-start 会接管后续：选 task → 派 op-coder → review → 收口。
 
 ## 相关文件
 

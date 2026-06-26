@@ -78,9 +78,9 @@ jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | in
 
 leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，由 leader 维护进度）。每个 step 是一组相关文件改动。
 
-**派活方式**：leader 只给 coder 当前 step + 相关 spec 段，不给整份 plan。coder 每 step 完成后 leader 再派下一个。小 task 可一次给全 plan。
+**派活方式**：leader 只给 op-coder 当前 step + 相关 spec 段，不给整份 plan。op-coder 每 step 完成后 leader 再派下一个。小 task 可一次给全 plan。
 
-**steps.md**：leader 维护，记录当前 step 编号和进度。coder 只读不写。
+**steps.md**：leader 维护，记录当前 step 编号和进度。op-coder 只读不写。
 
 ## tech_debt
 
@@ -96,8 +96,8 @@ leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，
 |---|---|---|
 | 需求→task | `/op-task` | 先改 ref 再建 task |
 | 开发循环 | `/op-start` | 自治循环，收口后自动选下一个 |
-| review | Agent Team（code-reviewer + test-reviewer） | 双 review 并行，leader 读 verdict |
-| 收口 | op-start 收口段 | closer stage 全部产出，leader commit |
+| review | Agent Team（op-code-reviewer + op-test-reviewer） | 双 review 并行，leader 读 verdict |
+| 收口 | op-start 收口段 | op-closer stage 全部产出，leader commit |
 | 技术债偿还 | `/op-debt2tasks` | 功能 task 全 done 后触发 |
 | spec 生成 | `/op-generate-spec`（或 intake 调用） | op-generate-spec skill |
 | plan 生成 | `/op-generate-plan`（或 intake 调用） | op-generate-plan skill |

@@ -26,7 +26,7 @@
 
 ## D4：放弃 Workflow，全面使用 Agent Team（2026-06-25）
 
-**变更**：review 从 Workflow（task_review.js）迁移到 Agent Team（code-reviewer + test-reviewer）。
+**变更**：review 从 Workflow（task_review.js）迁移到 Agent Team（op-code-reviewer + op-test-reviewer）。
 
 **理由**：
 - Workflow 每次重新填充上下文，token 成本高
@@ -36,7 +36,7 @@
 
 **影响**：
 - `docs/harness/workflows/` 已删除
-- review 流程改为：leader SendMessage 派 review → code-reviewer/test-reviewer 写 review_*.md → leader 读首行 verdict
+- review 流程改为：leader SendMessage 派 review → op-code-reviewer/op-test-reviewer 写 review_*.md → leader 读首行 verdict
 
 ## D5：放弃上下文监控，全面复用（2026-06-25）
 
@@ -60,11 +60,11 @@
 
 **理由**：收口主 commit + hash 回填单独 commit = 两次 commit，违反"一个 task 一次 commit"原则。合并到下一个 task 的 commit 中，保持一个 task 一次 commit 的简洁语义。
 
-## D7：test-reviewer 使用 Round 格式（2026-06-25）
+## D7：op-test-reviewer 使用 Round 格式（2026-06-25）
 
-**变更**：test-reviewer 从 10 段通用测试审查报告改为 Round N-1/N-2 轮次结构，与 code-reviewer 格式一致。
+**变更**：op-test-reviewer 从 10 段通用测试审查报告改为 Round N-1/N-2 轮次结构，与 op-code-reviewer 格式一致。
 
-**理由**：模板 `review_test.md` 定义了 Round N-1/N-2 结构，但 test-reviewer agent 输出 10 段通用报告，格式完全不匹配。统一格式后 leader 判定逻辑一致，coder FAIL 轮处理也一致。
+**理由**：模板 `review_test.md` 定义了 Round N-1/N-2 结构，但 op-test-reviewer agent 输出 10 段通用报告，格式完全不匹配。统一格式后 leader 判定逻辑一致，op-coder FAIL 轮处理也一致。
 
 ## D8：删除 agent frontmatter model 字段（2026-06-25）
 
@@ -89,7 +89,7 @@
 - 扫到 `coder_done` → 删文件 → 派 review
 - 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict
 - 全在等时 `ScheduleWakeup(180s)` 兜底轮询
-- FAIL 轮重新派 coder 前标记文件已在上一轮处理时删空
+- FAIL 轮重新派 op-coder 前标记文件已在上一轮处理时删空
 
 **理由**：
 - SendMessage 跨 agent 通信不是 100% 可靠——消息可能丢失
@@ -111,9 +111,9 @@
 - 删除 `agents/op-task-splitter.md`
 - RULES.md / SKILL.md / CLAUDE.md 中所有相关段落删除
 
-## D14：放弃 coder 并发（2026-06-26）
+## D14：放弃 op-coder 并发（2026-06-26）
 
-**变更**：只保留 coder，删除 coder-2/3。所有 task 串行执行。
+**变更**：只保留 op-op-coder，删除 coder-2/3。所有 task 串行执行。
 
 **理由**：
 - worktree 并发收口时的合并冲突、控制平面竞争、FF 策略选择——复杂度远超收益
@@ -121,7 +121,7 @@
 - 串行简化整个系统：无同层波次、无下游顺延、无并发 merge 冲突
 
 **影响**：
-- 花名册 coder/2/3 → coder
+- 花名册 op-coder/2/3 → op-coder
 - RULES.md / SKILL.md 中所有"并发"、"波次"、"同层"段落重写
 - DAG 仍保留给串行 task 的拓扑顺序计算
 
@@ -135,7 +135,7 @@
 
 ## D12：代码平面 vs 控制平面分离，一个 task 两个 commit（2026-06-26）
 
-**变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → harness commit。
+**变更**：工作区文件分为两层——代码平面（per-task，进 feat 分支）和控制平面（全局共享，仅 leader 在主 repo 串行写）。收口从"worktree 内一次 commit 包含所有文件"改为两阶段：A. op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；B. leader 在主 repo 串行更新控制平面文件 → harness commit。
 
 **规则**：
 - 代码平面：`src/`、`tests/`、`docs/op_execution/tasks/{TID}/`、`docs/op_record/tasks/{TID}/`

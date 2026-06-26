@@ -11,10 +11,10 @@
 | 角色          | 类型                 | model  | 职责                                                                                                |
 | ------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------- |
 | leader        | 主会话               | —     | 编排、收口、改共享文档                                                                              |
-| coder       | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
-| code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
-| test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
-| closer        | **Subagent**   | haiku  | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
+| op-coder       | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
+| op-code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
+| op-test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
+| op-closer        | **Subagent**   | haiku  | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
 
 ### 为什么用 Agent Team
 
@@ -22,7 +22,7 @@
 - FAIL 轮唤醒同一实例，保留 spec/plan/上一轮代码上下文
 - compact 后 teammate 消失需重 spawn，但 context.md/ review_*.md 在文件系统，恢复不丢
 
-### 为什么 closer 用 Subagent
+### 为什么 op-closer 用 Subagent
 
 - 一次性操作：执行完回报消失
 - 无需持久，无需 FAIL 轮，无需跨 task 复用
@@ -43,9 +43,9 @@ tasks_list.json status 值：
 | status     | 含义                                        | blocked_by                                         |
 | ---------- | ------------------------------------------- | -------------------------------------------------- |
 | `待开始` | spec/plan 就位，未开发                      | null                                               |
-| `进行中` | coder 开发或修复轮中                        | null                                               |
+| `进行中` | op-coder 开发或修复轮中                        | null                                               |
 | `审阅中` | review 进行中                               | null                                               |
-| `收口中` | 双 PASS 后，closer 执行中，leader commit 前 | null                                               |
+| `收口中` | 双 PASS 后，op-closer 执行中，leader commit 前 | null                                               |
 | `完成`   | commit + close_check 通过                   | null                                               |
 | `阻塞`   | 3 轮 FAIL 或环境阻塞                        | `key`/`domain`/`quality`/`spawn`（必有值） |
 | `跳过`   | 因下游阻塞顺延，等待阻塞解除                | null                                               |
@@ -73,12 +73,12 @@ docs/op_execution/tasks/{TID}/
 ├── spec.md           # op-generate-spec 生成
 ├── plan.md           # op-generate-plan 生成
 ├── steps.md          # leader 维护的 step 进度
-├── context.md        # coder 每 step 完成追加正向进度。FAIL 轮不碰
-├── review_code.md    # code-reviewer 写 — coder 修改记录就近追加（只追加不覆盖）
-└── review_test.md    # test-reviewer 写 — 同上
+├── context.md        # op-coder 每 step 完成追加正向进度。FAIL 轮不碰
+├── review_code.md    # op-code-reviewer 写 — op-coder 修改记录就近追加（只追加不覆盖）
+└── review_test.md    # op-test-reviewer 写 — 同上
 ```
 
-- context.md = 构建边界（正向进度），review_*.md = 质量边界（FAIL 来回）。二者不重叠——读者、时机、内容不重叠，重审不跨文件找。review 文档是审计痕迹，全部进 git、永不删，记录 coder 改了什么、为什么不改、review 哪里误判。
+- context.md = 构建边界（正向进度），review_*.md = 质量边界（FAIL 来回）。二者不重叠——读者、时机、内容不重叠，重审不跨文件找。review 文档是审计痕迹，全部进 git、永不删，记录 op-coder 改了什么、为什么不改、review 哪里误判。
 - task 闭环后 git mv 到 `docs/op_record/tasks/{TID}/` 归档。
 - `docs/op_execution/issues/{TID}_quality.md` 记录质量阻塞（3 轮 FAIL）和 spawn 失败等阻塞原因。
 
@@ -110,15 +110,15 @@ docs/op_execution/tasks/{TID}/
 
 review 由 Agent Team 执行（D4），不用 Workflow。
 
-- leader SendMessage 派 code-reviewer 和 test-reviewer 并行 review
-- code-reviewer 写 `review_code.md`，test-reviewer 写 `review_test.md`
+- leader SendMessage 派 op-code-reviewer 和 op-test-reviewer 并行 review
+- op-code-reviewer 写 `review_code.md`，op-test-reviewer 写 `review_test.md`
 - 每个 review_*.md 首行必须是 `verdict: PASS` 或 `verdict: FAIL`
 - leader 读首行判定，不 grep 正文
 - 双 PASS → 收口。任一 FAIL → FAIL 轮。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回 coder → coder 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**下游传播**：FAIL task 的下游依赖 task status 改为 `跳过`，等待阻塞解除后恢复。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回 op-coder → op-op-coder 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。op-coder 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**下游传播**：FAIL task 的下游依赖 task status 改为 `跳过`，等待阻塞解除后恢复。
 
 ### commit 时机
 
@@ -126,9 +126,9 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 **代码平面**（per-task，不冲突，进 feat 分支）：
 
-- `src/`、`tests/` — coder 产出
+- `src/`、`tests/` — op-coder 产出
 - `docs/op_execution/tasks/{TID}/` — task 工作区
-- 归档目录 `docs/op_record/tasks/{TID}/` — closer 归档
+- 归档目录 `docs/op_record/tasks/{TID}/` — op-closer 归档
 
 **控制平面**（全局共享，仅 leader 在主 repo 串行写，永不进 feat 分支）：
 
@@ -137,7 +137,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - `specs/{feature}.md` — 跨 task 累积
 - `progress.md`、`decisions.md`、`tech_debt.md` — 记录
 
-收口分两阶段：(A) closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
+收口分两阶段：(A) op-closer 在 worktree 做 per-task 操作 → leader commit 代码提交 → merge 回主线；(B) leader 在主 repo 串行更新控制平面文件 → harness commit。
 
 ### DAG 与 depends_on
 
@@ -155,30 +155,30 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 
 收口时 `git merge feat/{TID} --ff-only` 合回主线，然后 `git worktree remove .worktrees/{TID}`。
 
-**控制平面文件仅在主 repo 由 leader 串行写**——closer 和 feat 分支不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md / leader_checkpoint.md。
+**控制平面文件仅在主 repo 由 leader 串行写**——op-closer 和 feat 分支不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md / leader_checkpoint.md。
 
 ### Agent Team 管理
 
-coder、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
+op-coder、op-code-reviewer、op-test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。——用 `Agent` 工具 spawn，跨 task 常驻。
 
 **创建**（首次 /op-start 时，必须显式传 model 和 team_name 参数）：
 
 ```
 TeamCreate({ team_name: "op-{project}-team" })
 
-Agent({ name: "coder", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku",
+Agent({ name: "op-coder", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku",
   prompt: "等待 leader 派 TDD 任务..." })
 
-Agent({ name: "code-reviewer", team_name: "op-{project}-team", subagent_type: "op-code-reviewer", model: "sonnet",
+Agent({ name: "op-code-reviewer", team_name: "op-{project}-team", subagent_type: "op-code-reviewer", model: "sonnet",
   prompt: "等待 leader 派 review 任务..." })
 
-Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "op-test-reviewer", model: "sonnet",
+Agent({ name: "op-test-reviewer", team_name: "op-{project}-team", subagent_type: "op-test-reviewer", model: "sonnet",
   prompt: "等待 leader 派 review 任务..." })
 ```
 
 team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
-**通信**：`SendMessage(to: "coder", message: "...")`。teammate 之间不直接通信。
+**通信**：`SendMessage(to: "op-coder", message: "...")`。teammate 之间不直接通信。
 
 **完成通知**：标记文件是唯一真相源，SendMessage 是加速器。teammate 完成工作后**先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）。
 
@@ -186,9 +186,9 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
 | 角色          | 标记文件               | 写入时机                  |
 | ------------- | ---------------------- | ------------------------- |
-| coder         | `coder_done`         | 当前 step/FAIL 修改完成后 |
-| code-reviewer | `reviewer_code_done` | review_code.md 写完后     |
-| test-reviewer | `reviewer_test_done` | review_test.md 写完后     |
+| op-coder         | `coder_done`         | 当前 step/FAIL 修改完成后 |
+| op-code-reviewer | `reviewer_code_done` | review_code.md 写完后     |
+| op-test-reviewer | `reviewer_test_done` | review_test.md 写完后     |
 
 **leader 判定**：
 
@@ -196,7 +196,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 - 扫到 `coder_done` → 删文件 → 派 review。
 - 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict。
 - 只有一 reviewer 标记 → 不删，继续等。
-- FAIL 轮重新派 coder 前，leader 确保三个标记文件已清空（上一轮处理时已删）。
+- FAIL 轮重新派 op-coder 前，leader 确保三个标记文件已清空（上一轮处理时已删）。
 - **idle 兜底**：所有 task 都在等（无待开始、无 review 可处理），`ScheduleWakeup({ delaySeconds: 180, prompt: "继续执行 /op-start 自治循环——扫 signals/ 标记文件、检查 task 状态、推进下一个可跑 task", reason: "所有 task 都在等 teammate 完成，180s 轮询标记文件（< 300s 保持 cache 热）" })` 唤醒，重新扫标记文件。
 
 **生命周期**（D5）：
@@ -204,7 +204,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 - teammate 全程复用，不主动 shutdown，不监控上下文
 - 上下文满了由 Claude Code 自动 compact/截断
 - idle 后不消失，SendMessage 即可唤醒。FAIL 轮发回原 teammate，保留跨轮状态
-- **派新 task 前必须强制切目录**：上一个 task 收口后 worktree 已删除，teammate 的 shell cwd 是死路径。leader 在派活消息首行写 `cd <绝对路径> && pwd`，coder 收到消息第一件事执行 cd + 验证 pwd
+- **派新 task 前必须强制切目录**：上一个 task 收口后 worktree 已删除，teammate 的 shell cwd 是死路径。leader 在派活消息首行写 `cd <绝对路径> && pwd`，op-coder 收到消息第一件事执行 cd + 验证 pwd
 - **shutdown 仅用于 teammate 完全无响应**：SendMessage 含 shutdown_request → 等回复 → 清 config 残留
 - **spawn 前必须查 config**：名字已存在则唤醒，不存在才 spawn。同名 spawn 会被自动加序号
 
@@ -228,7 +228,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 ## Quick Reference（compact 后速查）
 
-**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 op-coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→op-coder 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
 
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 

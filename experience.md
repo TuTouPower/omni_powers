@@ -11,10 +11,10 @@
 
 
 没有生成 dag.md
-coder 发消息 leader 收不到
+op-coder 发消息 leader 收不到
 test_reviewer 文档应该放在 worktree 但是卸载了主 repo
-coder context.md 写到了主 repo 而非 worktree。修复
-closer  没有subagent
+op-coder context.md 写到了主 repo 而非 worktree。修复
+op-closer  没有subagent
 
 两个 FAIL：tech_debt 无 T43 段，归档缺 spec.md/plan.md。修复。
 
@@ -33,4 +33,4 @@ closer  没有subagent
 ● spec.md/plan.md 已被 git mv 移走了，在 worktree 的 record 里。从那里拷。
 
 
-closer 删了 spec.md/plan.md 但没归档到 record。从 git 恢复并归档。
+op-closer 删了 spec.md/plan.md 但没归档到 record。从 git 恢复并归档。

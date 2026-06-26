@@ -1,10 +1,10 @@
 verdict: <PASS|FAIL>
 
 > 首行 verdict: leader 读此行判定 PASS/FAIL，不 grep 正文。必须替换为 PASS 或 FAIL。
-> **PASS 门槛**：所有未标【暂存】的问题必须 coder 修完才能 PASS。LOW 不是放过理由。
+> **PASS 门槛**：所有未标【暂存】的问题必须 op-coder 修完才能 PASS。LOW 不是放过理由。
 > **暂存判断标准**（满足任一才可标暂存）：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task。
 > 标【暂存】的问题不阻塞 PASS，但必须写原因。默认不暂存——能当场修的都标【当场修】。
-> **轮次命名**：Review-N = reviewer 审阅（写意见 + verdict），Fix-N = coder 修改（FAIL 轮才有，逐项回应）。
+> **轮次命名**：Review-N = reviewer 审阅（写意见 + verdict），Fix-N = op-coder 修改（FAIL 轮才有，逐项回应）。
 > PASS 则止于 Review-N；FAIL 则进 Fix-N → Review-(N+1) 重读，循环 max 3 轮。
 > 只追加不覆盖——后续轮次在文件末尾续写，不改前文。
 
@@ -50,7 +50,7 @@ verdict: <PASS|FAIL>
 
 ## Review-2
 
-> 重读 coder 的 Fix-1 修改记录 + 新 git diff 后追加。承认误判则 PASS，维持原判则 FAIL 并追加理由。更新首行 verdict。
+> 重读 op-coder 的 Fix-1 修改记录 + 新 git diff 后追加。承认误判则 PASS，维持原判则 FAIL 并追加理由。更新首行 verdict。
 
 ---
 

@@ -68,8 +68,8 @@
 | teammate | model 参数 | 实际模型 | ctx_stats |
 |---|---|---|---|
 | op-coder | `haiku` | `default_haiku` | ✅ 可用 |
-| op-code-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
-| op-test-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
+| op-op-code-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
+| op-op-test-reviewer | `sonnet` | `default_sonnet` | ✅ 可用 |
 
 **结论**：ctx_stats 在 teammate 上可用，但**对上下文监控无用**——只显示 context-mode 拦截了多少字节，不显示 teammate 的实际上下文窗口占用率，无法用于判断何时需重建 teammate。
 
@@ -89,8 +89,8 @@
 
 **结果**：
 - `default_haiku`：200K tokens
-- `default_sonnet`（code-reviewer）：1M tokens
-- `default_sonnet`（test-reviewer）：200K tokens
+- `default_sonnet`（op-code-reviewer）：1M tokens
+- `default_sonnet`（op-test-reviewer）：200K tokens
 - `[1m]` 后缀是模型别名的一部分，不是窗口大小
 
 **结论**：窗口大小取决于实际模型 variant。不能让 agent 猜，需从系统提示解析。

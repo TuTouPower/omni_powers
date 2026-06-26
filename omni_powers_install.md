@@ -6,7 +6,7 @@
 
 1. **读到通用文档**：RULES.md、RULES_DETAIL.md 等协议文档，compact 恢复必读
 2. **执行脚本**：skill 自带脚本 + 多个 skill 共用的通用脚本
-3. **配置 Agent 模型**：coder 用 haiku/sonnet、reviewer 用哪个模型，用户可改
+3. **配置 Agent 模型**：op-coder 用 haiku/sonnet、op-code-reviewer 用哪个模型，用户可改
 4. **配置生成目录**：task 工作区、蓝图文档、记录归档的目录名，用户可改
 5. **模板文件**：spec.md、plan.md 等文档模板，按需读取
 
@@ -132,7 +132,7 @@ omni_powers/
 ```json
 {
   "name": "omni_powers",
-  "description": "多 Agent 协作开发工作流——leader 编排、coder 开发、reviewer 审查",
+  "description": "多 Agent 协作开发工作流——leader 编排、op-coder 开发、op-code-reviewer 审查",
   "version": "1.0.0",
   "author": { "name": "tutoupower" },
   "homepage": "https://github.com/tutoupower/omni_powers",
@@ -172,16 +172,16 @@ CONFIG_FILE="$HOME/.config/omni_powers/config.yaml"
 
 _awk_val() { awk '/^'"$1"':/{f=1;next} f&&/^  '"$2"':/{print $2;exit}' "$CONFIG_FILE" 2>/dev/null || true; }
 
-OMNI_POWERS_MODEL_CODER="${OMNI_POWERS_MODEL_CODER:-$(_awk_val models coder)}"
+OMNI_POWERS_MODEL_CODER="${OMNI_POWERS_MODEL_CODER:-$(_awk_val models op-coder)}"
 OMNI_POWERS_MODEL_CODER="${OMNI_POWERS_MODEL_CODER:-haiku}"
 
-OMNI_POWERS_MODEL_CODE_REVIEWER="${OMNI_POWERS_MODEL_CODE_REVIEWER:-$(_awk_val models code_reviewer)}"
+OMNI_POWERS_MODEL_CODE_REVIEWER="${OMNI_POWERS_MODEL_CODE_REVIEWER:-$(_awk_val models op-code-reviewer)}"
 OMNI_POWERS_MODEL_CODE_REVIEWER="${OMNI_POWERS_MODEL_CODE_REVIEWER:-sonnet}"
 
-OMNI_POWERS_MODEL_TEST_REVIEWER="${OMNI_POWERS_MODEL_TEST_REVIEWER:-$(_awk_val models test_reviewer)}"
+OMNI_POWERS_MODEL_TEST_REVIEWER="${OMNI_POWERS_MODEL_TEST_REVIEWER:-$(_awk_val models op-test-reviewer)}"
 OMNI_POWERS_MODEL_TEST_REVIEWER="${OMNI_POWERS_MODEL_TEST_REVIEWER:-sonnet}"
 
-OMNI_POWERS_MODEL_CLOSER="${OMNI_POWERS_MODEL_CLOSER:-$(_awk_val models closer)}"
+OMNI_POWERS_MODEL_CLOSER="${OMNI_POWERS_MODEL_CLOSER:-$(_awk_val models op-closer)}"
 OMNI_POWERS_MODEL_CLOSER="${OMNI_POWERS_MODEL_CLOSER:-haiku}"
 
 OMNI_POWERS_DIR_TASKS="${OMNI_POWERS_DIR_TASKS:-$(_awk_val dirs tasks)}"
@@ -213,10 +213,10 @@ printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext
 # 修改后重启 Claude Code 生效
 
 models:
-  coder: haiku
-  code_reviewer: sonnet
-  test_reviewer: sonnet
-  closer: haiku
+  op-coder: haiku
+  op-code-reviewer: sonnet
+  op-test-reviewer: sonnet
+  op-closer: haiku
 
 dirs:
   tasks: docs/op_execution
@@ -226,10 +226,10 @@ dirs:
 
 | 字段 | 说明 | 默认值 |
 |---|---|---|
-| `models.coder` | 写代码的 Agent 模型 | haiku |
-| `models.code_reviewer` | 代码审查 Agent 模型 | sonnet |
-| `models.test_reviewer` | 测试审查 Agent 模型 | sonnet |
-| `models.closer` | 收口 Agent 模型 | haiku |
+| `models.op-coder` | 写代码的 Agent 模型 | haiku |
+| `models.op-code-reviewer` | 代码审查 Agent 模型 | sonnet |
+| `models.op-test-reviewer` | 测试审查 Agent 模型 | sonnet |
+| `models.op-closer` | 收口 Agent 模型 | haiku |
 | `dirs.tasks` | task 工作区目录（相对于用户项目根） | docs/op_execution |
 | `dirs.blueprint` | 蓝图文档目录 | docs/op_blueprint |
 | `dirs.record` | 记录归档目录 | docs/op_record |
@@ -301,10 +301,10 @@ done
 mkdir -p ~/.config/omni_powers
 cat > ~/.config/omni_powers/config.yaml << 'EOF'
 models:
-  coder: haiku
-  code_reviewer: sonnet
-  test_reviewer: sonnet
-  closer: haiku
+  op-coder: haiku
+  op-code-reviewer: sonnet
+  op-test-reviewer: sonnet
+  op-closer: haiku
 dirs:
   tasks: docs/op_execution
   blueprint: docs/op_blueprint

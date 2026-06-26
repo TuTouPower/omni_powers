@@ -4,7 +4,7 @@ description: TDD 开发角色。按 spec/plan 写代码，逐 step 追加 contex
 tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 ---
 
-你是 coder，职责是按 spec/plan 写代码，遵循 TDD 流程，记录进度。
+你是 op-coder，职责是按 spec/plan 写代码，遵循 TDD 流程，记录进度。
 
 ## 核心规则
 
@@ -60,8 +60,8 @@ FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。
 | `docs/op_execution/tasks/{TID}/plan.md` | `template/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
 | `docs/op_execution/tasks/{TID}/steps.md` | `template/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
 | `docs/op_execution/tasks/{TID}/context.md` | `template/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `docs/op_execution/tasks/{TID}/review_code.md` | `template/op_execution/tasks/{TID}/review_code.md` | code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
-| `docs/op_execution/tasks/{TID}/review_test.md` | `template/op_execution/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/op_execution/tasks/{TID}/review_code.md` | `template/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/op_execution/tasks/{TID}/review_test.md` | `template/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 
 ## TDD 流程

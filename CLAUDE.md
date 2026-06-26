@@ -1,11 +1,11 @@
 # harness
 
-Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、reviewer 审查，标准化 task 生命周期。
+Claude Code 多 Agent 协作工作流系统。leader 编排、op-op-coder 开发、op-code-reviewer 审查，标准化 task 生命周期。
 
 ## 快速开始
 
 ```
-/op-start    # 统一入口：自动判断状态 → 选 task → 派 coder → review → 收口 → 下一个
+/op-start    # 统一入口：自动判断状态 → 选 task → 派 op-coder → review → 收口 → 下一个
 /op-debt2tasks    # 功能 task 全完成后：扫技术债 → 归类 → 生成偿还 task
 ```
 
@@ -58,9 +58,9 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 /op-start
     │
     ├─ 全完成     → 提示 /op-debt2tasks
-    ├─ 待开始     → 重算 DAG → 选 task → 派 coder
-    ├─ 进行中     → coder 完成 → 派 review（Agent Team）
-    ├─ 审阅中     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 coder
+    ├─ 待开始     → 重算 DAG → 选 task → 派 op-coder
+    ├─ 进行中     → op-coder 完成 → 派 review（Agent Team）
+    ├─ 审阅中     → 读 review_*.md verdict → PASS 进收口 / FAIL 回 op-coder
     └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
 ```
 

@@ -193,12 +193,12 @@ tech_debt.md 已清理。
 ## 与其他 skill 的关系
 
 - **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
-- **op-start**（统一工作流入口）：偿还 task 创建完成后，走 /op-start 进入标准开发循环（选 task→派 coder→review→收口）。收口流程与功能 task 相同。
+- **op-start**（统一工作流入口）：偿还 task 创建完成后，走 /op-start 进入标准开发循环（选 task→派 op-coder→review→收口）。收口流程与功能 task 相同。
 - 恢复后偿还 task 与功能 task 无区别，/op-start 统一按 tasks_list.json 的 status 和 depends_on 调度。
 
 ## 注意事项
 
-- leader 是本 skill 的唯一调用者。coder/reviewer/test-reviewer 不调用本 skill。
-- 偿还 task 走标准开发循环（spec/plan/coder/review/收口），与功能 task 流程完全一致。
+- leader 是本 skill 的唯一调用者。op-coder/op-code-reviewer/test-reviewer 不调用本 skill。
+- 偿还 task 走标准开发循环（spec/plan/op-coder/review/收口），与功能 task 流程完全一致。
 - 不在功能 task 跑到一半插偿还 task——等当前 task 收口。
 - 环境债的 blocked_by 在环境就位后由 leader 手动改为 null，然后走标准循环。

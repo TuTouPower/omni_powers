@@ -15,8 +15,8 @@
 ## team 状态
 - team: {name}
 - team config 路径: `~/.claude/teams/{team-name}/config.json`（compact 恢复时查 team 还在不在、paneId 在哪）
-- coder: {复用/重 spawn 决策}
-- reviewer / test-reviewer: 常驻
+- op-coder: {复用/重 spawn 决策}
+- op-code-reviewer / op-test-reviewer: 常驻
 
 ## 依赖 DAG
 （拓扑分层。⚠️ 恢复后必须重算 DAG，不吃 checkpoint 惯性）
