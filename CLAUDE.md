@@ -65,6 +65,17 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
     └─ 收口       → commit / 归档 / 更新 checkpoint → 自动选下一个
 ```
 
+## 安装
+
+```bash
+git clone <harness_repo>
+cd harness
+./install.sh    # 写全局配置 → 建 symlink → 设 SessionStart hook
+# 重启 Claude Code 生效
+```
+
+> 通用化方案详见 `omni_powers_install.md`
+
 ## 依赖
 
 - Claude Code（Teams + SendMessage）
