@@ -180,7 +180,7 @@ team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 - 扫到 `reviewer_code_done` + `reviewer_test_done` 同时存在 → 删两文件 → 读 verdict。
 - 只有一 reviewer 标记 → 不删，继续等。
 - FAIL 轮重新派 coder 前，leader 确保三个标记文件已清空（上一轮处理时已删）。
-- **idle 兜底**：所有 task 都在等（无待开始、无 review 可处理），`ScheduleWakeup(180s)` 唤醒，重新扫标记文件。
+- **idle 兜底**：所有 task 都在等（无待开始、无 review 可处理），`ScheduleWakeup({ delaySeconds: 180, prompt: "继续执行 /op-start 自治循环——扫 signals/ 标记文件、检查 task 状态、推进下一个可跑 task", reason: "所有 task 都在等 teammate 完成，180s 轮询标记文件（< 300s 保持 cache 热）" })` 唤醒，重新扫标记文件。
 
 **生命周期**（D5）：
 - teammate 全程复用，不主动 shutdown，不监控上下文
