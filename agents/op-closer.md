@@ -16,13 +16,13 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 leader 判定某 task 双 PASS 后，SendMessage 给你收口指令。你执行以下 per-task 机械操作：
 
-1. **归档 spec 盖戳**：`docs/harness_execution/tasks/{TID}/spec.md` 顶部加 `> ⚠️ 历史快照，以 docs/harness_blueprint/specs/ 为准。`**验证**：`head -1 docs/harness_execution/tasks/{TID}/spec.md | grep -q "历史快照"`，不通过则失败。
+1. **归档 spec 盖戳**：`docs/op_execution/tasks/{TID}/spec.md` 顶部加 `> ⚠️ 历史快照，以 docs/op_blueprint/specs/ 为准。`**验证**：`head -1 docs/op_execution/tasks/{TID}/spec.md | grep -q "历史快照"`，不通过则失败。
 
-2. **读 review 提取暂存项**：从 `docs/harness_execution/tasks/{TID}/review_code.md` 和 `review_test.md` 中提取标了【暂存】的项，供 leader 后续写入 tech_debt.md。
+2. **读 review 提取暂存项**：从 `docs/op_execution/tasks/{TID}/review_code.md` 和 `review_test.md` 中提取标了【暂存】的项，供 leader 后续写入 tech_debt.md。
 
-3. **读 spec 提取摘要**：读 `docs/harness_execution/tasks/{TID}/spec.md` 全文，提取当前生效的接口、数据模型、约束、行为，供 leader 后续整理进 specs/。判断归属哪个 feature 文件。
+3. **读 spec 提取摘要**：读 `docs/op_execution/tasks/{TID}/spec.md` 全文，提取当前生效的接口、数据模型、约束、行为，供 leader 后续整理进 specs/。判断归属哪个 feature 文件。
 
-4. **git mv 归档**：**先 ls 确认源目录存在**：`ls docs/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/plan.md`，不存在则回报错误。存在才 `git mv docs/harness_execution/tasks/{TID} docs/harness_record/tasks/{TID}`。**验证**：`ls docs/harness_record/tasks/{TID}/spec.md docs/harness_record/tasks/{TID}/plan.md`，任一不存在则失败。
+4. **git mv 归档**：**先 ls 确认源目录存在**：`ls docs/op_execution/tasks/{TID}/spec.md docs/op_execution/tasks/{TID}/plan.md`，不存在则回报错误。存在才 `git mv docs/op_execution/tasks/{TID} docs/op_record/tasks/{TID}`。**验证**：`ls docs/op_record/tasks/{TID}/spec.md docs/op_record/tasks/{TID}/plan.md`，任一不存在则失败。
 
 5. **git add -A**：`git add -A` 把以上所有产出 stage 好。**验证**：`git diff --staged --name-only | head -1 | grep -q .`，没有任何 staged 文件则警告。
 

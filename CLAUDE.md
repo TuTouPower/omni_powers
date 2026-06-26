@@ -35,9 +35,9 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 └── template/                # 文档模板（三态模型）
     ├── README.md            #   模板用法和命名约定
     ├── index.md             #   文档导航总图
-    ├── harness_blueprint/   #   稳定真相：prd / architecture / domain / conventions / spec / test
-    ├── harness_execution/   #   流动工作区：tasks_list / task 工作区 / tech_debt / checkpoint
-    └── harness_record/      #   冻结历史：decisions / progress
+    ├── op_blueprint/   #   稳定真相：prd / architecture / domain / conventions / spec / test
+    ├── op_execution/   #   流动工作区：tasks_list / task 工作区 / tech_debt / checkpoint
+    └── op_record/      #   冻结历史：decisions / progress
 ```
 
 ## 核心概念
@@ -47,9 +47,9 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 **三态文档**：
 | 层 | 含义 | 例子 |
 |---|---|---|
-| `harness_blueprint/` | 稳定真相（很少变） | prd, architecture, conventions |
-| `harness_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
-| `harness_record/` | 冻结历史（只追加） | decisions, progress |
+| `op_blueprint/` | 稳定真相（很少变） | prd, architecture, conventions |
+| `op_execution/` | 流动工作区（频繁变） | tasks_list.json, task/{TID}/, tech_debt |
+| `op_record/` | 冻结历史（只追加） | decisions, progress |
 
 **compact 恢复**：上下文窗口满了自动 compact，恢复时读 `RULES.md` + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 
@@ -81,4 +81,4 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、coder 开发、rev
 | 历史踩坑 | `experience.md` |
 | 文档模板 | `template/README.md` |
 | 文档导航 | `template/index.md`（部署后为 `docs/index.md`） |
-| DAG 依赖图 | `docs/harness_execution/dag.md`（由 `dag_gen.sh` 生成） |
+| DAG 依赖图 | `docs/op_execution/dag.md`（由 `dag_gen.sh` 生成） |

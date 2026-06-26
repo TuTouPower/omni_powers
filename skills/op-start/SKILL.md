@@ -28,8 +28,8 @@ description: >
 
 **读三件套**：
 
-1. `docs/harness_execution/leader_checkpoint.md` —— 上次断在哪
-2. `docs/harness_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
+1. `docs/op_execution/leader_checkpoint.md` —— 上次断在哪
+2. `docs/op_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
 3. `RULES.md` —— 规则手册
 
 **确保 Agent Team 存在**（不创建 team 不进循环）：
@@ -112,7 +112,7 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 **派活消息必须首行切绝对路径**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
 
 ```js
-SendMessage({ to: "coder-1", message: "cd <project_root>/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
+SendMessage({ to: "coder-1", message: "cd <project_root>/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/op_execution/tasks/{TID}/spec.md（相关段）。plan: docs/op_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
 ```
 
 ```bash
@@ -216,7 +216,7 @@ HASH=$(git rev-parse HEAD)
 bash skills/op-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
 
 # 9. 控制平面提交
-git add docs/harness_execution/ docs/harness_record/ docs/harness_blueprint/
+git add docs/op_execution/ docs/op_record/ docs/op_blueprint/
 git commit -m "chore(harness): {TID} 收口记录"
 ```
 
@@ -282,8 +282,8 @@ Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "o
 | `RULES.md` | 规则手册 |
 | `op_decisions.md` | 决策记录 |
 | `op_findings.md` | 实验发现 |
-| `docs/harness_execution/tasks_list.json` | 状态源 |
-| `docs/harness_execution/leader_checkpoint.md` | 断点 |
+| `docs/op_execution/tasks_list.json` | 状态源 |
+| `docs/op_execution/leader_checkpoint.md` | 断点 |
 | `skills/op-start/scripts/close_check.sh` | 收口验收 |
 | `skills/op-start/scripts/op-status.sh` | 状态流转 |
 | `skills/op-start/scripts/op-scan-signals.sh` | 信号扫描 |

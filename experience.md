@@ -18,16 +18,16 @@ closer  没有subagent
 
 两个 FAIL：tech_debt 无 T43 段，归档缺 spec.md/plan.md。修复。
 
-● Bash(echo "" >> docs/harness_execution/tech_debt.md && echo "## T43" >>
-      docs/harness_execution/tech_debt.md && echo "无新增。" >>
-      docs/harness_execution/tech_debt.md)
+● Bash(echo "" >> docs/op_execution/tech_debt.md && echo "## T43" >>
+      docs/op_execution/tech_debt.md && echo "无新增。" >>
+      docs/op_execution/tech_debt.md)
   ⎿  (No output)
 
-● Bash(cp docs/harness_execution/tasks/T43/spec.md
-      docs/harness_record/tasks/T43/spec.md && cp
-      docs/harness_execution/tasks/T43/plan.md docs/harness_record/tasks/T43/p…)
+● Bash(cp docs/op_execution/tasks/T43/spec.md
+      docs/op_record/tasks/T43/spec.md && cp
+      docs/op_execution/tasks/T43/plan.md docs/op_record/tasks/T43/p…)
   ⎿  Error: Exit code 1
-     cp: cannot stat 'docs/harness_execution/tasks/T43/spec.md': No such file or
+     cp: cannot stat 'docs/op_execution/tasks/T43/spec.md': No such file or
      directory
 
 ● spec.md/plan.md 已被 git mv 移走了，在 worktree 的 record 里。从那里拷。

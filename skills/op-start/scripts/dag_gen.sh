@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 从 tasks_list.json 生成 DAG 图 + 依赖关系表
 # 用法: dag_gen.sh
-# 输出: docs/harness_execution/dag.md
+# 输出: docs/op_execution/dag.md
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -27,8 +27,8 @@ cat > "$jq_script" << 'JQEOF'
 (.tasks[] | "| \(.id) | \(.status) | \(.depends_on // "-" | if type == "array" then join(", ") else . end) |")
 JQEOF
 
-jq -r -f "$jq_script" docs/harness_execution/tasks_list.json > docs/harness_execution/dag.md
+jq -r -f "$jq_script" docs/op_execution/tasks_list.json > docs/op_execution/dag.md
 
-[ -s docs/harness_execution/dag.md ] || { echo "[FAIL] dag.md 生成失败或为空" >&2; exit 1; }
+[ -s docs/op_execution/dag.md ] || { echo "[FAIL] dag.md 生成失败或为空" >&2; exit 1; }
 
-echo "[OK] dag.md 已生成 ($(wc -l < docs/harness_execution/dag.md) 行)"
+echo "[OK] dag.md 已生成 ($(wc -l < docs/op_execution/dag.md) 行)"

@@ -11,7 +11,7 @@ description: >
 ## 触发
 
 - `/intake "做用户登录功能"`
-- `/intake docs/harness_blueprint/prd.md`（已有文档）
+- `/intake docs/op_blueprint/prd.md`（已有文档）
 - `/intake`（然后粘贴需求描述）
 - 用户说"新需求"、"拆 task"、"需求入轨"
 
@@ -114,5 +114,5 @@ context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）
 
 - 先改 ref 再拆 task，不反过来
 - 每个 task 独立可交付——拆不出来说明需求还不够清晰
-- spec.md 的过程性内容留在 task spec，不进 harness_blueprint/specs/
+- spec.md 的过程性内容留在 task spec，不进 op_blueprint/specs/
 - context.md 和 steps.md 不要预填

@@ -1,6 +1,6 @@
 # {TID} {title} Spec
 
-> 来源：`docs/harness_blueprint/prd.md`、`docs/harness_blueprint/spec.md`、`docs/harness_blueprint/architecture.md`、`docs/harness_blueprint/domain.md`。
+> 来源：`docs/op_blueprint/prd.md`、`docs/op_blueprint/spec.md`、`docs/op_blueprint/architecture.md`、`docs/op_blueprint/domain.md`。
 > 生成方式：`op-generate-spec` skill。
 
 ## 目标
@@ -24,7 +24,7 @@
 ## 设计决策
 
 ### 方案比较
-（候选方案 + 选定 + 理由。过程性内容，闭环后留在归档，不进 harness_blueprint/specs/）
+（候选方案 + 选定 + 理由。过程性内容，闭环后留在归档，不进 op_blueprint/specs/）
 
 ## 文件结构
 

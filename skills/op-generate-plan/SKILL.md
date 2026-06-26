@@ -21,7 +21,7 @@ description: >
 
 **上下文：** 如果在隔离的 worktree 中工作，应由 leader 在执行时通过 `git worktree` 创建。
 
-**保存 plan 到：** `docs/harness_execution/tasks/{TID}/plan.md`
+**保存 plan 到：** `docs/op_execution/tasks/{TID}/plan.md`
 
 ## 模式选择
 
@@ -185,7 +185,7 @@ git commit -m "feat: add specific feature"
 
 保存 plan 后，指向下一步：
 
-**"Plan 已写入 `docs/harness_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
+**"Plan 已写入 `docs/op_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
 
 op-start 会接管后续：选 task → 派 coder → review → 收口。
 
@@ -193,8 +193,8 @@ op-start 会接管后续：选 task → 派 coder → review → 收口。
 
 | 文件 | 用途 |
 |---|---|
-| `template/harness_execution/tasks/{TID}/plan.md` | plan 模板 |
-| `template/harness_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
+| `template/op_execution/tasks/{TID}/plan.md` | plan 模板 |
+| `template/op_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
 | `skills/op-generate-spec/SKILL.md` | 上一步：op-generate-spec |
 | `skills/op-start/SKILL.md` | 下一步：op-start |
 | `skills/op-generate-plan/plan-document-reviewer-prompt.md` | Plan 审阅提示词模板 |
