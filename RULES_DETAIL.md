@@ -44,8 +44,7 @@ bash scripts/op_jq.sh all
 
 | 类型 | blocked_by | 处理 |
 |---|---|---|
-| 外部密钥/凭据缺失 | `key` | 跳过，标阻塞 |
-| 域名/外部端点缺失 | `domain` | 同上 |
+| 外部资源缺失（密钥/端点等） | `resource` | 跳过，标阻塞 |
 | 3 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
@@ -69,19 +68,9 @@ bash scripts/op_jq.sh all
 
 **阻塞汇总**：所有可跑 task 跑完后，若仍有阻塞 task，leader 才停下报告阻塞项、缺什么、需用户提供什么。
 
-## plan 分段派活
-
-leader 先读 plan，拆成有序 step 列表（存入 `tasks/{TID}/steps.md`，由 leader 维护进度）。每个 step 是一组相关文件改动。
-
-**派活方式**：leader 只给 op-coder 当前 step + 相关 spec 段，不给整份 plan。op-coder 每 step 完成后 leader 再派下一个。小 task 可一次给全 plan。
-
-**steps.md**：leader 维护，记录当前 step 编号和进度。op-coder 只读不写。
-
 ## tech_debt
 
 只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行）。不允许只口头说"记 tech_debt"，必须真写文件，否则 task 不算闭环。
-
-格式：按 task 分节，表格列 `| ID | 来源(review-code/review-test/环境) | 债项 | 严重度 | 暂存原因 |`。
 
 ## 执行体系（指向 skill）
 

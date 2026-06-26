@@ -112,7 +112,7 @@ bash skills/op-start/scripts/op-coder-check.sh {TID}
 
 | mode | round | 动作 |
 |------|-------|------|
-| normal | 1 | 正向开发，读 spec/plan/steps |
+| normal | 1 | 正向开发，读 spec/plan |
 | fail | 2 | FAIL 轮：读 review_*.md + diff，针对 blocker 改 |
 | fail | 3 | FAIL 轮（最后一轮） |
 | blocked | - | exit 1，直接阻塞，不再派 coder |
@@ -123,7 +123,7 @@ bash scripts/op_status.sh {TID} 进行中
 
 ```js
 Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
-  prompt: "cd <work_dir> && pwd\nT{n}。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan/steps。" })
+  prompt: "cd <work_dir> && pwd\nT{n}。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan。" })
 ```
 
 coder 返回后，验证产出（context.md 已更新），进入子步骤 3.3。
@@ -139,11 +139,11 @@ bash scripts/op_status.sh {TID} 审阅中
 ```js
 Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet",
   background: true,
-  prompt: "cd <work_dir> && pwd\nreview T{n}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。FAIL 时每条问题标等级，默认不暂存。重审时在末尾纯追加 ### Round N verdict: PASS/FAIL。" })
+  prompt: "cd <work_dir> && pwd\nreview T{n}。git diff + context.md → 写 review_code.md。文件最后一行必须写 verdict: PASS 或 FAIL。FAIL 时每条问题标等级，默认不暂存。" })
 
 Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "sonnet",
   background: true,
-  prompt: "cd <work_dir> && pwd\nreview T{n} tests。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。重审时在末尾纯追加 ### Round N verdict: PASS/FAIL。" })
+  prompt: "cd <work_dir> && pwd\nreview T{n} tests。读 tests/ + context.md → 写 review_test.md。文件最后一行必须写 verdict: PASS 或 FAIL。" })
 ```
 
 **任一 reviewer 出错**：只重试出错的那个（max 3），成功的等。重试仍失败 → 该 review 文件手动写 `verdict: FAIL`。
@@ -154,20 +154,12 @@ Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "son
 
 ```bash
 bash skills/op-start/scripts/op-read-verdict.sh {TID}
-# 输出每个 review 文件的 verdict + 最终结果
-# exit 0 = 双 PASS, exit 1 = 任一 FAIL
+# 读两个 review 文件最后一行，双 PASS → exit 0，任一 FAIL → exit 1
 ```
 
-脚本分别读 `review_code.md` 和 `review_test.md` 的**最后一条** verdict 行，两个独立判定。
-
-| code | test | 结果 |
-|------|------|------|
-| PASS | PASS | → 收口（子步骤 3.5） |
-| FAIL | PASS | → 回 coder（子步骤 3.2），code-reviewer blockers |
-| PASS | FAIL | → 回 coder（子步骤 3.2），test-reviewer blockers |
-| FAIL | FAIL | → 回 coder（子步骤 3.2），两份 blockers |
-
-**第 3 轮仍任一 FAIL**：不再回 coder：
+- 双 PASS → 收口（子步骤 3.5）
+- 任一 FAIL → 回 coder（子步骤 3.2）。coder 重新 dispatch，`op-coder-check.sh` 自动判断轮次
+- 同一 task 最多 3 次 review，第 3 次仍任一 FAIL：
 
 ```bash
 bash scripts/op_status.sh {TID} 阻塞 quality

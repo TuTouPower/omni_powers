@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# op-read-verdict：读 review 文件的最终 verdict + 轮次
+# op-read-verdict：读 review 文件的最终 verdict
 # 用法: op-read-verdict.sh <TID>
 # 分别读 review_code.md 和 review_test.md 的最后一条 verdict 行
 # 输出: 轮次、各文件 verdict、最终结果
@@ -21,8 +21,8 @@ read_verdict() {
 code_v=$(read_verdict "$TASK_DIR/review_code.md")
 test_v=$(read_verdict "$TASK_DIR/review_test.md")
 
-# 轮次 = review_code.md 中 Round verdict 行数（两个文件应一致）
-round=$(grep -c 'Round.*verdict:' "$TASK_DIR/review_code.md" 2>/dev/null || echo 0)
+# 轮次 = review_code.md 中 verdict 行数（两个文件应一致）
+round=$(grep -c '^verdict:' "$TASK_DIR/review_code.md" 2>/dev/null || echo 0)
 
 echo "round: $round"
 echo "code_review: $code_v"

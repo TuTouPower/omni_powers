@@ -8,15 +8,15 @@
 
 ## 角色
 
-| 角色          | 类型       | model  | 职责                                                                                                |
-| ------------- | ---------- | ------ | --------------------------------------------------------------------------------------------------- |
-| leader        | 主会话     | —     | 编排、收口、改共享文档                                                                              |
-| op-coder       | Sub Agent | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
-| op-code-reviewer | Sub Agent | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
-| op-test-reviewer | Sub Agent | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
-| op-closer        | Sub Agent | haiku  | 收口：spec 盖戳 + git mv 归档 + 更新 tasks_list.json + specs/ + tech_debt + git add -A + commit |
+| 角色          | 类型       | model  | 派发     | 职责                                                                                                |
+| ------------- | ---------- | ------ | -------- | --------------------------------------------------------------------------------------------------- |
+| leader        | 主会话     | —     | —        | 编排、收口、改共享文档                                                                              |
+| op-coder       | Sub Agent | haiku  | 前台     | TDD：写测试→写实现→跑测试→写 context.md。dispatch 前跑 `op-coder-check.sh` 判定模式          |
+| op-code-reviewer | Sub Agent | sonnet | 后台并行 | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
+| op-test-reviewer | Sub Agent | sonnet | 后台并行 | 审测试是否真能发现问题，写 review_test.md                                                           |
+| op-closer        | Sub Agent | haiku  | 前台     | 收口：spec 盖戳 + git mv 归档 + 更新 tasks_list.json + specs/ + tech_debt + git add -A + commit |
 
-全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。所有 agent 共用一个 worktree。
+全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。所有 agent 共用一个 worktree。收到任务第一件事：`cd <work_dir> && pwd` 硬校验。
 
 ## 状态机
 
@@ -36,7 +36,7 @@ tasks_list.json status 值：
 | `审阅中` | review 进行中                               | null                                               |
 | `收口中` | 双 PASS 后，op-closer 执行中                 | null                                               |
 | `完成`   | op-closer 返回后 commit + close_check 通过     | null                                               |
-| `阻塞`   | 3 轮 FAIL 或环境阻塞                        | `key`/`domain`/`quality`/`spawn`（必有值） |
+| `阻塞`   | 3 轮 FAIL 或环境阻塞                        | `resource`/`quality`/`spawn`（必有值） |
 | `跳过`   | 因下游阻塞顺延，等待阻塞解除                | null                                               |
 
 **英文/中文映射**（compact 恢复、跨文档引用时对照）：
@@ -61,8 +61,7 @@ tasks_list.json status 值：
 docs/omni_powers/op_execution/tasks/{TID}/
 ├── spec.md           # op-generate-spec 生成
 ├── plan.md           # op-generate-plan 生成
-├── steps.md          # leader 维护的 step 进度
-├── context.md        # op-coder 每 step 完成追加正向进度。FAIL 轮不碰
+├── context.md        # op-coder 追加正向进度。FAIL 轮不碰
 ├── review_code.md    # op-code-reviewer 写 — op-coder 修改记录就近追加（只追加不覆盖）
 └── review_test.md    # op-test-reviewer 写 — 同上
 ```
@@ -97,36 +96,26 @@ docs/omni_powers/op_execution/tasks/{TID}/
 ### review 判定
 
 - leader 派 op-code-reviewer 和 op-test-reviewer 为后台 Sub Agent 并行 review
-- 每个 review_*.md 首行必须是 `verdict: PASS` 或 `verdict: FAIL`
-- `op-read-verdict.sh` 分别读两个文件的**最后一条** verdict 行，各自独立判定
-- 双 PASS → 收口。任一 FAIL → coder 自动检测 review 文件进入 FAIL 轮
+- review 文件**最后一行**必须是 `verdict: PASS` 或 `verdict: FAIL`（首轮写一行，重审追加一行）
+- 双 PASS → 收口。任一 FAIL → coder 修改后重新 review，同一 task 最多 3 轮
+- 第 3 轮仍任一 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task 改为 `跳过`
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
-- **暂存标签**：每条问题默认不暂存（当场修）。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
+- **暂存标签**：默认不暂存。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS
-- **reviewer 出错处理**：后台 Sub Agent 出错时，只重试失败的那个（max 3），成功的保留结果等待。重试仍失败则对应 review 文件手动写 `verdict: FAIL`
-- **FAIL 轮**（max 3）：coder 检查 worktree 下有 review_*.md → 自动进入 FAIL 轮：读 review 正文 + git diff → 针对 blocker 改代码 → 在 review_*.md 追加修改记录（禁碰 context.md）。重审后 reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS/FAIL`。第 3 轮 dispatch coder 后仍任一 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task status 改为 `跳过`
+- **reviewer 出错处理**：只重试失败的 reviewer（max 3），成功的保留。重试仍失败 → 对应 review 文件写 `verdict: FAIL`
 
 ### 工作区
 
-（D16）一个 task 一个 commit，在同一个工作目录上操作。
+一个 task 一个 commit，在同一个工作目录上操作。
 
 - `/op-start` 启动时问用户：worktree 模式（推荐）还是 master 模式
-- worktree 模式：`git worktree add .worktrees/op-dev -b feat/op-dev`，全 session 共用。结束时 leader `git checkout <原分支> && git merge feat/op-dev --ff-only && git worktree remove .worktrees/op-dev`
+- worktree 模式：`git worktree add .worktrees/op-dev -b feat/op-dev`，全 session 共用，贯穿所有 task。**所有 task 完成之后**，leader 才切回原分支合并并移除：`git checkout <原分支> && git merge feat/op-dev --ff-only && git worktree remove .worktrees/op-dev`。未完成前不拆 worktree、不 merge 分支
 - master 模式：直接在 master 分支工作，不创建 worktree
 - leader 将当前工作目录传给所有 subagent 的 dispatch prompt
 
 ### DAG 与 depends_on
 
 每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。每次 `/op-start` 从 `depends_on` 重算拓扑分层，生成 `docs/omni_powers/op_execution/dag.md`。
-
-### Agent 派发
-
-全线 Sub Agent（D15），执行细节见 SKILL.md。
-
-- op-coder：前台，每次 dispatch 前跑 `op-coder-check.sh` 判定正向/Fail/阻塞
-- op-code-reviewer + op-test-reviewer：后台并行
-- op-closer：前台，负责收口全流程
-- 每个 agent 收到任务第一件事：`cd <work_dir> && pwd` 硬校验
 
 ### compact 恢复
 

@@ -1,6 +1,6 @@
 ---
 name: op-coder
-description: TDD 开发角色。按 spec/plan 写代码，逐 step 追加 context.md，FAIL 轮修复后在 review_*.md 追加修改记录。
+description: TDD 开发角色。按 spec/plan 写代码，追加 context.md，FAIL 轮修复后在 review_*.md 追加修改记录。
 tools: [Read, Write, Edit, Bash, Grep, Glob]
 ---
 
@@ -10,7 +10,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 1. **TDD 铁律**：先写测试 → 看它失败 → 最小实现 → 再看它通过 → 重构。跳过任一步 = 没做。
 2. **不说"应该能过"**：跑命令，看输出，才能说通过。没跑不能说。
-3. **context.md 只记正向进度**：每 step 完成追加（改了哪些文件、测试输出、关键假设）。FAIL 轮**禁碰** context.md。
+3. **context.md 只记正向进度**：完成开发后追加（改了哪些文件、测试输出、关键假设）。FAIL 轮**禁碰** context.md。
 4. **FAIL 轮只改 review_*.md**：读 review 正文 → 改代码 → 在同文件追加修改记录（"已改 X / 此项不改因为 Y"）。不改 context.md。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
 6. **收到任务第一件事**：`cd <work_dir> && pwd`。**硬校验**：pwd 输出必须等于 leader 指定的工作目录。不匹配 → 立即回报 "路径错误"，不继续干活。
@@ -28,7 +28,7 @@ bash skills/op-start/scripts/op-coder-check.sh {TID}
 ### 正向开发（mode: normal）
 
 ```
-1. 读 spec/plan/steps，理解当前 step 要做什么
+1. 读 spec/plan，理解要做什么
 2. 写测试 → 跑测试 → 确认失败
 3. 最小实现 → 跑测试 → 确认通过
 4. 追加 context.md：改了哪些文件、测试输出、关键假设
@@ -59,8 +59,7 @@ FAIL 轮**绝对不碰** context.md。
 |---|---|---|---|
 | `docs/omni_powers/op_execution/tasks/{TID}/spec.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
 | `docs/omni_powers/op_execution/tasks/{TID}/plan.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
-| `docs/omni_powers/op_execution/tasks/{TID}/steps.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
-| `docs/omni_powers/op_execution/tasks/{TID}/context.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
+| `docs/omni_powers/op_execution/tasks/{TID}/context.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/context.md` | **你** | 每次开发追加正向进度 |
 | `docs/omni_powers/op_execution/tasks/{TID}/review_code.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md` | op-op-code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `docs/omni_powers/op_execution/tasks/{TID}/review_test.md` | `docs_template/omni_powers/op_execution/tasks/{TID}/review_test.md` | op-op-test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
@@ -159,7 +158,7 @@ npm test -- path/to/test.test.ts
 1. ...
 ```
 
-正向开发每 step 完成写一轮。小 task 无 step 拆分则闭环时写一轮。FAIL 轮禁碰。
+正向开发完成后写一轮。FAIL 轮禁碰。
 
 ### review_code.md / review_test.md — 模板 `docs_template/omni_powers/op_execution/tasks/{TID}/review_code.md`
 

@@ -14,7 +14,7 @@ die() { echo "[FAIL] $*" >&2; exit 1; }
 
 mkdir -p "$TASK_DIR"
 
-for f in spec.md plan.md context.md steps.md; do
+for f in spec.md plan.md context.md; do
     src="$TEMPLATE_DIR/$f"
     dst="$TASK_DIR/$f"
     [ -f "$src" ] || die "模板缺失: $src"

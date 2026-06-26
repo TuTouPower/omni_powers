@@ -90,7 +90,7 @@ T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 bash scripts/op_new_task.sh {TID}
 ```
 
-context.md 和 steps.md 暂不填（空模板，op-coder 和 leader 后续维护）。
+context.md 暂不填（空模板，op-coder 后续维护）。
 
 ## 与其他 skill 的关系
 
@@ -115,4 +115,4 @@ context.md 和 steps.md 暂不填（空模板，op-coder 和 leader 后续维护
 - 先改 ref 再拆 task，不反过来
 - 每个 task 独立可交付——拆不出来说明需求还不够清晰
 - spec.md 的过程性内容留在 task spec，不进 op_blueprint/specs/
-- context.md 和 steps.md 不要预填
+- context.md 不要预填

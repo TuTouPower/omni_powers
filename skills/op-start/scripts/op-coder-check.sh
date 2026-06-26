@@ -28,11 +28,11 @@ if ! $has_review; then
     exit 0
 fi
 
-# 统计已有 review 轮次（两个文件取大值）
+# 统计已有 review 轮次（两个文件取大值，按 verdict 行数算）
 max_round=0
 for f in review_code.md review_test.md; do
     if has_file "$f"; then
-        r=$(grep -c 'Round.*verdict:' "$TASK_DIR/$f" 2>/dev/null || echo 0)
+        r=$(grep -c '^verdict:' "$TASK_DIR/$f" 2>/dev/null || echo 0)
         [ "$r" -gt "$max_round" ] && max_round="$r"
     fi
 done

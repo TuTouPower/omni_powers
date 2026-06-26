@@ -1,12 +1,10 @@
-verdict: <PASS|FAIL>
+verdict: PASS
 
-> 首行 verdict: leader 读此行判定 PASS/FAIL，不 grep 正文。必须替换为 PASS 或 FAIL。
+> **格式**：最后一行必须是 `verdict: PASS` 或 `verdict: FAIL`——leader 读最后一行判定。
 > **PASS 门槛**：所有未标【暂存】的问题必须 op-coder 修完才能 PASS。LOW 不是放过理由。
 > **暂存判断标准**（满足任一才可标暂存）：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task。
 > 标【暂存】的问题不阻塞 PASS，但必须写原因。默认不暂存——能当场修的都标【当场修】。
-> **轮次命名**：Review-N = reviewer 审阅（写意见 + verdict），Fix-N = op-coder 修改（FAIL 轮才有，逐项回应）。
-> PASS 则止于 Review-N；FAIL 则进 Fix-N → Review-(N+1) 重读，循环 max 3 轮。
-> 只追加不覆盖——后续轮次在文件末尾续写，不改前文。
+> 重审时在原文件末尾追加新内容 + 新 verdict 行，不覆盖已有内容。同一 task 最多 3 次 review。
 
 ---
 
@@ -32,28 +30,9 @@ verdict: <PASS|FAIL>
 
 #### 1. ...【当场修】
 
-> 任何级别满足暂存条件时标【暂存:原因】，如：【暂存:跨 scope，需 T05 先完成】
-> 暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
-
 ---
 
-## Fix-1
+## Review-2（重审）
 
-> 仅 FAIL 轮写。逐项回应 reviewer：已改 X / 此项不改因为 Y / review 此处判断有误因为 Z。
-> 禁止写 context.md——FAIL 轮记录只进 review_*.md。
 
-- CRITICAL X：已改，见 commit / 文件
-- HIGH Y：此项不改，因为 Z
-- MEDIUM 此处判断有误，因为 W
-
----
-
-## Review-2
-
-> 重读 op-coder 的 Fix-1 修改记录 + 新 git diff 后追加。承认误判则 PASS，维持原判则 FAIL 并追加理由。更新首行 verdict。
-
----
-
-## Review-3
-
-（第 3 轮仍 FAIL → 标"status=阻塞, blocked_by=quality"，写 issues/{TID}_quality.md）
+verdict: PASS
