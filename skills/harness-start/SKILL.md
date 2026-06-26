@@ -13,7 +13,18 @@ description: >
 
 协议规则、状态机、review 判定、并发约束等见 `agent_protocol.md`。
 
-## 步骤 0：读状态 + 确保 Agent Team
+## 步骤 0：前置校验 + 读状态 + 确保 Agent Team
+
+**Agent Teams 前置校验**：检查 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 环境变量是否已设为 `1`。未设置则输出提示并退出：
+
+```
+[错误] Agent Teams 未启用。
+
+请设置环境变量：export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+然后重新运行 /harness-start。
+```
+
+**禁止**自行修改用户配置文件。
 
 **读三件套**：
 

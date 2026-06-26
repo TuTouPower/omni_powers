@@ -181,7 +181,6 @@ team_name 规则：`harness-<项目目录名>`，如 `harness-omni_powers`。
 
 **compact 后恢复**：teammate 消失需重 spawn。恢复前查 config.json，isActive=false 的先清残留再 spawn。恢复后从 spec/plan/context.md 重建上下文。
 
-> 首次使用需设 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`。参考：[Agent Teams](https://code.claude.com/docs/en/agent-teams)
 
 ### tech_debt
 
