@@ -100,13 +100,13 @@ docs/op_execution/tasks/{TID}/
 
 - leader 派 op-code-reviewer 和 op-test-reviewer 为后台 Sub Agent 并行 review
 - 每个 review_*.md 首行必须是 `verdict: PASS` 或 `verdict: FAIL`
-- leader 读首行判定，不 grep 正文
-- 双 PASS → 收口。任一 FAIL → FAIL 轮。
+- `op-read-verdict.sh` 分别读两个文件的**最后一条** verdict 行，各自独立判定
+- 双 PASS → 收口。任一 FAIL → coder 自动检测 review 文件进入 FAIL 轮
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS
-- **reviewer 出错处理**：后台 Sub Agent 出错时，只重试失败的那个（max 3），已成功的保留结果等待。重试仍失败则对应 review 文件手动写 `verdict: FAIL`，进入 FAIL 轮
-- **FAIL 轮**（max 3）：leader 派新 op-coder Sub Agent（含 blockers + review 文件路径）→ 改代码 → 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。重审后 reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS/FAIL`。leader 读最后一条 verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task status 改为 `跳过`
+- **reviewer 出错处理**：后台 Sub Agent 出错时，只重试失败的那个（max 3），成功的保留结果等待。重试仍失败则对应 review 文件手动写 `verdict: FAIL`
+- **FAIL 轮**（max 3）：coder 检查 worktree 下有 review_*.md → 自动进入 FAIL 轮：读 review 正文 + git diff → 针对 blocker 改代码 → 在 review_*.md 追加修改记录（禁碰 context.md）。重审后 reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS/FAIL`。第 3 轮 dispatch coder 后仍任一 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task status 改为 `跳过`
 
 ### 工作区
 
@@ -123,29 +123,12 @@ docs/op_execution/tasks/{TID}/
 
 ### Agent 派发
 
-全线 Sub Agent（D15）。
+全线 Sub Agent（D15），执行细节见 SKILL.md。
 
-**op-coder**（前台）：
-```js
-Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
-  prompt: "cd <work_dir> && pwd\nTDD 实现 T{n}。读 docs/op_execution/tasks/{TID}/ 下的 spec/plan/steps。完成后回报结果。" })
-```
-
-**op-code-reviewer + op-test-reviewer**（后台并行）：
-```js
-Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet", background: true,
-  prompt: "cd <work_dir> && pwd\nreview T{n}。写 review_code.md。..." })
-Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "sonnet", background: true,
-  prompt: "cd <work_dir> && pwd\nreview T{n} tests。写 review_test.md。..." })
-```
-
-**op-closer**（前台）：
-```js
-Agent({ name: "op-closer", subagent_type: "op-closer", model: "haiku",
-  prompt: "cd <work_dir> && pwd\n收口 T{n}。..." })
-```
-
-**每个 agent 收到任务第一件事**：`cd <work_dir> && pwd`。硬校验 pwd 输出。
+- op-coder：前台，每次 dispatch 前跑 `op-coder-check.sh` 判定正向/Fail/阻塞
+- op-code-reviewer + op-test-reviewer：后台并行
+- op-closer：前台，负责收口全流程
+- 每个 agent 收到任务第一件事：`cd <work_dir> && pwd` 硬校验
 
 ### compact 恢复
 

@@ -81,6 +81,7 @@ omni_powers/
 │   │   └── scripts/             # 本 skill 专属脚本
 │   │       ├── dag_gen.sh
 │   │       ├── close_check.sh
+│   │       ├── op-coder-check.sh
 │   │       └── op-read-verdict.sh
 │   ├── op-task/SKILL.md
 │   ├── op-generate-spec/
@@ -117,6 +118,7 @@ omni_powers/
 |---|---|---|
 | op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/dag_gen.sh` | op-start |
 | op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/close_check.sh` | op-start |
+| op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-coder-check.sh` | op-start |
 | op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-read-verdict.sh` | op-start |
 | op-generate-spec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/start-server.sh` | op-generate-spec |
 | op-generate-spec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/stop-server.sh` | op-generate-spec |
@@ -245,6 +247,7 @@ bash $CLAUDE_PLUGIN_ROOT/scripts/op-new-task.sh {TID}
 
 ```bash
 bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/dag_gen.sh
+bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-coder-check.sh {TID}
 bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-read-verdict.sh {TID}
 bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/close_check.sh {TID}
 bash $CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/start-server.sh --project-dir .
