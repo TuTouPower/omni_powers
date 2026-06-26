@@ -56,18 +56,9 @@ while (存在待开始 task 且依赖全完成) {
 **每次 /harness-start 从 `depends_on` 重算，不靠 checkpoint。**
 
 ```bash
-jq -r '
-  "# DAG — 任务依赖图\n\n> 生成时间: \(now | strftime("%Y-%m-%d %H:%M:%S"))\n",
-  "## Mermaid\n\n```mermaid\ngraph TD",
-  (.tasks[] | "  \(.id)[\(.id)<br/>\(.status)]"),
-  (.tasks[] | select(.depends_on != null and (.depends_on | length) > 0) | .depends_on[] as $d | "  \($d) --> \(.id)"),
-  "```\n",
-  "## 依赖关系\n",
-  "| Task | 状态 | depends_on |",
-  "|---|---|---|",
-  (.tasks[] | "| \(.id) | \(.status) | \(.depends_on // "-" | if type == "array" then join(", ") else . end) |")
-' docs/harness_execution/tasks_list.json > docs/harness_execution/dag.md
+bash docs/harness/skills/harness-start/scripts/dag_gen.sh
 ```
+**失败处理**：exit 非 0 → 禁止继续。检查 stderr 信息，修复后重跑，直到通过才能进自治循环。
 
 > 先用 `(.tasks[])` 生成全部节点（含状态），再用 `select(...length>0)` 生成边。depends_on 为 null 或空数组的任务不出边，但作为孤立节点出现在图中。依赖关系表列出所有 task。
 
@@ -100,10 +91,10 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 
 **派活**：leader 先读 plan 拆 steps.md（由 leader 维护进度），只给 coder 当前 step + 相关 spec 段，不给整份 plan。小 task 可一次给全 plan。
 
-**派活消息必须首行切目录**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
+**派活消息必须首行切绝对路径**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
 
 ```js
-SendMessage({ to: "coder-1", message: "cd .worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
+SendMessage({ to: "coder-1", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
 ```
 
 tasks_list.json 波次内所有 task status → 进行中。
@@ -114,9 +105,11 @@ tasks_list.json 波次内所有 task status → 进行中。
 
 完成判断：coder 回复含 "完成"/"done"，且 context.md 非空、当前 Round 含 "### 完成状态"。coder 报错/阻塞 → status=阻塞，退出波次。
 
+**双通道确认**：leader 不单靠 SendMessage 返回——同时检查标记文件 `ls .worktrees/{TID}/.coder_done`。文件存在 + coder 回报完成 → 才派 review。
+
 ```js
-SendMessage({ to: "code-reviewer", message: "review T{a}。worktree: .worktrees/{TID}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
-SendMessage({ to: "test-reviewer", message: "review T{a} tests。worktree: .worktrees/{TID}。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "code-reviewer", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nreview T{a}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "test-reviewer", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nreview T{a} tests。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
 ```
 
 tasks_list.json status → 审阅中。leader idle 等返回。
@@ -124,6 +117,8 @@ tasks_list.json status → 审阅中。leader idle 等返回。
 ### 5. review 返回 → 处理结果（事件驱动）
 
 review 完成判断：review_code.md 和 review_test.md 都存在且首行含 `verdict:`。
+
+**双通道确认**：同时检查标记文件 `ls .worktrees/{TID}/.reviewer_code_done` 和 `ls .worktrees/{TID}/.reviewer_test_done`。文件都存在 + reviewer 回报 → 才判定 review 完成。
 
 leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HIGH/MEDIUM/LOW 四级，每条问题默认不暂存（当场修），满足暂存条件（跨 scope/需环境变更/架构决策/依赖未来 task）才标【暂存:原因】。
 
@@ -147,19 +142,34 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 7. git add -A 把所有产出 stage 好（worktree 只有 closer 产出，不会误伤）
 
 ```js
-Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。worktree: .worktrees/{TID}。" })
+Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
 ```
 
-**leader 执行（closer 回报后）**：
-7. 更新 tasks_list.json：status → 完成
-8. 写 leader_checkpoint.md
-9. git 提交（closer 已 stage 所有产出，直接 commit；一个 task 一次 commit）
-10. 验收：`bash docs/harness/skills/harness-start/scripts/close_check.sh {TID}`
-11. hash 回填（延迟到下一个 task）
+**leader 执行（closer 回报后，全程在 worktree 内操作）**：
+
+> closer 的 `git add -A` 操作的是 worktree 的 index。leader 必须切到 worktree 再 commit，回主 repo 后看不到那些 staged 内容。
+
+```
+main_root=/home/karon/karson_ubuntu/feng_gaokao
+
+# 7-10 步全部在 worktree 内执行
+cd $main_root/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2; exit 1; }
+
+# 7. 更新 tasks_list.json：status → 完成
+# 8. 写 leader_checkpoint.md
+# 9. git 提交（closer 已 stage 所有产出，直接 commit；一个 task 一次 commit）
+# 10. 验收
+bash docs/harness/skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
+
+# 11. hash 回填（延迟到下一个 task）
+
+# 切回主 repo 再 merge / 删 worktree / 选下个 task
+cd $main_root && pwd
+```
 
 ### 7. FAIL 轮
 
-- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "T{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker，不跑完整 TDD 循环，不扩展范围、不补写新测试），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
+- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nT{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker，不跑完整 TDD 循环，不扩展范围、不补写新测试），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
 - 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 issues/{TID}_quality.md，退出波次
 - **下游顺延**：FAIL task 的下游依赖自动顺延到下一波次
 

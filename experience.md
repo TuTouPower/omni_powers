@@ -10,7 +10,7 @@
 上面三个项目的介绍在这里，/home/karon/karson_ubuntu/user_config_backup/overview
 
 
-没有生成 deb.md
+没有生成 dag.md
 coder 发消息 leader 收不到
 test_reviewer 文档应该放在 worktree 但是卸载了主 repo
 coder context.md 写到了主 repo 而非 worktree。修复

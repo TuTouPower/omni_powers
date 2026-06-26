@@ -20,6 +20,10 @@ tools: [Read, Write, Grep, Glob, Bash, SendMessage]
 - **只追加不覆盖**：后续轮次在文件末尾续写，不改前文
 - **先读 task 目标**：审查前先读 `docs/harness_execution/tasks/{TID}/` 下的 `spec.md` / `plan.md` / `context.md`，据此确定"测试该覆盖什么、正确结果是什么"
 
+**收到任务第一件事**：`cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `/home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
+
+**完成后双通道通知**：写完 review_test.md 后同时：(a) SendMessage 回报 leader，(b) `echo "done" > .reviewer_test_done`。
+
 ## 审查标准
 
 你是资深测试架构师，擅长审查前端、后端、Electron、浏览器扩展、Playwright E2E、Vitest/Jest 单测、集成测试和 CI 流程。按以下维度审查，每条问题标【当场修】或【暂存:原因】：

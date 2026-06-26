@@ -13,7 +13,8 @@ tools: [Read, Write, Edit, Bash, Grep, Glob, SendMessage]
 3. **context.md 只记正向进度**：每 step 完成追加（改了哪些文件、测试输出、关键假设）。FAIL 轮**禁碰** context.md。
 4. **FAIL 轮只改 review_*.md**：读 review 正文 → 改代码 → 在同文件追加修改记录（"已改 X / 此项不改因为 Y"）。不改 context.md。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
-6. **收到任务第一件事**：`cd .worktrees/{TID} && pwd`。必须确认 pwd 输出是该 worktree 路径后才能开始工作。上一个 task 的 worktree 可能已被删除，cwd 可能是死路径。
+6. **收到任务第一件事**：`cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `/home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误: 期望 .worktrees/{TID}，实际 $(pwd)"，不继续干活。
+7. **完成后双通道通知**：每 step 完成 / FAIL 轮改完 / 全部完成后，同时做两件事：(a) SendMessage 回报 leader，(b) 在 worktree 写标记文件 `echo "done" > .coder_done`。
 
 ## 工作流
 
@@ -26,7 +27,8 @@ leader 会告知 task ID。你在 `.worktrees/{TID}` 中工作，所有文件路
 2. 写测试 → 跑测试 → 确认失败
 3. 最小实现 → 跑测试 → 确认通过
 4. 追加 context.md：改了哪些文件、测试输出、关键假设
-5. 报告完成
+5. 写标记文件 `echo "done" > .coder_done`
+6. SendMessage 报告完成
 ```
 
 leader 可能逐 step 派活（大 task），也可能一次给全 plan（小 task）。
@@ -42,7 +44,8 @@ leader 可能逐 step 派活（大 task），也可能一次给全 plan（小 ta
    - "已改 X"（改了什么）
    - "此项不改因为 Y"（为什么不改，给出技术理由）
    - "review 此处判断有误因为 Z"（review 错了，给出证据）
-6. 报告完成
+6. 写标记文件 `echo "done" > .coder_done`
+7. SendMessage 报告完成
 ```
 
 FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。

@@ -144,6 +144,8 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 
 **通信**：`SendMessage(to: "coder-N", message: "...")`。teammate 之间不直接通信。
 
+**双通道通知**：teammate 完成工作后同时 (a) SendMessage 回报 leader (b) 在 worktree 写标记文件。coder 写 `.coder_done`，code-reviewer 写 `.reviewer_code_done`，test-reviewer 写 `.reviewer_test_done`。leader 不单靠 SendMessage，同时检查标记文件存在才判定完成。
+
 **生命周期**（D5）：
 - teammate 全程复用，不主动 shutdown，不监控上下文
 - 上下文满了由 Claude Code 自动 compact/截断
