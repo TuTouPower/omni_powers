@@ -82,7 +82,7 @@ bash skills/harness-start/scripts/dag_gen.sh
 
 **选 task**（4 条全满足，取 ID 最小）：status=待开始、`depends_on` 中所有 task 均为 `完成`、不在阻塞范围、ID 最小。
 
-层宽 1 → 串行；层宽 > 1 → 按协议"并发判定算法"（见 `agent_protocol.md`）从 plan.md 提取文件列表算冲突图定并发组。
+层宽 1 → 串行；层宽 > 1 → 同层并发（上限 3，>3 则取 ID 升序前 3，其余等下波次）。不做文件冲突预检，合并冲突在收口阶段解决。
 
 ### 2. 拆 task（task 太大时）
 
