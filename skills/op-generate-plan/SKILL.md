@@ -9,7 +9,6 @@ description: >
 # 写实施计划
 
 > 本 skill 参考 [superpowers:writing-plans](https://github.com/obra/superpowers)（Copyright (c) 2025 Prime Radiant, Inc.），本土化适配 harness 工作流。
-> `plan-document-reviewer-prompt.md` 直接取自 superpowers，原作者保留版权。
 
 ## 概述
 
@@ -197,4 +196,3 @@ op-start 会接管后续：选 task → 派 coder → review → 收口。
 | `template/op_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
 | `skills/op-generate-spec/SKILL.md` | 上一步：op-generate-spec |
 | `skills/op-start/SKILL.md` | 下一步：op-start |
-| `skills/op-generate-plan/plan-document-reviewer-prompt.md` | Plan 审阅提示词模板 |
