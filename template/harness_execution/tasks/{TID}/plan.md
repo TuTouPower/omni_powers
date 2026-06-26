@@ -1,6 +1,6 @@
 # {TID} {title} Implementation Plan
 
-> 生成方式：plan-generator skill。
+> 生成方式：op-generate-plan skill。
 
 ## File Structure
 

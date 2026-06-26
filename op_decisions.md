@@ -68,15 +68,15 @@
 
 ## D8：删除 agent frontmatter model 字段（2026-06-25）
 
-**变更**：三个 harness agent 定义文件（harness-coder、harness-code-reviewer、harness-test-reviewer）删除 frontmatter 中的 `model` 字段。
+**变更**：三个 harness agent 定义文件（op-coder、op-code-reviewer、op-test-reviewer）删除 frontmatter 中的 `model` 字段。
 
 **理由**：spawn 时 Agent 工具不读 frontmatter 的 model，必须显式传 `model` 参数。保留 model 字段会误导读者以为它会生效。
 
-## D9：保留 debt-to-tasks HARD-GATE（2026-06-25）
+## D9：保留 op-debt2tasks HARD-GATE（2026-06-25）
 
-**决策**：不改 debt-to-tasks SKILL.md 中的 `<HARD-GATE>` 标签。
+**决策**：不改 op-debt2tasks SKILL.md 中的 `<HARD-GATE>` 标签。
 
-**理由**：spec-generator 和 plan-generator 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
+**理由**：op-generate-spec 和 op-generate-plan 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
 
 ## D10：标记文件为完成判定唯一真相源，去双通道（2026-06-26）
 

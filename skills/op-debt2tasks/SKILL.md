@@ -1,21 +1,21 @@
 ---
-name: debt-to-tasks
+name: op-debt2tasks
 description: >
   技术债偿还——扫 tech_debt.md，按主题归类，拆成偿还 task，生成 spec/plan，更新 tasks_list.json。
   默认快速模式（直接归类拆 task），用户说"深度模式/深度讨论"才走深度（逐债项讨论）。
   功能 task 全部完成后由 leader 触发。
 ---
 
-# debt-to-tasks：技术债偿还
+# op-debt2tasks：技术债偿还
 
 ## 触发
 
 - 所有功能 task 状态为 `完成` 后，leader 调用本 skill
-- 用户显式说 `/debt-to-tasks`、还债、偿还技术债
+- 用户显式说 `/op-debt2tasks`、还债、偿还技术债
 
 ## 模式选择
 
-**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 spec/plan-generator（快速）。
+**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 spec/op-generate-planerator（快速）。
 
 **深度模式**：仅当用户**明确说**以下关键词时才走深度：
 - "深度模式"、"深度讨论"、"逐项讨论"、"详细讨论"
@@ -23,7 +23,7 @@ description: >
 进入 skill 后先确认：
 
 ```
-/debt-to-tasks
+/op-debt2tasks
 
 默认快速归类直接拆。说"深度"则逐债项讨论。开始？
 ```
@@ -34,9 +34,9 @@ description: >
 |---|---|---|
 | `tech_debt_path` | `docs/harness_execution/tech_debt.md` | 技术债清单 |
 | `tasks_list_path` | `docs/harness_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
-| `tasks_list_template` | `docs/harness/template/harness_execution/tasks_list.json` | tasks_list.json 模板 |
-| `spec_template` | `docs/harness/template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
-| `plan_template` | `docs/harness/template/harness_execution/tasks/{TID}/plan.md` | plan 模板 |
+| `tasks_list_template` | `template/harness_execution/tasks_list.json` | tasks_list.json 模板 |
+| `spec_template` | `template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
+| `plan_template` | `template/harness_execution/tasks/{TID}/plan.md` | plan 模板 |
 
 ## 输出
 
@@ -140,7 +140,7 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 ### step 6：生成 spec + plan
 
 <HARD-GATE>
-spec.md 和 plan.md 的内容必须通过 Skill 工具调用 spec-generator 和 plan-generator 生成。禁止手动写。
+spec.md 和 plan.md 的内容必须通过 Skill 工具调用 op-generate-spec 和 op-generate-plan 生成。禁止手动写。
 </HARD-GATE>
 
 对每个偿还 task：
@@ -148,19 +148,19 @@ spec.md 和 plan.md 的内容必须通过 Skill 工具调用 spec-generator 和 
 1. 建目录拷模板：
 ```bash
 mkdir -p docs/harness_execution/tasks/{TID}
-cp docs/harness/template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
-cp docs/harness/template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
-cp docs/harness/template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
-cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
+cp template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
+cp template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
+cp template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
+cp template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
 ```
 
-2. 调 spec-generator 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
+2. 调 op-generate-spec 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
 
-3. 调 plan-generator 生成 plan.md
+3. 调 op-generate-plan 生成 plan.md
 
-**快速模式（默认）**：每个偿还 task 必须用 Skill 工具调用 spec-generator（快速模式）→ 再调 plan-generator（快速模式）。批量 task 时用子代理并发，每个子代理对一个 task 依次完成 spec+plan。
+**快速模式（默认）**：每个偿还 task 必须用 Skill 工具调用 op-generate-spec（快速模式）→ 再调 op-generate-plan（快速模式）。批量 task 时用子代理并发，每个子代理对一个 task 依次完成 spec+plan。
 
-**深度模式**（用户明确说"深度"时才走）：spec-generator 走深度模式逐债项讨论，plan-generator 走深度模式逐 step 确认。
+**深度模式**（用户明确说"深度"时才走）：op-generate-spec 走深度模式逐债项讨论，op-generate-plan 走深度模式逐 step 确认。
 
 ### step 7：更新 tech_debt.md
 
@@ -197,8 +197,8 @@ tech_debt.md 已清理。
 ## 与其他 skill 的关系
 
 - **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
-- **harness-start**（统一工作流入口）：偿还 task 创建完成后，走 /harness-start 进入标准开发循环（选 task→派 coder→review→收口）。收口流程与功能 task 相同。
-- 恢复后偿还 task 与功能 task 无区别，/harness-start 统一按 tasks_list.json 的 status 和 depends_on 调度。
+- **op-start**（统一工作流入口）：偿还 task 创建完成后，走 /op-start 进入标准开发循环（选 task→派 coder→review→收口）。收口流程与功能 task 相同。
+- 恢复后偿还 task 与功能 task 无区别，/op-start 统一按 tasks_list.json 的 status 和 depends_on 调度。
 
 ## 注意事项
 

@@ -1,5 +1,5 @@
 ---
-name: harness-closer
+name: op-closer
 description: 收口子代理。leader 下达收口指令后，一次性执行 per-task 机械收口步骤（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件。
 tools: [Read, Write, Edit, Bash, Grep, Glob]
 ---

@@ -1,9 +1,9 @@
 ---
-name: spec-generator
+name: op-generate-spec
 description: >
   从 task 需求生成 spec.md。默认深度模式（一问一答协作讨论 + 可选 visual companion），
-  用户说"快速模式/快速决定/直接生成"才走快速。intake/debt-to-tasks 调本 skill 生成 spec。
-  触发：/spec-gen、生成 spec、写规格。
+  用户说"快速模式/快速决定/直接生成"才走快速。intake/op-debt2tasks 调本 skill 生成 spec。
+  触发：/op-generate-spec、生成 spec、写规格。
 ---
 
 # 从需求到设计规格
@@ -25,7 +25,7 @@ description: >
 
 **快速模式**：仅当用户**明确说**以下关键词时才走快速：
 - "快速模式"、"快速决定"、"直接生成"、"快速生成"、"不用讨论了"
-- 或 intake/debt-to-tasks 调用时指定快速模式
+- 或 intake/op-debt2tasks 调用时指定快速模式
 
 进入 skill 后先确认：
 
@@ -52,7 +52,7 @@ description: >
 6. **写设计文档**——保存到 `docs/harness_execution/tasks/{TID}/spec.md`
 7. **spec 自审**——快速内联检查占位符、矛盾、歧义、范围（见下文）
 8. **用户审阅 spec**——要求用户在继续前审阅 spec 文件
-9. **过渡到实施**——调用 plan-generator skill 创建实施计划
+9. **过渡到实施**——调用 op-generate-plan skill 创建实施计划
 
 ## 流程
 
@@ -66,7 +66,7 @@ digraph brainstorming {
     "写设计文档" [shape=box];
     "Spec 自审\n(内联修复)" [shape=box];
     "用户审阅 spec?" [shape=diamond];
-    "调用 plan-generator" [shape=doublecircle];
+    "调用 op-generate-plan" [shape=doublecircle];
 
     "探索项目上下文" -> "提出澄清问题";
     "提出澄清问题" -> "提出 2-3 个方案";
@@ -77,11 +77,11 @@ digraph brainstorming {
     "写设计文档" -> "Spec 自审\n(内联修复)";
     "Spec 自审\n(内联修复)" -> "用户审阅 spec?";
     "用户审阅 spec?" -> "写设计文档" [label="需要修改"];
-    "用户审阅 spec?" -> "调用 plan-generator" [label="已批准"];
+    "用户审阅 spec?" -> "调用 op-generate-plan" [label="已批准"];
 }
 ```
 
-**终点是调用 plan-generator。** 不要调用任何其他实现 skill。brainstorming 之后唯一调用的 skill 是 plan-generator。
+**终点是调用 op-generate-plan。** 不要调用任何其他实现 skill。brainstorming 之后唯一调用的 skill 是 op-generate-plan。
 
 ## 过程细节
 
@@ -127,7 +127,7 @@ digraph brainstorming {
 **文档：**
 
 - 把验证过的设计（spec）写到 `docs/harness_execution/tasks/{TID}/spec.md`
-- 使用 `docs/harness/template/harness_execution/tasks/{TID}/spec.md` 模板结构
+- 使用 `template/harness_execution/tasks/{TID}/spec.md` 模板结构
 - 提交设计文档到 git
 
 **Spec 自审：**
@@ -149,8 +149,8 @@ spec 自审通过后，要求用户在继续前审阅 spec：
 
 **实施：**
 
-- 调用 plan-generator skill 创建详细实施计划
-- 不要调用任何其他 skill。plan-generator 是下一步。
+- 调用 op-generate-plan skill 创建详细实施计划
+- 不要调用任何其他 skill。op-generate-plan 是下一步。
 
 ## 快速模式
 
@@ -163,7 +163,7 @@ spec 自审通过后，要求用户在继续前审阅 spec：
 5. 自己跑自审
 6. 输出 spec 全文 + 关键决策摘要（选了哪个方案、为什么），请用户审阅
 
-用户只需在最后审阅。说"改"才改，否则通过进入 plan-generator。
+用户只需在最后审阅。说"改"才改，否则通过进入 op-generate-plan。
 
 **关键**：快速模式不把判断丢回给用户。方案选择、边界划定、文件结构——skill 自己做决定。但必须汇报决策理由。
 
@@ -194,7 +194,7 @@ spec 自审通过后，要求用户在继续前审阅 spec：
 一个关于 UI 话题的问题不自动等于视觉问题。"你想要什么类型的 wizard？"是概念问题——用终端。"这两种 wizard 布局哪个更好？"是视觉问题——用浏览器。
 
 如果用户同意 companion，在继续前读详细指南：
-`skills/spec-generator/visual-companion.md`
+`skills/op-generate-spec/visual-companion.md`
 
 启动服务器：
 ```bash
@@ -210,11 +210,11 @@ scripts/stop-server.sh $SESSION_DIR
 
 | 文件 | 用途 |
 |---|---|
-| `docs/harness/template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
+| `template/harness_execution/tasks/{TID}/spec.md` | spec 模板 |
 | `docs/harness_blueprint/prd.md` | 产品需求 |
 | `docs/harness_blueprint/spec.md` | 全局总纲 |
 | `docs/harness_blueprint/architecture.md` | 系统架构 |
 | `docs/harness_blueprint/domain.md` | 领域模型 |
-| `docs/harness/skills/spec-generator/visual-companion.md` | Visual companion 详细指南 |
-| `docs/harness/skills/spec-generator/spec-document-reviewer-prompt.md` | Spec 审阅提示词模板 |
-| `docs/harness/skills/plan-generator/SKILL.md` | 下一步：plan-generator |
+| `skills/op-generate-spec/visual-companion.md` | Visual companion 详细指南 |
+| `skills/op-generate-spec/spec-document-reviewer-prompt.md` | Spec 审阅提示词模板 |
+| `skills/op-generate-plan/SKILL.md` | 下一步：op-generate-plan |

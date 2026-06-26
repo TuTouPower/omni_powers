@@ -1,8 +1,8 @@
 ---
-name: intake
+name: op-task
 description: >
   需求→task 统一入口。默认深度模式（一问一答协作讨论 + 可选 visual companion），
-  用户说"快速模式/快速决定/直接生成"才走快速。内部调 spec-generator 和 plan-generator。
+  用户说"快速模式/快速决定/直接生成"才走快速。内部调 op-generate-spec 和 op-generate-plan。
   触发：/intake、新需求、拆 task、需求入轨。
 ---
 
@@ -34,15 +34,15 @@ description: >
 ## 深度模式
 
 1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
-2. **讨论需求（第一轮 spec-generator）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
+2. **讨论需求（第一轮 op-generate-spec）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
-4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill（深度模式）和 plan-generator skill（深度模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
+4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 op-generate-spec skill（深度模式）和 op-generate-plan skill（深度模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
 
 <HARD-GATE>
-必须对每个 task 调用 `Skill("spec-generator")` 和 `Skill("plan-generator")`，禁止手写 spec/plan。不得跳过此步。
+必须对每个 task 调用 `Skill("op-generate-spec")` 和 `Skill("op-generate-plan")`，禁止手写 spec/plan。不得跳过此步。
 </HARD-GATE>
 
-5. **汇报**：task 已就位，下一步 /harness-start
+5. **汇报**：task 已就位，下一步 /op-start
 
 ## 快速模式
 
@@ -52,15 +52,15 @@ description: >
 2. **确认需求范围**：从输入提取，输出确认
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
-4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 spec-generator skill（快速模式）和 plan-generator skill（快速模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
+4. **生成 spec/plan**：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 op-generate-spec skill（快速模式）和 op-generate-plan skill（快速模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。
 
 <HARD-GATE>
-必须对每个 task 调用 spec-generator 和 plan-generator skill，禁止手写 spec/plan。不得跳过此步。
+必须对每个 task 调用 op-generate-spec 和 op-generate-plan skill，禁止手写 spec/plan。不得跳过此步。
 </HARD-GATE>
 
 > 深度模式直接在主会话调 Skill（需要用户交互），快速模式用子代理（无需交互可并发）。两种方式不同是因为深度模式需要一问一答，子代理无法与用户交互。
 
-6. **汇报**：task 已就位，下一步 /harness-start
+6. **汇报**：task 已就位，下一步 /op-start
 
 ## 拆 task 规则
 
@@ -88,10 +88,10 @@ T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 
 ```bash
 mkdir -p docs/harness_execution/tasks/{TID}
-cp docs/harness/template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
-cp docs/harness/template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
-cp docs/harness/template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
-cp docs/harness/template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
+cp template/harness_execution/tasks/{TID}/spec.md docs/harness_execution/tasks/{TID}/spec.md
+cp template/harness_execution/tasks/{TID}/plan.md docs/harness_execution/tasks/{TID}/plan.md
+cp template/harness_execution/tasks/{TID}/context.md docs/harness_execution/tasks/{TID}/context.md
+cp template/harness_execution/tasks/{TID}/steps.md docs/harness_execution/tasks/{TID}/steps.md
 ```
 
 context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）。
@@ -101,18 +101,18 @@ context.md 和 steps.md 暂不填（空模板，coder 和 leader 后续维护）
 ```
 /intake（默认深度模式）
     │
-    ├── 深度：spec-generator（深度讨论）→ 拆 task → spec/plan-generator（深度）
+    ├── 深度：op-generate-spec（深度讨论）→ 拆 task → spec/op-generate-planerator（深度）
     │
-    └── 快速：确认范围 → 拆 task → spec/plan-generator（快速）
+    └── 快速：确认范围 → 拆 task → spec/op-generate-planerator（快速）
                 │
                 ▼
-         /harness-start
+         /op-start
 ```
 
-- **spec-generator**：intake 内部调用，可独立调用 `/spec-gen`
-- **plan-generator**：intake 内部调用，可独立调用 `/plan-gen`
-- **debt-to-tasks**：技术债偿还走 debt-to-tasks，新功能走 intake
-- **harness-start**：完成后调 /harness-start 进入开发循环
+- **op-generate-spec**：intake 内部调用，可独立调用 `/op-generate-spec`
+- **op-generate-plan**：intake 内部调用，可独立调用 `/op-generate-plan`
+- **op-debt2tasks**：技术债偿还走 op-debt2tasks，新功能走 intake
+- **op-start**：完成后调 /op-start 进入开发循环
 
 ## 注意事项
 

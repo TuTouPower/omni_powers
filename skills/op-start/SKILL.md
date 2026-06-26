@@ -1,15 +1,15 @@
 ---
-name: harness-start
+name: op-start
 description: >
-  统一工作流入口——用户只需 /harness-start，leader 进入自治循环。
-  触发：/harness-start、继续、下一步、干活。
+  统一工作流入口——用户只需 /op-start，leader 进入自治循环。
+  触发：/op-start、继续、下一步、干活。
 ---
 
-# Harness Start Skill
+# Op Start Skill
 
-`/harness-start` 是启动按钮。leader 读状态、确保 Agent Team 存在，进入自治循环自动推进。只在等外部（coder 完成、review 返回）时暂停。
+`/op-start` 是启动按钮。leader 读状态、确保 Agent Team 存在，进入自治循环自动推进。只在等外部（coder 完成、review 返回）时暂停。
 
-**用户再触发 `/harness-start` 只在**：compact 恢复、crash 恢复、想查进度。
+**用户再触发 `/op-start` 只在**：compact 恢复、crash 恢复、想查进度。
 
 协议规则、状态机、review 判定、并发约束等见 `RULES.md`。
 
@@ -21,7 +21,7 @@ description: >
 [错误] Agent Teams 未启用。
 
 请设置环境变量：export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
-然后重新运行 /harness-start。
+然后重新运行 /op-start。
 ```
 
 **禁止**自行修改用户配置文件。
@@ -71,10 +71,10 @@ while (存在 status 为 待开始/进行中/审阅中/收口中 的 task) {
 
 ### 1. 生成 DAG + 选波次
 
-**每次 /harness-start 从 `depends_on` 重算，不靠 checkpoint。**
+**每次 /op-start 从 `depends_on` 重算，不靠 checkpoint。**
 
 ```bash
-bash skills/harness-start/scripts/dag_gen.sh
+bash skills/op-start/scripts/dag_gen.sh
 ```
 **失败处理**：exit 非 0 → 禁止继续。检查 stderr 信息，修复后重跑，直到通过才能进自治循环。
 
@@ -148,13 +148,13 @@ leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂
 
 #### A. worktree 内（closer + leader）
 
-**closer 执行**（per-task 操作，详见 `agents/harness-closer.md`）：
+**closer 执行**（per-task 操作，详见 `agents/op-closer.md`）：
 - spec 盖戳 + git mv 归档 + git add -A
 - 输出 `.harness/signals/closer_output`：暂存项列表、spec 摘要、feature 归属
 - 不碰 tasks_list.json / specs/ / progress.md / decisions.md / tech_debt.md
 
 ```js
-Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd <project_root>/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
+Agent({ name: "closer", subagent_type: "op-closer", model: "haiku", prompt: "cd <project_root>/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
 ```
 
 **leader 执行**（closer 回报后）：
@@ -196,7 +196,7 @@ HASH=$(git rev-parse HEAD)
 # checkpoint 格式见 RULES.md compact 恢复段
 
 # 8. 验收
-bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
+bash skills/op-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
 
 # 9. 控制平面提交
 git add docs/harness_execution/ docs/harness_record/ docs/harness_blueprint/
@@ -214,8 +214,8 @@ git commit -m "chore(harness): {TID} 收口记录"
 
 ## 循环结束
 
-- **全部完成**：检查 tech_debt.md 有无未偿还债项，有则提示 /debt-to-tasks
-- **剩余阻塞**：输出阻塞项，等外部解除后 /harness-start
+- **全部完成**：检查 tech_debt.md 有无未偿还债项，有则提示 /op-debt2tasks
+- **剩余阻塞**：输出阻塞项，等外部解除后 /op-start
 
 ## Agent Team 管理
 
@@ -238,12 +238,12 @@ cat ~/.claude/teams/{team}/config.json | jq '.members[] | select(.name == "coder
 
 首次启动：
 ```js
-Agent({ name: "coder-1", team_name: "harness-{project}", subagent_type: "harness-coder", model: "haiku", prompt: "..." })
-Agent({ name: "code-reviewer", team_name: "harness-{project}", subagent_type: "harness-code-reviewer", model: "sonnet", prompt: "..." })
-Agent({ name: "test-reviewer", team_name: "harness-{project}", subagent_type: "harness-test-reviewer", model: "sonnet", prompt: "..." })
+Agent({ name: "coder-1", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku", prompt: "..." })
+Agent({ name: "code-reviewer", team_name: "op-{project}-team", subagent_type: "op-code-reviewer", model: "sonnet", prompt: "..." })
+Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "op-test-reviewer", model: "sonnet", prompt: "..." })
 ```
 
-并发扩展：查 config 确认不存在后 `Agent({ name: "coder-2", team_name: "harness-{project}", subagent_type: "harness-coder", model: "haiku", prompt: "..." })`
+并发扩展：查 config 确认不存在后 `Agent({ name: "coder-2", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku", prompt: "..." })`
 
 ### 复用与 shutdown
 
@@ -258,9 +258,9 @@ Agent({ name: "test-reviewer", team_name: "harness-{project}", subagent_type: "h
 | 文件 | 用途 |
 |---|---|
 | `RULES.md` | 规则手册 |
-| `harness_decisions.md` | 决策记录 |
-| `findings.md` | 实验发现 |
+| `op_decisions.md` | 决策记录 |
+| `op_findings.md` | 实验发现 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |
 | `docs/harness_execution/leader_checkpoint.md` | 断点 |
-| `skills/harness-start/scripts/close_check.sh` | 收口验收脚本 |
-| `skills/debt-to-tasks/SKILL.md` | 技术债偿还 |
+| `skills/op-start/scripts/close_check.sh` | 收口验收脚本 |
+| `skills/op-debt2tasks/SKILL.md` | 技术债偿还 |
