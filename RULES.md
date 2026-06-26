@@ -11,7 +11,7 @@
 | 角色          | 类型                 | model  | 职责                                                                                                |
 | ------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------- |
 | leader        | 主会话               | —     | 编排、收口、改共享文档                                                                              |
-| coder-1       | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
+| coder       | **Agent Team** | haiku  | TDD：写测试→写实现→跑测试→写 context.md                                                          |
 | code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md                                                 |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md                                                           |
 | closer        | **Subagent**   | haiku  | 按需启用：per-task 收口（spec 盖戳、git mv 归档、git add -A），输出 closer_output。不碰控制平面文件 |
@@ -118,7 +118,7 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：每条问题默认不暂存（当场修）。需要暂存时标【暂存:原因】。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS。LOW 不是放过理由。
-- **FAIL 轮**（max 3）：leader 把 blockers 发回 coder-1 → coder-1 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder-1 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**下游传播**：FAIL task 的下游依赖 task status 改为 `跳过`，等待阻塞解除后恢复。
+- **FAIL 轮**（max 3）：leader 把 blockers 发回 coder → coder 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外的新行为和新测试）+ 在 review_*.md 追加修改记录（禁碰 context.md）→ leader 重派 review。coder 跨轮保留状态。**重审后**：reviewer 在 review_*.md 末尾追加 `### Round {N} verdict: PASS` 或 `### Round {N} verdict: FAIL`（纯追加，不覆盖已有 verdict 行）。leader 读**最后一条** verdict 行判定。第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`。**下游传播**：FAIL task 的下游依赖 task status 改为 `跳过`，等待阻塞解除后恢复。
 
 ### commit 时机
 
@@ -159,14 +159,14 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 
 ### Agent Team 管理
 
-coder-1、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
+coder、code-reviewer、test-reviewer 是 **Agent Team**——用 `Agent` 工具 spawn，跨 task 常驻。
 
 **创建**（首次 /op-start 时，必须显式传 model 和 team_name 参数）：
 
 ```
 TeamCreate({ team_name: "op-{project}-team" })
 
-Agent({ name: "coder-1", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku",
+Agent({ name: "coder", team_name: "op-{project}-team", subagent_type: "op-coder", model: "haiku",
   prompt: "等待 leader 派 TDD 任务..." })
 
 Agent({ name: "code-reviewer", team_name: "op-{project}-team", subagent_type: "op-code-reviewer", model: "sonnet",
@@ -178,7 +178,7 @@ Agent({ name: "test-reviewer", team_name: "op-{project}-team", subagent_type: "o
 
 team_name 规则：`op-<项目目录名>`，如 `op-omni_powers-team`。
 
-**通信**：`SendMessage(to: "coder-1", message: "...")`。teammate 之间不直接通信。
+**通信**：`SendMessage(to: "coder", message: "...")`。teammate 之间不直接通信。
 
 **完成通知**：标记文件是唯一真相源，SendMessage 是加速器。teammate 完成工作后**先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）。
 
@@ -228,7 +228,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 ## Quick Reference（compact 后速查）
 
-**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder-1 TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder-1 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
+**单 task 生命周期**：确认 spec/plan → 拆 steps → 派 coder TDD → 派 review（Agent Team 并行）→ 读最后一条 verdict 行（PASS→收口 / FAIL→coder 改→重审 max 3 轮）→ 收口（closer→代码 commit→merge→控制平面 commit）→ 下一个
 
 **关键路径**：tasks_list.json = 状态源 / dag.md = 依赖图（衍生） / tasks/{TID}/ = 进行中 / record/tasks/{TID}/ = 归档 / specs/{功能}.md = 当前真相 / leader_checkpoint.md = 断点
 
