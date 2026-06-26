@@ -76,6 +76,14 @@ tools: [Read, Write, Grep, Glob, Bash, SendMessage]
 
 检查 `coverage/`、`playwright-report/`、`test-results/`、test account、test config 是否被 git 跟踪或打包进生产。
 
+### 日志脱敏审查
+
+检查测试中的日志输出和错误消息是否泄露敏感信息：
+- 变量值（如用户名、邮箱、IP 地址）是否直接拼进错误消息
+- API key、token、password 是否出现在日志或测试断言中
+- 堆栈跟踪是否暴露内部路径或数据库结构
+- 测试 mock 的日志输出是否包含真实凭证或 PII
+
 ### 实际运行验证
 
 必须实际运行测试命令，不能只看配置。写清楚实际跑了什么、结果是什么、哪些没跑及原因。没跑不能说通过。
