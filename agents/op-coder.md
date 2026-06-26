@@ -56,12 +56,12 @@ FAIL 轮**绝对不碰** context.md。跨轮保留你的上下文状态。
 
 | 文件 | 模板 | 谁写 | 何时 |
 |---|---|---|---|
-| `tasks/{TID}/spec.md` | `op_execution/tasks/{TID}/spec.md` | leader | 只读 |
-| `tasks/{TID}/plan.md` | `op_execution/tasks/{TID}/plan.md` | leader | 只读 |
-| `tasks/{TID}/steps.md` | `op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
-| `tasks/{TID}/context.md` | `op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
-| `tasks/{TID}/review_code.md` | `op_execution/tasks/{TID}/review_code.md` | code-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
-| `tasks/{TID}/review_test.md` | `op_execution/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Round N-2 |
+| `docs/op_execution/tasks/{TID}/spec.md` | `template/op_execution/tasks/{TID}/spec.md` | leader | 只读 |
+| `docs/op_execution/tasks/{TID}/plan.md` | `template/op_execution/tasks/{TID}/plan.md` | leader | 只读 |
+| `docs/op_execution/tasks/{TID}/steps.md` | `template/op_execution/tasks/{TID}/steps.md` | leader | 只读（如果有） |
+| `docs/op_execution/tasks/{TID}/context.md` | `template/op_execution/tasks/{TID}/context.md` | **你** | 每轮追加正向进度 |
+| `docs/op_execution/tasks/{TID}/review_code.md` | `template/op_execution/tasks/{TID}/review_code.md` | code-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
+| `docs/op_execution/tasks/{TID}/review_test.md` | `template/op_execution/tasks/{TID}/review_test.md` | test-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | — | **你** | coding 阶段 |
 
 ## TDD 流程
@@ -162,10 +162,10 @@ npm test -- path/to/test.test.ts
 
 ### review_code.md / review_test.md — 模板 `template/op_execution/tasks/{TID}/review_code.md`
 
-FAIL 轮在文件末尾追加，不复盖前文。你的段叫 `Round N-2 Coder 修改`：
+FAIL 轮在文件末尾追加，不复盖前文。你的段叫 `Fix-N`：
 
 ```markdown
-## Round N-2 Coder 修改
+## Fix-N
 
 > 逐项回应。【当场修】的修完报结果，不修的给技术理由。
 
