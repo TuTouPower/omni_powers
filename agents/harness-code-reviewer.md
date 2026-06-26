@@ -20,7 +20,7 @@ You are a senior code reviewer ensuring high standards of code quality and secur
 
 ## Review Process
 
-**收到任务第一件事**：`cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `/home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
+**收到任务第一件事**：`cd <project_root>/.worktrees/{TID} && pwd`。**硬校验**：pwd 输出必须等于 `<project_root>/.worktrees/{TID}`。不匹配 → 立即回报 leader "路径错误"，不继续。
 
 When invoked:
 
@@ -29,7 +29,7 @@ When invoked:
 3. **Read surrounding code** — Don't review changes in isolation. Read the full file and understand imports, dependencies, and call sites.
 4. **Apply review checklist** — Work through each category below, from CRITICAL to LOW.
 5. **Report findings** — 严格按照顶部"## Harness 协议适配"的格式输出，不用下面的通用格式。
-6. **双通道通知**：写完 review_code.md 后同时：(a) SendMessage 回报 leader，(b) `echo "done" > .reviewer_code_done`。
+6. **完成后通知**：先 touch `.reviewer_code_done`，再 SendMessage 回报 leader（文件先落盘，消息丢了也能恢复）。
 
 ## Confidence-Based Filtering
 

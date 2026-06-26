@@ -77,3 +77,22 @@
 **决策**：不改 debt-to-tasks SKILL.md 中的 `<HARD-GATE>` 标签。
 
 **理由**：spec-generator 和 plan-generator 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
+
+## D10：标记文件为完成判定唯一真相源，去双通道（2026-06-26）
+
+**变更**：取消"双通道确认"（SendMessage + 标记文件必须同时满足）。完成判定以标记文件为唯一依据，SendMessage 降级为加速信号。
+
+**规则**：
+- teammate **先 touch 标记文件、再 SendMessage**（文件先落盘，消息丢了也能恢复）
+- leader 每次主循环迭代前扫标记文件。文件存在即完成，不依赖 SendMessage
+- 扫到 `.coder_done` → 删文件 → 派 review
+- 扫到 `.reviewer_code_done` + `.reviewer_test_done` 同时存在 → 删两文件 → 读 verdict
+- 全在等时 `ScheduleWakeup(180s)` 兜底轮询
+- FAIL 轮重新派 coder 前标记文件已在上一轮处理时删空
+
+**理由**：
+- SendMessage 跨 agent 通信不是 100% 可靠——消息可能丢失
+- 双路并行等待引入竞态（消息和文件哪个先到）和重复判定问题
+- 标记文件在 worktree 磁盘上，compact/crash 后也不丢——天然覆盖恢复场景
+- SendMessage 仍保留：到达时触发提前扫描，省去 3 分钟等待
+- 删除标记文件确保下一轮不会误读上一轮的旧标记
