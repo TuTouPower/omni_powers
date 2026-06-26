@@ -5,31 +5,27 @@
 
 ## jq 查询示例
 
-⚠️ 严禁 Read 整文件 `tasks_list.json`，必须用 jq 查询。
+⚠️ 严禁 Read 整文件 `tasks_list.json`，用 `scripts/op_jq.sh` 或 jq 查询。
 
 ```bash
-# 查所有待开始 task（选 task）
-jq '.tasks[] | select(.status=="待开始")' docs/op_execution/tasks_list.json
+# 查所有待开始 task
+bash scripts/op_jq.sh pending
 
-# 查某 task 依赖是否全完成
-TID=T02
-DEPS=$(jq -r '.tasks[] | select(.id=="'$TID'") | .depends_on[]?' docs/op_execution/tasks_list.json)
-for d in $DEPS; do
-  jq -r '.tasks[] | select(.id=="'$d'") | .status' docs/op_execution/tasks_list.json
-done
+# 查某 task 依赖
+bash scripts/op_jq.sh deps {TID}
 
-# 查所有阻塞 task
-jq '.tasks[] | select(.status=="阻塞") | {id, blocked_by}' docs/op_execution/tasks_list.json
+# 查阻塞/跳过
+bash scripts/op_jq.sh blocked
+bash scripts/op_jq.sh skipped
 
-# 查所有跳过 task
-jq '.tasks[] | select(.status=="跳过") | {id, title}' docs/op_execution/tasks_list.json
+# 查下游
+bash scripts/op_jq.sh downstream {TID}
 
-# 查某 task 的下游（谁依赖它）
-TID=T02
-jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | index($tid))) | .id' docs/op_execution/tasks_list.json
+# 全部概览
+bash scripts/op_jq.sh all
 ```
 
-状态修改统一用 `bash skills/op-start/scripts/op-status.sh <TID> <status> [blocked_by]` 或 `--batch` 模式。
+状态修改统一用 `bash scripts/op_status.sh <TID> <status> [blocked_by]` 或 `--batch` 模式。
 
 ## WIP sub-commit
 
@@ -58,8 +54,8 @@ jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | in
 不用 reset（会丢历史）。
 
 1. `git revert <commit_hash>` — 反向提交
-2. `bash skills/op-start/scripts/op-status.sh {TID} 待开始` — 该 task status 回退
-3. 用 jq 查下游 task（`select(.depends_on | index("{TID}"))`），逐一 `op-status.sh {下游TID} 待开始`
+2. `bash scripts/op_status.sh {TID} 待开始` — 该 task status 回退
+3. `bash scripts/op_jq.sh downstream {TID}` 查下游 task，逐一 `op_status.sh {下游TID} 待开始`
 4. 若该 task 已归档到 `docs/op_record/tasks/{TID}/`：`git mv docs/op_record/tasks/{TID} docs/op_execution/tasks/{TID}` — 移回工作区
 5. 重新进入开发循环
 

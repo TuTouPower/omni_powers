@@ -51,7 +51,7 @@ tasks_list.json status 值：
 | blocked             | 阻塞                    |
 | skipped             | 跳过                    |
 
-状态修改：`bash skills/op-start/scripts/op-status.sh <TID> <status> [blocked_by]`（详见 `RULES_DETAIL.md`）。
+状态修改：`bash scripts/op_status.sh <TID> <status> [blocked_by]`（详见 `RULES_DETAIL.md`）。
 
 ## 文件分层
 

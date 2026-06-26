@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # op-new-task：建 task 工作区目录并拷模板
-# 用法: op-new-task.sh <TID>
+# 用法: op_new_task.sh <TID>
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TID="${1:?用法: op-new-task.sh <TID>}"
+TID="${1:?用法: op_new_task.sh <TID>}"
 TASK_DIR="$ROOT/docs/op_execution/tasks/$TID"
 TEMPLATE_DIR="$ROOT/template/op_execution/tasks/{TID}"
 

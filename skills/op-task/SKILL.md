@@ -87,7 +87,7 @@ T{n}   "{title}"  依赖: [{depends_on}]  验收: {verification}
 ## 建目录拷模板
 
 ```bash
-bash skills/op-start/scripts/op-new-task.sh {TID}
+bash scripts/op_new_task.sh {TID}
 ```
 
 context.md 和 steps.md 暂不填（空模板，op-coder 和 leader 后续维护）。
