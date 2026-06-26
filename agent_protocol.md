@@ -2,7 +2,7 @@
 
 > **唯一编排依据**——所有编排决策以本协议为准。执行流程见 skills。
 > compact 恢复：读本文件 + 用 jq 查询 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
-> 决策依据见 `docs/harness/harness_decisions.md`，实验记录见 `docs/harness/findings.md`。
+> 决策依据见 `harness_decisions.md`，实验记录见 `findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，teammate 和 leader 上下文都是可重建缓存。
 
@@ -15,7 +15,7 @@
 | code-reviewer | **Agent Team** | sonnet | 审 git diff + 安全/架构/错误处理，写 review_code.md |
 | test-reviewer | **Agent Team** | sonnet | 审测试是否真能发现问题，写 review_test.md |
 | task-splitter | **Subagent** | sonnet | 按需启用：拆 task，不污染 leader 上下文 |
-| closer | **Subagent** | sonnet | 按需启用：收口机械步骤（progress/decisions/tech_debt/specs 整理/归档），不污染 leader 上下文 |
+| closer | **Subagent** | haiku | 按需启用：收口机械步骤（progress/decisions/tech_debt/specs 整理/归档），不污染 leader 上下文 |
 
 ### 为什么用 Agent Team
 
@@ -90,7 +90,7 @@ docs/harness_execution/tasks/{TID}/
 
 **整理规则**：每 task 闭环时，leader 必须把 task spec 里当前生效的接口、数据模型、约束、行为整理进对应功能 specs 文件——不是拷贝，过程性内容留在归档 task spec。同一功能跨多个 task 时累积更新同一个文件，不为后续 task 新建文件。归档后永不再改。
 
-**新建文件规则**：一律先拷 `docs/harness/template/` 下对应模板再填内容。无对应模板才自建。
+**新建文件规则**：一律先拷 `template/` 下对应模板再填内容。无对应模板才自建。
 
 ## 关键规则
 
@@ -120,8 +120,12 @@ review 由 Agent Team 执行（D4），不用 Workflow。
 
 ### 并发与 worktree
 
-- 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
-- **并发收益判断**：画依赖图看层宽；层宽普遍为 1 则串行；列同层 task 的共享文件交集，交集大则降并发或拆波次；用数据决定并发路数。
+- 波次 = DAG 同层所有可跑 task。层宽 1 → 串行；层宽 > 1 → 按文件冲突判定并发（上限 3）。
+- **并发判定算法**：
+  1. 从每个 task 的 plan.md"文件结构"段提取要修改的文件路径列表
+  2. 两两计算交集——有公共文件即冲突对，必须串行
+  3. 构建无向冲突图（节点=task，边=冲突对），每个连通分量内串行，分量间可并发
+  4. 并发数 = min(3, 连通分量数)。若分量数 > 3，按分量内 task 数降序取前 3 个分量，其余等下个波次
 - 隔离靠 leader 手动 `git worktree add .worktrees/{TID} -b feat/{TID}`。所有 worktree 统一在项目根 `.worktrees/` 下，分支名 `feat/{TID}`。
 - 收口时按依赖顺序合并 worktree，每合一跑全量测试，**全部合并完再做共享文档收口**。合并冲突时：leader 读冲突段，按依赖优先规则解决（后者适配），解决后跑全量测试，冲突记录写入 decisions.md。波次全部收口后开下一波次。
 
@@ -189,7 +193,7 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 ### 拆 task（task 太大时，派 task-splitter）
 
-leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。agent 定义见 `docs/harness/agents/harness-task-splitter.md`。
+leader 拆 steps.md 时若发现某 task 大到"多个独立交付单元、各自需独立 review/回滚"，拆成多 task。agent 定义见 `agents/harness-task-splitter.md`。
 
 **判断标准**：
 

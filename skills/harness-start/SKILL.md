@@ -11,7 +11,7 @@ description: >
 
 **用户再触发 `/harness-start` 只在**：compact 恢复、crash 恢复、想查进度。
 
-协议规则、状态机、review 判定、并发约束等见 `docs/harness/agent_protocol.md`。
+协议规则、状态机、review 判定、并发约束等见 `agent_protocol.md`。
 
 ## 步骤 0：读状态 + 确保 Agent Team
 
@@ -19,7 +19,7 @@ description: >
 
 1. `docs/harness_execution/leader_checkpoint.md` —— 上次断在哪
 2. `docs/harness_execution/tasks_list.json` —— 状态源（⚠️ 严禁 Read 整文件，必须用 jq 查询）
-3. `docs/harness/agent_protocol.md` —— 规则手册
+3. `agent_protocol.md` —— 规则手册
 
 **确保 Agent Team 存在**（不创建 team 不进循环）：
 
@@ -56,7 +56,7 @@ while (存在待开始 task 且依赖全完成) {
 **每次 /harness-start 从 `depends_on` 重算，不靠 checkpoint。**
 
 ```bash
-bash docs/harness/skills/harness-start/scripts/dag_gen.sh
+bash skills/harness-start/scripts/dag_gen.sh
 ```
 **失败处理**：exit 非 0 → 禁止继续。检查 stderr 信息，修复后重跑，直到通过才能进自治循环。
 
@@ -64,7 +64,7 @@ bash docs/harness/skills/harness-start/scripts/dag_gen.sh
 
 **选 task**（4 条全满足，取 ID 最小）：status=待开始、`depends_on` 中所有 task 均为 `完成`、不在阻塞范围、ID 最小。
 
-层宽 = 所有满足上述条件的待开始 task 数量。层宽 1 → 串行；层宽 > 1 → 看共享文件交集定并发数（上限 3）。
+层宽 1 → 串行；层宽 > 1 → 按协议"并发判定算法"（见 `agent_protocol.md`）从 plan.md 提取文件列表算冲突图定并发组。
 
 ### 2. 拆 task（task 太大时）
 
@@ -94,7 +94,7 @@ git worktree add .worktrees/{TID} -b feat/{TID}
 **派活消息必须首行切绝对路径**（上一个 task 的 worktree 可能已删除，teammate cwd 是死路径）：
 
 ```js
-SendMessage({ to: "coder-1", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
+SendMessage({ to: "coder-1", message: "cd <project_root>/.worktrees/{TID} && pwd\n在此目录中 TDD 实现 T{a} step {N}。spec: docs/harness_execution/tasks/{TID}/spec.md（相关段）。plan: docs/harness_execution/tasks/{TID}/plan.md（当前 step）。完成后报告。" })
 ```
 
 tasks_list.json 波次内所有 task status → 进行中。
@@ -108,8 +108,8 @@ tasks_list.json 波次内所有 task status → 进行中。
 **双通道确认**：leader 不单靠 SendMessage 返回——同时检查标记文件 `ls .worktrees/{TID}/.coder_done`。文件存在 + coder 回报完成 → 才派 review。
 
 ```js
-SendMessage({ to: "code-reviewer", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nreview T{a}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
-SendMessage({ to: "test-reviewer", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nreview T{a} tests。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "code-reviewer", message: "cd <project_root>/.worktrees/{TID} && pwd\nreview T{a}。git diff + context.md → 写 review_code.md。首行 verdict: PASS 或 FAIL。" })
+SendMessage({ to: "test-reviewer", message: "cd <project_root>/.worktrees/{TID} && pwd\nreview T{a} tests。读 tests/ + context.md → 写 review_test.md。首行 verdict: PASS 或 FAIL。" })
 ```
 
 tasks_list.json status → 审阅中。leader idle 等返回。
@@ -120,11 +120,9 @@ review 完成判断：review_code.md 和 review_test.md 都存在且首行含 `v
 
 **双通道确认**：同时检查标记文件 `ls .worktrees/{TID}/.reviewer_code_done` 和 `ls .worktrees/{TID}/.reviewer_test_done`。文件都存在 + reviewer 回报 → 才判定 review 完成。
 
-leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HIGH/MEDIUM/LOW 四级，每条问题默认不暂存（当场修），满足暂存条件（跨 scope/需环境变更/架构决策/依赖未来 task）才标【暂存:原因】。
+leader 读首行判定，按协议 review 规则处理（verdict/PASS 门槛/暂存标签/分类体系，详见 `agent_protocol.md`）。
 
-**双 PASS → 收口**（PASS 门槛：所有未标暂存的问题必须修完才 PASS，LOW 不是放过理由）
-
-**任一 FAIL → FAIL 轮**
+**双 PASS → 收口**，**任一 FAIL → FAIL 轮**。
 
 ### 6. 收口
 
@@ -142,7 +140,7 @@ leader 读首行判定（不 grep 正文）。review 分类体系为 CRITICAL/HI
 7. git add -A 把所有产出 stage 好（worktree 只有 closer 产出，不会误伤）
 
 ```js
-Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
+Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt: "cd <project_root>/.worktrees/{TID} && pwd\n收口 T{n} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
 ```
 
 **leader 执行（closer 回报后，全程在 worktree 内操作）**：
@@ -150,7 +148,7 @@ Agent({ name: "closer", subagent_type: "harness-closer", model: "haiku", prompt:
 > closer 的 `git add -A` 操作的是 worktree 的 index。leader 必须切到 worktree 再 commit，回主 repo 后看不到那些 staged 内容。
 
 ```
-main_root=/home/karon/karson_ubuntu/feng_gaokao
+main_root=<project_root>
 
 # 7-10 步全部在 worktree 内执行
 cd $main_root/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2; exit 1; }
@@ -159,7 +157,7 @@ cd $main_root/.worktrees/{TID} && pwd || { echo "[FAIL] 切 worktree 失败" >&2
 # 8. 写 leader_checkpoint.md
 # 9. git 提交（closer 已 stage 所有产出，直接 commit；一个 task 一次 commit）
 # 10. 验收
-bash docs/harness/skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
+bash skills/harness-start/scripts/close_check.sh {TID} || { echo "[FAIL] close_check 不通过" >&2; exit 1; }
 
 # 11. hash 回填（延迟到下一个 task）
 
@@ -169,9 +167,10 @@ cd $main_root && pwd
 
 ### 7. FAIL 轮
 
-- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "cd /home/karon/karson_ubuntu/feng_gaokao/.worktrees/{TID} && pwd\nT{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker，不跑完整 TDD 循环，不扩展范围、不补写新测试），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
+按协议 FAIL 轮规则执行（max 3 轮，下游顺延，详见 `agent_protocol.md`）。
+
+- 第 1-2 轮 FAIL → `SendMessage({ to: "coder-N", message: "cd <project_root>/.worktrees/{TID} && pwd\nT{n} review FAIL。blockers: {...}。读 review_*.md 改代码（只针对 blocker），在 review_*.md 追加修改记录（禁碰 context.md），改完报告。" })`。coder 改完后**立即重派 review**
 - 第 3 轮仍 FAIL → status=阻塞, blocked_by=quality，写 issues/{TID}_quality.md，退出波次
-- **下游顺延**：FAIL task 的下游依赖自动顺延到下一波次
 
 波次内所有 task 收口完成（或阻塞退出）→ 自动回到步骤 1。
 
@@ -210,26 +209,20 @@ Agent({ name: "test-reviewer", subagent_type: "harness-test-reviewer", model: "s
 
 ### 复用与 shutdown
 
-teammate 全程复用，不监控上下文，不主动 shutdown。上下文满了由 Claude Code 自动 compact。
-
-仅在 teammate 完全无响应时 shutdown：SendMessage 含 shutdown_request → 等回复 → jq 清 config 残留 → 重新 spawn。
-
-FAIL 轮唤醒原 coder-N（保留跨轮状态），不换人。
+按协议 Agent Team 生命周期规则（详见 `agent_protocol.md`）。仅在 teammate 完全无响应时 shutdown。
 
 ### compact 后恢复
 
-1. 读 leader_checkpoint.md 的 teammate 列表
-2. 查 team config：isActive=true → 唤醒；isActive=false → 清残留 → spawn
-3. 从 spec/plan/context.md 重建上下文
+按协议 compact 恢复步骤（详见 `agent_protocol.md`）。
 
 ## 相关文件
 
 | 文件 | 用途 |
 |---|---|
-| `docs/harness/agent_protocol.md` | 规则手册 |
-| `docs/harness/harness_decisions.md` | 决策记录 |
-| `docs/harness/findings.md` | 实验发现 |
+| `agent_protocol.md` | 规则手册 |
+| `harness_decisions.md` | 决策记录 |
+| `findings.md` | 实验发现 |
 | `docs/harness_execution/tasks_list.json` | 状态源 |
 | `docs/harness_execution/leader_checkpoint.md` | 断点 |
-| `docs/harness/skills/harness-start/scripts/close_check.sh` | 收口验收脚本 |
-| `docs/harness/skills/debt-to-tasks/SKILL.md` | 技术债偿还 |
+| `skills/harness-start/scripts/close_check.sh` | 收口验收脚本 |
+| `skills/debt-to-tasks/SKILL.md` | 技术债偿还 |
