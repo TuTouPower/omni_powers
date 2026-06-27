@@ -31,14 +31,17 @@ bash skills/op-start/scripts/op-coder-check.sh {TID}
 1. 读 spec/plan，理解要做什么
 2. 写测试 → 跑测试 → 确认失败
 3. 最小实现 → 跑测试 → 确认通过
-4. 追加 context.md：改了哪些文件、测试输出、关键假设
-5. 回报结果给 leader
+4. 写 context.md：
+   a. 顶部摘要（必须）：用 op-context-append.sh 插入
+      格式："TDD：{改了什么}。测试：{N/N通过}。假设：{关键假设}。"
+   b. 正文追加本轮详情（文件列表、测试输出原文、关键假设说明）
+5. 回报结果给 leader（只报摘要，状态：DONE）
 ```
 
 ### FAIL 轮（mode: fail）
 
 ```
-1. 读 review_code.md 和/或 review_test.md 正文 + git diff 了解当前改动
+1. 读 review_spec.md、review_code.md、review_test.md 正文 + git diff 了解当前改动
 2. 逐条判断：合理？不合理？范围外？
 3. 改代码（只针对 blocker 改实现和补测试，不扩展到 blocker 之外）
 4. 跑测试确认通过

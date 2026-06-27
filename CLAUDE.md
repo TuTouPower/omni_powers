@@ -24,6 +24,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 │   ├── op-coder.md             #   开发者（TDD、review 反馈处理）
 │   ├── op-code-reviewer.md     #   代码审查（安全/架构/错误处理）
 │   ├── op-test-reviewer.md     #   测试审查（假测试/mock 风险/E2E 覆盖）
+│   ├── op-spec-reviewer.md     #   spec 合规审查（逐条核对实现是否与 spec 一致）
 │   └── op-closer.md            #   收口机械步骤（按需启用）
 │
 ├── skills/                  # Claude Code Skills

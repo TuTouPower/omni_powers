@@ -62,7 +62,7 @@ cat RULES.md
 | 全部 status=完成 | 循环结束，进入收尾 |
 | 存在 status=收口中 | 从 checkpoint 恢复，跳到收口子步骤 |
 | 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
-| 存在 status=进行中 | 进入循环，先检查 coder 是否完成（读 context.md） |
+| 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/op-start/scripts/op-context-read.sh {TID}`） |
 | 存在可跑 task | 进入循环 |
 | 全部阻塞/跳过 | 输出原因，等外部解除 |
 
@@ -97,12 +97,12 @@ bash skills/op-start/scripts/dag_gen.sh
   │ mode=blocked（第3轮 FAIL 后）──▶ 阻塞，回到 3.1
   │
   ▼
-派 review（3.3，后台 Sub Agent ×2 并行）
+派 review（3.3，后台 Sub Agent ×3 并行）
   │
   ▼
 判定 review 结果（3.4）
   │
-  ├────▶ 双 PASS ──▶ 收口（3.5）──▶ 回到 3.1
+  ├────▶ 三 PASS ──▶ 收口（3.5）──▶ 回到 3.1
   │
   ▼
 任一 FAIL
@@ -137,10 +137,17 @@ bash scripts/op_status.sh {TID} 进行中
 
 ```js
 Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
-  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan。" })
+  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan。完成后用 op-context-append.sh 写摘要到 context.md。" })
 ```
 
-coder 返回后，验证产出（context.md 已更新），进入子步骤 3.3。
+coder 返回后，读摘要验证产出：
+
+```bash
+bash skills/op-start/scripts/op-context-read.sh {TID}
+# 只读顶部摘要，不读完整 context。完整 context 交给 reviewer 细读
+```
+
+进入子步骤 3.3。
 
 ### 子步骤 3.3：派 review
 
@@ -159,6 +166,10 @@ bash skills/op-start/scripts/op-read-verdict.sh {TID}
 #### 首轮（round=0）
 
 ```js
+Agent({ name: "op-spec-reviewer", subagent_type: "op-spec-reviewer", model: "sonnet",
+  background: true,
+  prompt: "cd <work_dir> && pwd\n首轮 review {TID} spec。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md + context.md\n代码变更：git diff\n输出：docs/omni_powers/op_execution/tasks/{TID}/review_spec.md\n逐条核对实现是否与 spec 一致。文件最后一行必须写 verdict: PASS 或 FAIL。" })
+
 Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet",
   background: true,
   prompt: "cd <work_dir> && pwd\n首轮 review {TID}。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md + context.md\n代码变更：git diff\n输出：docs/omni_powers/op_execution/tasks/{TID}/review_code.md\n文件最后一行必须写 verdict: PASS 或 FAIL。" })
@@ -171,6 +182,10 @@ Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "son
 #### FAIL 轮（round≥1）
 
 ```js
+Agent({ name: "op-spec-reviewer", subagent_type: "op-spec-reviewer", model: "sonnet",
+  background: true,
+  prompt: "cd <work_dir> && pwd\n重审 {TID} spec。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md\n上次审查：docs/omni_powers/op_execution/tasks/{TID}/review_spec.md\n代码变更：git diff\n验证修复后，在 review_spec.md 末尾追加新 verdict 行（不覆盖已有内容）。" })
+
 Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet",
   background: true,
   prompt: "cd <work_dir> && pwd\n重审 {TID}。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md\n上次审查：docs/omni_powers/op_execution/tasks/{TID}/review_code.md\n代码变更：git diff\n验证修复后，在 review_code.md 末尾追加新 verdict 行（不覆盖已有内容）。" })
@@ -182,25 +197,25 @@ Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "son
 
 **任一 reviewer 出错**：只重试出错的那个（max 3），成功的等。重试仍失败 → 该 review 文件手动写 `verdict: FAIL`。
 
-两个都返回后进入子步骤 3.4。
+三个都返回后进入子步骤 3.4。
 
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
 bash skills/op-start/scripts/op-read-verdict.sh {TID}
-# 输出 round + code_review + test_review + result
-# exit 0 = 双 PASS, exit 1 = 任一 FAIL
+# 输出 round + spec_review + code_review + test_review + result
+# exit 0 = 三 PASS, exit 1 = 任一 FAIL
 ```
 
 | 结果 | 轮次 | 动作 |
 |---|---|---|
-| 双 PASS | 任意 | 收口（子步骤 3.5） |
+| 三 PASS | 任意 | 收口（子步骤 3.5） |
 | 任一 FAIL | 第1/2轮 | 回到子步骤 3.2（coder 进入 fail 模式修复） |
 | 任一 FAIL | 第3轮 | `bash scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，`bash scripts/op_status.sh --batch "{下游TID列表}" 跳过`，回到子步骤 3.1 |
 
 ### 子步骤 3.5：收口
 
-双 PASS 后派 op-closer（前台 Sub Agent）：
+三 PASS 后派 op-closer（前台 Sub Agent）：
 
 ```bash
 bash scripts/op_status.sh {TID} 收口中
@@ -271,7 +286,9 @@ cd <原项目根目录>
 | `template/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
 | `skills/op-start/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |
-| `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 |
+| `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 + 轮次判断 |
+| `skills/op-start/scripts/op-context-read.sh` | 读 context.md 摘要（不进完整上下文） |
+| `skills/op-start/scripts/op-context-append.sh` | coder 写摘要到 context.md 顶部 |
 | `skills/op-start/scripts/close_check.sh` | 收口验收 |
 | `skills/op-start/scripts/op-checkpoint.sh` | checkpoint 写入 |
 | `skills/op-start/scripts/dag_gen.sh` | DAG 生成 |

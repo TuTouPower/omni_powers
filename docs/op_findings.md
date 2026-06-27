@@ -83,17 +83,36 @@
 
 **结论**：spawn 时必须显式传 `model` 参数。agent 定义文件里的 model 字段不被 spawn 读取。
 
-## 实验 8：上下文窗口大小
+## 实验 9：superpowers subagent-driven-development 研究
 
-**方法**：检查 teammate 报告的上下文窗口。
+**日期**：2026-06-27
+
+**方法**：逐文件研读 superpowers `subagent-driven-development` skill 的 SKILL.md、implementer-prompt.md、task-reviewer-prompt.md 及 3 个脚本。
 
 **结果**：
-- `default_haiku`：200K tokens
-- `default_sonnet`（op-code-reviewer）：1M tokens
-- `default_sonnet`（op-test-reviewer）：200K tokens
-- `[1m]` 后缀是模型别名的一部分，不是窗口大小
 
-**结论**：窗口大小取决于实际模型 variant。不能让 agent 猜，需从系统提示解析。
+| 设计点 | superpowers 做法 | omni_powers 现状 |
+|---|---|---|
+| 文件交接 | diff不进controller上下文，`review-package` 打包成文件传路径 | prompt里传文件路径，controller不读diff ✅ |
+| 进度ledger | `.superpowers/sdd/progress.md`，compact后从ledger+git log恢复 | `leader_checkpoint.md` 起类似作用 |
+| implementer自审 | coder完成前自审（completeness/quality/discipline/testing），写report | coder追加context.md，无结构化自审清单 |
+| review维度 | 二维合一：spec合规（缺/多/错）+ 代码质量 | 二维分开：code_review + test_review（并行） |
+| task-brief提取 | 脚本从plan提取单task文本，implementer只读自己的brief | coder直接读spec+plan全文 |
+| fixer独立 | 独立fix子agent改完后追加report文件，reviewer重审 | coder自己修复，在review_*.md追加Fix-N |
+| review-package | `BASE..HEAD` commit列表+stat+完整diff→单个文件 | reviewer直接跑git diff |
 
-**解析方法**：teammate 系统提示含 `You are powered by the model xxx`。leader SendMessage 问 teammate "你的系统提示里 powered by the model 后面是什么？原样回复"，拿到模型别名后查 settings.json 的 `ANTHROPIC_DEFAULT_HAIKU_MODEL` / `ANTHROPIC_DEFAULT_SONNET_MODEL` 配置推导窗口大小。
+**可借鉴的点**：
+
+1. **coder自审清单** — superpowers的implementer要求完成前自审4维度（completeness/quality/discipline/testing），比现在"追加context.md"更结构化
+2. **task-brief隔离** — 从plan提取单task文本，避免coder读全局plan后过度设计。omni_powers spec/plan通常短，收益有限
+3. **review-package** — 把diff打包成文件而不是让reviewer跑git命令，更可控（但当前也用git diff，无大问题）
+4. **文件交接** — omni_powers已经在做（review文件→脚本读verdict），这个方向是对的
+5. **进度ledger** — checkpoint已经起到恢复作用。但superpowers的ledger设计更简单：一行一条，compact后`cat .superpowers/sdd/progress.md`即知进度
+
+**不照搬的理由**：
+
+- superpowers review是串行（implementer→reviewer→fixer→re-review），omni_powers是code+test并行review后统一回coder修复。并行更快
+- superpowers需要每task写report文件→review→fix→re-review循环，交互次数多。omni_powers一步并行review后按轮次退回，交互少
+- superpowers的reviewer不信任implementer报告（"Do Not Trust the Report"），需要独立验证。omni_powers coder的context.md是给reviewer提供上下文，不是替代review
+- superpowers假设每个task有明确的文件交接（brief/report/diff三个文件），omni_powers所有信息在task目录下，结构更紧凑
 
