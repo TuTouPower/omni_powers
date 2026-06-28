@@ -64,7 +64,8 @@ cat RULES.md
 | 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
 | 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/op-start/scripts/op-context-read.sh {TID}`） |
 | 存在可跑 task | 进入循环 |
-| 全部阻塞/跳过 | 输出原因，等外部解除 |
+| 存在 status=待规划 | 输出提醒，提示用户通过 `/op-task` 细化这些 task |
+| 全部阻塞/跳过/挂起 | 输出原因，等外部解除或用户修改状态 |
 
 ---
 
@@ -112,7 +113,7 @@ bash skills/op-start/scripts/dag_gen.sh
 
 ### 子步骤 3.1：选 task
 
-选取条件（4 条全满足，取 ID 最小）：status=待开始、depends_on 全部完成、不在阻塞范围、ID 最小。
+选取条件（4 条全满足，取 ID 最小）：status=待开始、depends_on 全部完成（且依赖的不能是 `待规划` 或 `挂起` 等未就绪节点）、不在阻塞范围、ID 最小。
 
 无符合条件的 task → 循环结束，进入收尾。
 
@@ -269,7 +270,8 @@ cd <原项目根目录>
 **主分支/当前分支模式**：无额外操作。
 
 - **全部完成**：检查 tech_debt.md，有未偿债项则提示 `/op-debt2tasks`
-- **全部阻塞**：输出原因，等外部解除
+- **有待规划项**：输出提示，建议用户使用 `/op-task` 或自行编辑补全 spec/plan
+- **全部阻塞/挂起**：输出原因，等外部解除或用户明确恢复
 
 ## compact 恢复
 

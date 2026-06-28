@@ -22,16 +22,17 @@
 ## 状态机
 
 ```
-待开始 → 进行中 → 审阅中 → 收口中 → 完成
-                ↑        ↓ (FAIL，max 3 轮)
-                └────────┘
-                第 3 轮仍 FAIL → 阻塞(blocked_by=quality)
+待规划 → 待开始 → 进行中 → 审阅中 → 收口中 → 完成
+  ↓             ↑        ↓ (FAIL，max 3 轮)
+挂起 ───────────┘        └────────┘
+                        第 3 轮仍 FAIL → 阻塞(blocked_by=quality)
 ```
 
 tasks_list.json status 值：
 
 | status     | 含义                                       | blocked_by                                   |
 | ---------- | ------------------------------------------ | -------------------------------------------- |
+| `待规划` | 刚从需求解析出 task，只有一句话，没有 spec/plan | null                                         |
 | `待开始` | spec/plan 就位，未开发                     | null                                         |
 | `进行中` | op-coder 开发或修复轮中                    | null                                         |
 | `审阅中` | review 进行中                              | null                                         |
@@ -39,11 +40,13 @@ tasks_list.json status 值：
 | `完成`   | op-closer 返回后 commit + close_check 通过 | null                                         |
 | `阻塞`   | 3 轮 FAIL 或环境阻塞                       | `resource`/`quality`/`spawn`（必有值） |
 | `跳过`   | 因下游阻塞顺延，等待阻塞解除               | null                                         |
+| `挂起`   | 用户明确指示暂时不做，需用户同意才能做     | null                                         |
 
 **英文/中文映射**（compact 恢复、跨文档引用时对照）：
 
 | 英文（状态机/日志） | 中文（tasks_list.json） |
 | ------------------- | ----------------------- |
+| pending_plan        | 待规划                  |
 | pending             | 待开始                  |
 | coding              | 进行中                  |
 | reviewing           | 审阅中                  |
@@ -51,6 +54,7 @@ tasks_list.json status 值：
 | done                | 完成                    |
 | blocked             | 阻塞                    |
 | skipped             | 跳过                    |
+| suspended           | 挂起                    |
 
 状态修改：`bash scripts/op_status.sh <TID> <status> [blocked_by]`。
 
@@ -69,7 +73,9 @@ tasks_list.json status 值：
 - 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
 - 所有可跑 task 跑完后仍有阻塞，leader 才停下报告阻塞项、缺什么、需用户提供什么。
 
-### 回滚
+### 挂起项处理
+
+- `挂起`：用户主动推迟。不自动流转，除非用户要求恢复。恢复后根据是否已生成 spec/plan，回到 `待开始` 或 `待规划`。
 
 不用 reset（会丢历史）。
 
@@ -169,9 +175,11 @@ compact 后读本文件 + 用 jq 查询 `tasks_list.json` + 读 `leader_checkpoi
 
 ```bash
 bash scripts/op_jq.sh pending      # 查所有待开始 task
+bash scripts/op_jq.sh pending_plan # 查所有待规划 task
 bash scripts/op_jq.sh deps {TID}   # 查某 task 依赖
 bash scripts/op_jq.sh blocked      # 查阻塞
 bash scripts/op_jq.sh skipped      # 查跳过
+bash scripts/op_jq.sh suspended    # 查挂起
 bash scripts/op_jq.sh downstream {TID}  # 查下游
 bash scripts/op_jq.sh all          # 全部概览
 ```

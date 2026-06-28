@@ -4,7 +4,7 @@
 #   op-status <TID> <status> [blocked_by]         单 task
 #   op-status --batch <TID1,TID2,...> <status>     批量 task（同状态）
 #
-# status 有效值: 待开始 进行中 审阅中 收口中 完成 阻塞 跳过
+# status 有效值: 待规划 待开始 进行中 审阅中 收口中 完成 阻塞 跳过 挂起
 # blocked_by 仅在 status=阻塞 时填写 (key/domain/quality/spawn)，其余留空
 set -euo pipefail
 
@@ -35,8 +35,8 @@ fi
 # ── 校验 status ──
 
 case "$status" in
-    待开始|进行中|审阅中|收口中|完成|阻塞|跳过) ;;
-    *) die "无效 status: $status（有效值: 待开始 进行中 审阅中 收口中 完成 阻塞 跳过）" ;;
+    待规划|待开始|进行中|审阅中|收口中|完成|阻塞|跳过|挂起) ;;
+    *) die "无效 status: $status（有效值: 待规划 待开始 进行中 审阅中 收口中 完成 阻塞 跳过 挂起）" ;;
 esac
 
 # blocked_by 映射到 JSON null / string

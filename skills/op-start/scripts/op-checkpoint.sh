@@ -24,8 +24,10 @@ status_json=$(jq -r '[.tasks[] | {id, status, blocked_by}]' "$TASKS_LIST" 2>/dev
 
 done_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "完成") | .id] | join(", ")' 2>/dev/null || echo "")
 pending_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "待开始") | .id] | join(", ")' 2>/dev/null || echo "")
+pending_plan_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "待规划") | .id] | join(", ")' 2>/dev/null || echo "")
 blocked=$(echo "$status_json" | jq -r '[.[] | select(.status == "阻塞") | "\(.id)(\(.blocked_by))"] | join(", ")' 2>/dev/null || echo "")
 skipped_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "跳过") | .id] | join(", ")' 2>/dev/null || echo "")
+suspended_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "挂起") | .id] | join(", ")' 2>/dev/null || echo "")
 
 {
     echo "## tasks_list 状态"
@@ -33,8 +35,10 @@ skipped_ids=$(echo "$status_json" | jq -r '[.[] | select(.status == "跳过") | 
     echo "<!-- AUTO -->"
     echo "- 完成：${done_ids:-无}"
     echo "- 待开始：${pending_ids:-无}"
+    echo "- 待规划：${pending_plan_ids:-无}"
     echo "- 阻塞：${blocked:-无}"
     echo "- 跳过：${skipped_ids:-无}"
+    echo "- 挂起：${suspended_ids:-无}"
     echo ""
 } > "/tmp/op_checkpoint_status_$$.md"
 

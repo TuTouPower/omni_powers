@@ -9,4 +9,4 @@
 
 上面三个项目的介绍在这里，/home/karon/karson_ubuntu/user_config_backup/overview
 
-划分 task 要合理 避免 太大 
+划分 task 要合理 避免 一个 task 太大 

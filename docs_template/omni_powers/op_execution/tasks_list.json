@@ -34,7 +34,7 @@
       "id": "T04",
       "title": "{title}",
       "depends_on": ["T01"],
-      "status": "待开始",
+      "status": "待规划",
       "verification": "{验收标准}",
       "blocked_by": null,
       "created_at": "2026-01-01T00:00:00+08:00",
@@ -46,7 +46,19 @@
       "depends_on": ["T02"],
       "status": "阻塞",
       "verification": "{验收标准}",
-      "blocked_by": "key"
+      "blocked_by": "key",
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
+    },
+    {
+      "id": "T06",
+      "title": "{title}",
+      "depends_on": null,
+      "status": "挂起",
+      "verification": "{验收标准}",
+      "blocked_by": null,
+      "created_at": "2026-01-01T00:00:00+08:00",
+      "updated_at": "2026-01-01T00:00:00+08:00"
     }
   ],
   "blockers": [

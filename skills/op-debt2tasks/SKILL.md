@@ -120,7 +120,7 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
 **verification**：从债项描述推导验收标准，一句话。
 
-**status**：统一填 `待开始`。
+**status**：统一填 `待规划`。如果有明确的细节可以直接调用生成并改为 `待开始`。
 
 ### step 5：更新 tasks_list.json
 
@@ -139,11 +139,13 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 
 ### step 6：生成 spec + plan
 
+3. 用户确认后，将新 task 追加到 tasks_list.json，初始状态设为 `待规划`。如果有明确的细节可以直接调用生成并改为 `待开始`。
+
 <HARD-GATE>
-spec.md 和 plan.md 的内容必须通过 Skill 工具调用 op-generate-spec 和 op-generate-plan 生成。禁止手动写。
+如果决定要生成详细的 spec 和 plan，spec.md 和 plan.md 的内容必须通过 Skill 工具调用 op-generate-spec 和 op-generate-plan 生成。禁止手动写。
 </HARD-GATE>
 
-对每个偿还 task：
+对每个需要详细规划的偿还 task：
 
 1. 建目录拷模板：
 ```bash
@@ -154,9 +156,9 @@ bash scripts/op_new_task.sh {TID}
 
 3. 调 op-generate-plan 生成 plan.md
 
-**快速模式（默认）**：每个偿还 task 用子代理并发调用 op-generate-spec（快速模式）→ op-generate-plan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。
+**快速模式（默认）**：每个需要详细规划的偿还 task 用子代理并发调用 op-generate-spec（快速模式）→ op-generate-plan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。生成完成后将状态从 `待规划` 改为 `待开始`。
 
-**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("op-generate-spec")`（深度模式）→ `Skill("op-generate-plan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。
+**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("op-generate-spec")`（深度模式）→ `Skill("op-generate-plan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。生成完成后将状态从 `待规划` 改为 `待开始`。
 
 ### step 7：更新 tech_debt.md
 

@@ -18,7 +18,7 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 │   ├── op_decisions.md      #   决策记录
 │   ├── op_findings.md       #   实验发现
 │   ├── experience.md        #   踩坑笔记
-│   └── omni_powers_install.md # 通用化方案
+│   └── op_install.md          # 通用化方案
 │
 ├── agents/                  # Agent 角色提示词
 │   ├── op-coder.md             #   开发者（TDD、review 反馈处理）
@@ -52,7 +52,7 @@ cd omni_powers
 # 重启 Claude Code 生效
 ```
 
-> 通用化方案详见 `docs/omni_powers_install.md`
+> 通用化方案详见 `docs/op_install.md`
 
 ## 依赖
 
