@@ -42,20 +42,6 @@ tasks_list.json status 值：
 | `跳过`   | 因下游阻塞顺延，等待阻塞解除               | null                                         |
 | `挂起`   | 用户明确指示暂时不做，需用户同意才能做     | null                                         |
 
-**英文/中文映射**（compact 恢复、跨文档引用时对照）：
-
-| 英文（状态机/日志） | 中文（tasks_list.json） |
-| ------------------- | ----------------------- |
-| pending_plan        | 待规划                  |
-| pending             | 待开始                  |
-| coding              | 进行中                  |
-| reviewing           | 审阅中                  |
-| closing             | 收口中                  |
-| done                | 完成                    |
-| blocked             | 阻塞                    |
-| skipped             | 跳过                    |
-| suspended           | 挂起                    |
-
 状态修改：`bash scripts/op_status.sh <TID> <status> [blocked_by]`。
 
 ### 阻塞项处理
