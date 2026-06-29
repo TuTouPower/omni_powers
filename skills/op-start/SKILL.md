@@ -64,7 +64,7 @@ cat RULES.md
 | 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
 | 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/op-start/scripts/op-context-read.sh {TID}`） |
 | 存在可跑 task | 进入循环 |
-| 存在 status=待规划 | 输出提醒，提示用户通过 `/op-task` 细化这些 task |
+| 存在 status=待规划 | 输出提醒：多个待规划 task 可用 `/op-task` 快速生成 spec/plan；按当前能力逐个或批量完成规划文档 |
 | 全部阻塞/跳过/挂起 | 输出原因，等外部解除或用户修改状态 |
 
 ---
@@ -75,6 +75,12 @@ cat RULES.md
 bash skills/op-start/scripts/dag_gen.sh
 # exit 非 0 → 禁止继续，修复后重跑
 ```
+
+### 规划并行（阶段1）
+
+发现多个 `待规划` task 时，leader 可先批量派生 spec/plan 生成：只写 `docs/omni_powers/op_execution/tasks/{TID}/` 下的规划文档，不改代码、不进入 coder。
+
+规划完成后，task 回到正常 `/op-start` 流程；coder 执行仍保持单 task 串行，收口仍单 task。B 阶段2（代码执行并行）暂不启用。
 
 ---
 
