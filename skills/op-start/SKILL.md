@@ -216,27 +216,28 @@ bash skills/op-start/scripts/op-read-verdict.sh {TID}
 
 ### 子步骤 3.5：收口
 
-三 PASS 后派 op-closer（前台 Sub Agent）：
+三 PASS 后先跑收口前机械脚本：
 
 ```bash
-bash scripts/op_status.sh {TID} 收口中
+bash scripts/op_close_pre.sh {TID}
 ```
+
+再派 op-closer（前台 Sub Agent）做判断性文档整理：
 
 ```js
 Agent({ name: "op-closer", subagent_type: "op-closer", model: "haiku",
-  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。暂存项：[{列表}。]决策：[{内容}。]specs 归属：{feature}。" })
+  prompt: "cd <work_dir> && pwd\n收口判断 {TID} \"{title}\"。整理 blueprint/tech_debt/decisions。specs 归属：{feature}。暂存项：[{列表，或无}]。决策：[{内容，或无}]。" })
 ```
 
-op-closer 做：
+op-closer 只整理 `docs/omni_powers/op_blueprint/`、`docs/omni_powers/op_execution/tech_debt.md`、`docs/omni_powers/op_record/decisions.md`。不碰 git、不改 status、不归档、不盖戳、不 stage。
 
-1. spec 盖戳（"历史快照，以 docs/omni_powers/op_blueprint/specs/ 为准"）
-2. git mv `docs/omni_powers/op_execution/tasks/{TID}` → `docs/omni_powers/op_record/tasks/{TID}`
-3. `bash scripts/op_status.sh {TID} 完成`
-4. 整理 `docs/omni_powers/op_blueprint/` 下所有受影响文档（specs/{feature}.md、prd.md、architecture.md 等）
-5. 追加 `docs/omni_powers/op_record/progress.md`、`docs/omni_powers/op_record/decisions.md`（有决策时）、`docs/omni_powers/op_execution/tech_debt.md`
-6. `git add docs/omni_powers/op_execution/ docs/omni_powers/op_record/ docs/omni_powers/op_blueprint/`
+op-closer 返回 closer_output 后，leader 跑收口后机械脚本：
 
-返回 closer_output 完整内容。leader 审查：
+```bash
+bash scripts/op_close_post.sh {TID} {feature}
+```
+
+leader 审查：
 
 ```bash
 git status --short  # 确认 stage 内容正确
@@ -287,6 +288,8 @@ cd <原项目根目录>
 | `RULES.md` | 规则手册 + 操作细则 |
 | `template/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
+| `scripts/op_close_pre.sh` | 收口前机械步骤：盖戳 + status=收口中 |
+| `scripts/op_close_post.sh` | 收口后机械步骤：review 校验 + 归档 + progress + status=完成 + stage |
 | `skills/op-start/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |
 | `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 + 轮次判断 |
 | `skills/op-start/scripts/op-context-read.sh` | 读 context.md 摘要（不进完整上下文） |

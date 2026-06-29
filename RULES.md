@@ -15,7 +15,7 @@
 | op-code-reviewer | Sub Agent | sonnet | 后台并行 | 审 git diff + 安全/架构/错误处理，写 review_code.md                                             |
 | op-test-reviewer | Sub Agent | sonnet | 后台并行 | 审测试是否真能发现问题，写 review_test.md                                                       |
 | op-spec-reviewer | Sub Agent | sonnet | 后台并行 | 逐条核对实现是否与 spec/plan 一致，写 review_spec.md                                             |
-| op-closer        | Sub Agent | haiku  | 前台     | 收口全流程：spec 盖戳 + git mv 归档 + 更新 tasks_list.json + 整理 op_blueprint/ 下所有相关文档 + tech_debt + progress/decisions + git add -A + commit |
+| op-closer        | Sub Agent | haiku  | 前台     | 收口判断层：整理 op_blueprint/、tech_debt、decisions；不碰 git/status/归档/盖戳/stage |
 
 全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。
 
@@ -94,20 +94,24 @@ docs/omni_powers/op_execution/tasks/{TID}/
 
 | 路径                                                   | 谁写               | 何时                                         |
 | ------------------------------------------------------ | ------------------ | -------------------------------------------- |
-| `docs/omni_powers/op_execution/tasks_list.json`      | op-closer | 状态流转                                     |
-| `docs/omni_powers/op_blueprint/specs/{feature}.md`   | op-closer | 每 task 闭环整理（当前生效规格，按功能聚合） |
-| `docs/omni_powers/op_record/progress.md`             | op-closer | 闭环后追加                                   |
-| `docs/omni_powers/op_record/decisions.md`            | op-closer | 有架构决策才追加                             |
-| `docs/omni_powers/op_execution/tech_debt.md`         | op-closer | 闭环后追加                                   |
-| `docs/omni_powers/op_execution/leader_checkpoint.md` | leader    | 每 task 闭环后写                             |
-| `docs/omni_powers/op_execution/dag.md`               | leader    | 每次 /op-start 从 depends_on 重算生成        |
-| `docs/omni_powers/op_blueprint/` 下其他文档          | op-closer | 按需更新                                     |
+| `docs/omni_powers/op_execution/tasks_list.json`      | 机械脚本/leader | 状态流转                                     |
+| `docs/omni_powers/op_blueprint/specs/{feature}.md`   | op-closer       | 每 task 闭环整理（当前生效规格，按功能聚合） |
+| `docs/omni_powers/op_record/progress.md`             | 机械脚本        | 闭环后追加                                   |
+| `docs/omni_powers/op_record/decisions.md`            | op-closer       | 有架构决策才追加                             |
+| `docs/omni_powers/op_execution/tech_debt.md`         | op-closer       | 闭环后追加                                   |
+| `docs/omni_powers/op_execution/leader_checkpoint.md` | leader          | 每 task 闭环后写                             |
+| `docs/omni_powers/op_execution/dag.md`               | leader          | 每次 /op-start 从 depends_on 重算生成        |
+| `docs/omni_powers/op_blueprint/` 下其他文档          | op-closer       | 按需更新                                     |
 
 ### 闭环整理
 
-task 闭环时，op-closer 检查 `docs/omni_powers/op_blueprint/` 下所有相关文档（specs/{feature}.md、prd.md、architecture.md、domain.md、conventions.md 等），把本 task 当前生效的接口、数据模型、约束、行为整理进去。只留"现在是什么"，不留方案比较/被否方案。
+task 闭环分三段：
 
-归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 `op_blueprint/` 下的文件。
+1. `scripts/op_close_pre.sh {TID}`：负责 spec 盖戳和 `status=收口中`。
+2. op-closer：只做判断性文档整理，检查 `docs/omni_powers/op_blueprint/` 下所有相关文档（specs/{feature}.md、prd.md、architecture.md、domain.md、conventions.md 等），把本 task 当前生效的接口、数据模型、约束、行为整理进去；按需整理 `tech_debt.md`、`decisions.md`。只留"现在是什么"，不留方案比较/被否方案。
+3. `scripts/op_close_post.sh {TID} {feature}`：确认三份 review 最后 verdict 均 PASS、确认 spec 已盖戳，然后 git mv 归档、追加 progress、`status=完成`、git add 收口文档。
+
+mv 在 op-closer 之后执行。归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 `op_blueprint/` 下的文件。
 
 **新建文件规则**：一律先拷 `docs_template/omni_powers` 下对应模板再填内容。无对应模板才自建。
 
