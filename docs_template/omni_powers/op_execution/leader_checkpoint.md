@@ -1,7 +1,7 @@
 # Leader Checkpoint
 
 > 每 task 闭环后由 `op-checkpoint.sh {TID}` 自动生成机械部分，leader 补填"关键上下文"段。
-> 写完应跑 `bash skills/op-start/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
+> 写完应跑 `bash skills/opstart/scripts/close_check.sh {TID}` 验收，非 0 不许进下一个 task。
 
 ## 已完成 task
 

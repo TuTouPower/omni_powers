@@ -72,11 +72,11 @@
 
 **理由**：spawn 时 Agent 工具不读 frontmatter 的 model，必须显式传 `model` 参数。保留 model 字段会误导读者以为它会生效。
 
-## D9：保留 op-debt2tasks HARD-GATE（2026-06-25）
+## D9：保留 opdebt HARD-GATE（2026-06-25）
 
-**决策**：不改 op-debt2tasks SKILL.md 中的 `<HARD-GATE>` 标签。
+**决策**：不改 opdebt SKILL.md 中的 `<HARD-GATE>` 标签。
 
-**理由**：op-generate-spec 和 op-generate-plan 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
+**理由**：opspec 和 opplan 已注册到本项目的 `.claude/` 目录，Skill 工具可以调用。手动写 spec/plan 容易格式不一致、跳过自审流程，HARD-GATE 强制走标准化流程。
 
 ## D10：标记文件为完成判定唯一真相源，去双通道（2026-06-26）— ⚠️ 已被 D15 取代
 
@@ -103,12 +103,12 @@
 **变更**：删除 task-splitter subagent，删除所有 task 拆分逻辑。
 
 **理由**：
-- task 拆分是运行时动态行为，无法在 /op-start 的循环中可靠执行——拆后 tasks_list.json 变化，循环已跑过半
+- task 拆分是运行时动态行为，无法在 /opstart 的循环中可靠执行——拆后 tasks_list.json 变化，循环已跑过半
 - task-splitter 要读原 spec/plan 全文、切片、重写——中间内容大量挤占 leader 上下文
-- 实际使用中需要拆分的场景极少。真需要拆时，用户直接 /op-task 拆好了再 /op-start
+- 实际使用中需要拆分的场景极少。真需要拆时，用户直接 /optask 拆好了再 /opstart
 
 **影响**：
-- 删除 `agents/op-task-splitter.md`
+- 删除 `agents/optask-splitter.md`
 - RULES.md / SKILL.md / CLAUDE.md 中所有相关段落删除
 
 ## D14：放弃 op-coder 并发（2026-06-26）
@@ -161,7 +161,7 @@
 5. **Superpowers 已验证**——社区最大 Claude Code 插件全线使用 Sub Agent，证明了该模式在小规模多 Agent 协作中的可靠性。
 
 **影响**：
-- 删除 `skills/op-start/scripts/op-scan-signals.sh`
+- 删除 `skills/opstart/scripts/op-scan-signals.sh`
 - agents/*.md 删 SendMessage 工具和标记文件相关指令
 - RULES.md 删除 Agent Team 管理节、标记文件节、idle 兜底、compact teammate 恢复
 - SKILL.md 删除环境变量校验、Team 创建、标记扫描、SendMessage 派活
@@ -178,7 +178,7 @@
 3. leader、coder、reviewer、closer 全在同一目录工作
 4. 一个 task 一个 commit（不是两个）
 5. 收口在 session 结束时统一：merge + 删 worktree
-6. `/op-start` 启动时问用户选 worktree 模式还是 master 模式
+6. `/opstart` 启动时问用户选 worktree 模式还是 master 模式
 
 **理由**：
 - 串行执行下 per-task worktree 的隔离收益为零——没有并发竞争

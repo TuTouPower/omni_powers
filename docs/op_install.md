@@ -2,7 +2,7 @@
 
 ## 需求
 
-用户在任意项目中调用 `/op-start` 等 skill 时，需要能：
+用户在任意项目中调用 `/opstart` 等 skill 时，需要能：
 
 1. **读到通用文档**：RULES.md 等协议文档，compact 恢复必读
 2. **执行脚本**：skill 自带脚本 + 多个 skill 共用的通用脚本
@@ -30,7 +30,7 @@ Claude Code 插件系统 + SessionStart hook + 全局配置文件。
 
 SessionStart hook 每次会话都触发，**只注入环境变量配置（约 10 行）**，不注入 RULES.md。RULES.md 约 200 行，每次会话都灌入浪费上下文——用户开个会话改 README 不需要知道 omni_powers 协议。
 
-RULES.md 在 op-start skill 被调用时按需读取（`cat $CLAUDE_PLUGIN_ROOT/RULES.md`），多一次 Bash 调用换每会话省 200 行。compact 恢复时必须执行 /op-start，自然读到 RULES.md。
+RULES.md 在 opstart skill 被调用时按需读取（`cat $CLAUDE_PLUGIN_ROOT/RULES.md`），多一次 Bash 调用换每会话省 200 行。compact 恢复时必须执行 /opstart，自然读到 RULES.md。
 
 ### 为什么不用 CLI 二进制
 
@@ -56,7 +56,7 @@ OpenSpec 可以用 CLI 因为它的 skill 只做规范管理一件事。omni_pow
         ▼
   Skill / Agent 运行时
         │
-        ├─ 读协议:   cat $CLAUDE_PLUGIN_ROOT/RULES.md（op-start 调用时）
+        ├─ 读协议:   cat $CLAUDE_PLUGIN_ROOT/RULES.md（opstart 调用时）
         ├─ 脚本路径: bash $CLAUDE_PLUGIN_ROOT/scripts/op_status.sh
         ├─ 查询:     bash $CLAUDE_PLUGIN_ROOT/scripts/op_jq.sh
         ├─ 文档读取: cat $CLAUDE_PLUGIN_ROOT/RULES.md
@@ -76,26 +76,26 @@ omni_powers/
 │   └── session-start.sh         # 读配置 → 注入 env（约 10 行，不注入 RULES.md）
 │
 ├── skills/                      # 平台自动发现，各 skill 互不感知
-│   ├── op-start/
+│   ├── opstart/
 │   │   ├── SKILL.md
 │   │   └── scripts/             # 本 skill 专属脚本
 │   │       ├── dag_gen.sh
 │   │       ├── close_check.sh
 │   │       ├── op-coder-check.sh
 │   │       └── op-read-verdict.sh
-│   ├── op-task/SKILL.md
-│   ├── op-generate-spec/
+│   ├── optask/SKILL.md
+│   ├── opspec/
 │   │   ├── SKILL.md
 │   │   └── scripts/             # 本 skill 专属脚本
 │   │       ├── start-server.sh
 │   │       ├── stop-server.sh
 │   │       └── ...
-│   ├── op-generate-plan/SKILL.md
-│   └── op-debt2tasks/SKILL.md
+│   ├── opplan/SKILL.md
+│   └── opdebt/SKILL.md
 │
 ├── scripts/                     # 多个 skill 共用的通用脚本
-│   ├── op_status.sh             # 状态流转（op-start/op-task/op-debt2tasks 都用）
-│   ├── op_new_task.sh           # 工作区创建（op-task/op-start 都用）
+│   ├── op_status.sh             # 状态流转（opstart/optask/opdebt 都用）
+│   ├── op_new_task.sh           # 工作区创建（optask/opstart 都用）
 │   └── op_jq.sh                 # tasks_list.json 查询
 │
 ├── agents/                      # symlink 到 ~/.claude/agents/
@@ -108,7 +108,7 @@ omni_powers/
 │   ├── op_execution/
 │   └── op_blueprint/
 │
-├── RULES.md                     # 核心协议 + 操作细则（op-start 调用时 cat 读取）
+├── RULES.md                     # 核心协议 + 操作细则（opstart 调用时 cat 读取）
 └── CLAUDE.md
 ```
 
@@ -116,14 +116,14 @@ omni_powers/
 
 | 归属 | 路径 | 调用方 |
 |---|---|---|
-| op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/dag_gen.sh` | op-start |
-| op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/close_check.sh` | op-start |
-| op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-coder-check.sh` | op-start |
-| op-start 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-read-verdict.sh` | op-start |
-| op-generate-spec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/start-server.sh` | op-generate-spec |
-| op-generate-spec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/stop-server.sh` | op-generate-spec |
-| **共用** | `$CLAUDE_PLUGIN_ROOT/scripts/op_status.sh` | op-start / op-task / op-debt2tasks |
-| **共用** | `$CLAUDE_PLUGIN_ROOT/scripts/op_new_task.sh` | op-task / op-start |
+| opstart 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/dag_gen.sh` | opstart |
+| opstart 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/close_check.sh` | opstart |
+| opstart 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/op-coder-check.sh` | opstart |
+| opstart 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/op-read-verdict.sh` | opstart |
+| opspec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opspec/scripts/start-server.sh` | opspec |
+| opspec 专属 | `$CLAUDE_PLUGIN_ROOT/skills/opspec/scripts/stop-server.sh` | opspec |
+| **共用** | `$CLAUDE_PLUGIN_ROOT/scripts/op_status.sh` | opstart / optask / opdebt |
+| **共用** | `$CLAUDE_PLUGIN_ROOT/scripts/op_new_task.sh` | optask / opstart |
 | **共用** | `$CLAUDE_PLUGIN_ROOT/scripts/op_jq.sh` | 所有 skill（tasks_list.json 查询） |
 
 > 原则：一个脚本只被一个 skill 用 → 放 `skills/<name>/scripts/`。被多个 skill 用 → 放 `scripts/`。
@@ -247,11 +247,11 @@ bash $CLAUDE_PLUGIN_ROOT/scripts/op_new_task.sh {TID}
 ### Skill 专属脚本（`skills/<name>/scripts/`）
 
 ```bash
-bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/dag_gen.sh
-bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-coder-check.sh {TID}
-bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/op-read-verdict.sh {TID}
-bash $CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/close_check.sh {TID}
-bash $CLAUDE_PLUGIN_ROOT/skills/op-generate-spec/scripts/start-server.sh --project-dir .
+bash $CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/dag_gen.sh
+bash $CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/op-coder-check.sh {TID}
+bash $CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/op-read-verdict.sh {TID}
+bash $CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/close_check.sh {TID}
+bash $CLAUDE_PLUGIN_ROOT/skills/opspec/scripts/start-server.sh --project-dir .
 ```
 
 ### 共用脚本（`scripts/`）
@@ -354,18 +354,18 @@ export OMNI_POWERS_DIR_RECORD=docs/omni_powers/op_record
 
 | 从 | 到 | 原因 |
 |---|---|---|
-| `skills/op-start/scripts/op_status.sh` | `scripts/op_status.sh` | 被 3 个 skill 共用 |
-| `skills/op-start/scripts/op_new_task.sh` | `scripts/op_new_task.sh` | 被 2 个 skill 共用 |
+| `skills/opstart/scripts/op_status.sh` | `scripts/op_status.sh` | 被 3 个 skill 共用 |
+| `skills/opstart/scripts/op_new_task.sh` | `scripts/op_new_task.sh` | 被 2 个 skill 共用 |
 
 ### 路径改写
 
 | 文件 | 改动 |
 |---|---|
-| `skills/op-start/SKILL.md` | 专属脚本 → `$CLAUDE_PLUGIN_ROOT/skills/op-start/scripts/...`；共用脚本 → `$CLAUDE_PLUGIN_ROOT/scripts/...`；模型 → `$OMNI_POWERS_MODEL_*`；文档 → `cat $CLAUDE_PLUGIN_ROOT/...`；目录 → `$OMNI_POWERS_DIR_*` |
-| `skills/op-task/SKILL.md` | 同 |
-| `skills/op-generate-spec/SKILL.md` | 同 |
-| `skills/op-generate-plan/SKILL.md` | 同 |
-| `skills/op-debt2tasks/SKILL.md` | 同 |
+| `skills/opstart/SKILL.md` | 专属脚本 → `$CLAUDE_PLUGIN_ROOT/skills/opstart/scripts/...`；共用脚本 → `$CLAUDE_PLUGIN_ROOT/scripts/...`；模型 → `$OMNI_POWERS_MODEL_*`；文档 → `cat $CLAUDE_PLUGIN_ROOT/...`；目录 → `$OMNI_POWERS_DIR_*` |
+| `skills/optask/SKILL.md` | 同 |
+| `skills/opspec/SKILL.md` | 同 |
+| `skills/opplan/SKILL.md` | 同 |
+| `skills/opdebt/SKILL.md` | 同 |
 | `agents/op-coder.md` | 模型 + 输出路径 |
 | `agents/op-code-reviewer.md` | 模型 |
 | `agents/op-test-reviewer.md` | 模型 |

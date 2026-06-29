@@ -364,7 +364,7 @@ brainstorming → writing-plans → subagent-driven-development
 1. **控制平面**：tasks_list.json 是唯一状态源，leader 做全局调度。Superpowers 没有"所有 task 的状态概览"——它只是逐个 task 推进，没有全局视图。
 2. **阻塞传播**：FAIL 3 轮自动阻塞下游依赖。Superpowers 是线性任务列表，没有依赖管理。
 3. **Spec 持续积累**：每 task 闭环整理 specs/{feature}.md。Superpowers 的 spec 在 plan 文件里，归档后没有"当前真相"文件。
-4. **技术债追踪**：tech_debt.md 累积 + /op-debt2tasks。Superpowers 没有技术债概念。
+4. **技术债追踪**：tech_debt.md 累积 + /opdebt。Superpowers 没有技术债概念。
 5. **compact 恢复协议**：RULES.md + jq + checkpoint。Superpowers 靠 `progress.md`，更轻量但也更脆弱——如果文件被 `git clean -fdx` 就丢了。
 6. **Agent Team 错误检测**：标记文件机制给 leader 一个"超时兜底"。Superpowers 的 Sub Agent 模式同样受 #56869 bug 威胁。
 
@@ -521,7 +521,7 @@ Sub Agent 的运行模式：
 
 | 文件 | 原因 |
 |------|------|
-| `skills/op-start/scripts/op-scan-signals.sh` | 不需要扫标记文件 |
+| `skills/opstart/scripts/op-scan-signals.sh` | 不需要扫标记文件 |
 
 ### 保留不变的
 

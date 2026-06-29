@@ -1,15 +1,15 @@
 ---
-name: op-start
+name: opstart
 description: >
-  统一工作流入口——用户只需 /op-start，leader 进入自治循环。
-  触发：/op-start、继续、下一步、干活。
+  统一工作流入口——用户只需 /opstart，leader 进入自治循环。
+  触发：/opstart、继续、下一步、干活。
 ---
 
 # Op Start Skill
 
-`/op-start` 是多 Agent 协作的启动按钮。leader 查看状态、派活、收口，自动推进所有 task。
+`/opstart` 是多 Agent 协作的启动按钮。leader 查看状态、派活、收口，自动推进所有 task。
 
-**用户再触发 `/op-start`** 只在：compact 恢复、crash 恢复、想查进度。
+**用户再触发 `/opstart`** 只在：compact 恢复、crash 恢复、想查进度。
 
 协议规则、状态机、review 判定等见 `RULES.md`。
 
@@ -27,7 +27,7 @@ git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
 问用户：
 
 ```
-/op-start
+/opstart
 
 在哪开发？
 1. worktree（推荐）：创建隔离区，搞砸一键删除
@@ -40,7 +40,7 @@ git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
 - **选当前分支**：不动分支，当前目录就是工作目录
 - 记下 `<work_dir>` = 当前 `pwd` + 原分支名
 
-用户也可以指定分支名：`/op-start feat/my-branch` → `git worktree add .worktrees/my-branch -b feat/my-branch`
+用户也可以指定分支名：`/opstart feat/my-branch` → `git worktree add .worktrees/my-branch -b feat/my-branch`
 
 ### 1.2 读状态
 
@@ -62,9 +62,9 @@ cat RULES.md
 | 全部 status=完成 | 循环结束，进入收尾 |
 | 存在 status=收口中 | 从 checkpoint 恢复，跳到收口子步骤 |
 | 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
-| 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/op-start/scripts/op-context-read.sh {TID}`） |
+| 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/opstart/scripts/op-context-read.sh {TID}`） |
 | 存在可跑 task | 进入循环 |
-| 存在 status=待规划 | 输出提醒：多个待规划 task 可用 `/op-task` 快速生成 spec/plan；按当前能力逐个或批量完成规划文档 |
+| 存在 status=待规划 | 输出提醒：多个待规划 task 可用 `/optask` 快速生成 spec/plan；按当前能力逐个或批量完成规划文档 |
 | 全部阻塞/跳过/挂起 | 输出原因，等外部解除或用户修改状态 |
 
 ---
@@ -72,7 +72,7 @@ cat RULES.md
 ## 步骤二：生成 DAG
 
 ```bash
-bash skills/op-start/scripts/dag_gen.sh
+bash skills/opstart/scripts/dag_gen.sh
 # exit 非 0 → 禁止继续，修复后重跑
 ```
 
@@ -80,7 +80,7 @@ bash skills/op-start/scripts/dag_gen.sh
 
 发现多个 `待规划` task 时，leader 可先批量派生 spec/plan 生成：只写 `docs/omni_powers/op_execution/tasks/{TID}/` 下的规划文档，不改代码、不进入 coder。
 
-规划完成后，task 回到正常 `/op-start` 流程；coder 执行仍保持单 task 串行，收口仍单 task。B 阶段2（代码执行并行）暂不启用。
+规划完成后，task 回到正常 `/opstart` 流程；coder 执行仍保持单 task 串行，收口仍单 task。B 阶段2（代码执行并行）暂不启用。
 
 ---
 
@@ -126,7 +126,7 @@ bash skills/op-start/scripts/dag_gen.sh
 ### 子步骤 3.2：派 coder
 
 ```bash
-bash skills/op-start/scripts/op-coder-check.sh {TID}
+bash skills/opstart/scripts/op-coder-check.sh {TID}
 # 输出: mode=normal|fail|blocked, round=1|2|3
 # exit 0=可继续, exit 1=阻塞
 ```
@@ -150,7 +150,7 @@ Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
 coder 返回后，读摘要验证产出：
 
 ```bash
-bash skills/op-start/scripts/op-context-read.sh {TID}
+bash skills/opstart/scripts/op-context-read.sh {TID}
 # 只读顶部摘要，不读完整 context。完整 context 交给 reviewer 细读
 ```
 
@@ -165,7 +165,7 @@ bash scripts/op_status.sh {TID} 审阅中
 先跑 op-read-verdict.sh 判断轮次：
 
 ```bash
-bash skills/op-start/scripts/op-read-verdict.sh {TID}
+bash skills/opstart/scripts/op-read-verdict.sh {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
 # round=0 → 首轮，round≥1 → FAIL 轮（重审）
 ```
@@ -209,7 +209,7 @@ Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "son
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
-bash skills/op-start/scripts/op-read-verdict.sh {TID}
+bash skills/opstart/scripts/op-read-verdict.sh {TID}
 # 输出 round + spec_review + code_review + test_review + result
 # exit 0 = 三 PASS, exit 1 = 任一 FAIL
 ```
@@ -250,12 +250,12 @@ git status --short  # 确认 stage 内容正确
 git commit -m "feat({TID}): {title}"
 
 # 自动写 checkpoint 机械部分（取 hash + 查 title + 写已完成列表 + 重算状态）
-bash skills/op-start/scripts/op-checkpoint.sh {TID}
+bash skills/opstart/scripts/op-checkpoint.sh {TID}
 
 # leader 手动编辑 docs/omni_powers/op_execution/leader_checkpoint.md 的"关键上下文"段
 
 # 验收
-bash skills/op-start/scripts/close_check.sh {TID}
+bash skills/opstart/scripts/close_check.sh {TID}
 ```
 
 回到循环顶部 子步骤 3.1。
@@ -276,8 +276,8 @@ cd <原项目根目录>
 
 **主分支/当前分支模式**：无额外操作。
 
-- **全部完成**：检查 tech_debt.md，有未偿债项则提示 `/op-debt2tasks`
-- **有待规划项**：输出提示，建议用户使用 `/op-task` 或自行编辑补全 spec/plan
+- **全部完成**：检查 tech_debt.md，有未偿债项则提示 `/opdebt`
+- **有待规划项**：输出提示，建议用户使用 `/optask` 或自行编辑补全 spec/plan
 - **全部阻塞/挂起**：输出原因，等外部解除或用户明确恢复
 
 ## compact 恢复
@@ -296,12 +296,12 @@ cd <原项目根目录>
 | `scripts/op_status.sh` | 状态流转 |
 | `scripts/op_close_pre.sh` | 收口前机械步骤：盖戳 + status=收口中 |
 | `scripts/op_close_post.sh` | 收口后机械步骤：review 校验 + 归档 + progress + status=完成 + stage |
-| `skills/op-start/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |
-| `skills/op-start/scripts/op-read-verdict.sh` | verdict 读取 + 轮次判断 |
-| `skills/op-start/scripts/op-context-read.sh` | 读 context.md 摘要（不进完整上下文） |
-| `skills/op-start/scripts/op-context-append.sh` | coder 写摘要到 context.md 顶部 |
-| `skills/op-start/scripts/close_check.sh` | 收口验收 |
-| `skills/op-start/scripts/op-checkpoint.sh` | checkpoint 写入 |
-| `skills/op-start/scripts/dag_gen.sh` | DAG 生成 |
+| `skills/opstart/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |
+| `skills/opstart/scripts/op-read-verdict.sh` | verdict 读取 + 轮次判断 |
+| `skills/opstart/scripts/op-context-read.sh` | 读 context.md 摘要（不进完整上下文） |
+| `skills/opstart/scripts/op-context-append.sh` | coder 写摘要到 context.md 顶部 |
+| `skills/opstart/scripts/close_check.sh` | 收口验收 |
+| `skills/opstart/scripts/op-checkpoint.sh` | checkpoint 写入 |
+| `skills/opstart/scripts/dag_gen.sh` | DAG 生成 |
 | `scripts/op_new_task.sh` | 工作区创建 |
-| `skills/op-debt2tasks/SKILL.md` | 技术债偿还 |
+| `skills/opdebt/SKILL.md` | 技术债偿还 |

@@ -1,9 +1,9 @@
 ---
-name: op-generate-plan
+name: opplan
 description: >
   从 spec.md 生成 plan.md。默认深度模式（逐 step 确认 + 可选 visual companion），
-  用户说"快速模式/快速决定/直接生成"才走快速。intake/op-debt2tasks 调本 skill 生成 plan。
-  触发：/op-generate-plan、生成 plan、写实施计划。
+  用户说"快速模式/快速决定/直接生成"才走快速。intake/opdebt 调本 skill 生成 plan。
+  触发：/opplan、生成 plan、写实施计划。
 ---
 
 # 写实施计划
@@ -16,9 +16,9 @@ description: >
 
 假设他们是熟练的开发者，但几乎不了解我们的工具集和问题领域。假设他们不太懂好的测试设计。
 
-**开始时声明：** "我用 op-generate-plan 来创建实施计划。"
+**开始时声明：** "我用 opplan 来创建实施计划。"
 
-**上下文：** 工作目录由 leader 在 op-start 时确定（worktree 或 master 模式）。
+**上下文：** 工作目录由 leader 在 opstart 时确定（worktree 或 master 模式）。
 
 **保存 plan 到：** `docs/omni_powers/op_execution/tasks/{TID}/plan.md`
 
@@ -28,7 +28,7 @@ description: >
 
 **快速模式**：仅当用户**明确说**以下关键词时才走快速：
 - "快速模式"、"快速决定"、"直接生成"、"快速生成"、"不用讨论了"
-- 或 intake/op-debt2tasks 调用时指定快速模式
+- 或 intake/opdebt 调用时指定快速模式
 
 进入 skill 后先确认：
 
@@ -41,7 +41,7 @@ description: >
 
 ## 范围检查
 
-如果 spec 覆盖了多个独立子系统，应该在 brainstorming/op-generate-specerator 阶段就拆成子项目 spec。如果没有，建议先拆成多个 plan——每个子系统一个。每个 plan 应该产出可独立运行、可测试的软件。
+如果 spec 覆盖了多个独立子系统，应该在 brainstorming/opspecerator 阶段就拆成子项目 spec。如果没有，建议先拆成多个 plan——每个子系统一个。每个 plan 应该产出可独立运行、可测试的软件。
 
 ## 文件结构
 
@@ -176,7 +176,7 @@ git commit -m "feat: add specific feature"
 5. 自己跑自审（spec coverage / placeholder scan / 类型一致性）
 6. 输出 plan 全文 + step 概览，请用户审阅
 
-用户只需在最后审阅。说"改"才改，否则通过进入 op-start。
+用户只需在最后审阅。说"改"才改，否则通过进入 opstart。
 
 **关键**：不把 step 拆分丢回给用户。拆几个 step、每 step 做什么、文件路径是什么——skill 自己做决定。但必须汇报 step 概览。
 
@@ -184,9 +184,9 @@ git commit -m "feat: add specific feature"
 
 保存 plan 后，指向下一步：
 
-**"Plan 已写入 `docs/omni_powers/op_execution/tasks/{TID}/plan.md`。task 就位，调 /op-start 开始开发循环。"**
+**"Plan 已写入 `docs/omni_powers/op_execution/tasks/{TID}/plan.md`。task 就位，调 /opstart 开始开发循环。"**
 
-op-start 会接管后续：选 task → 派 op-coder → review → 收口。
+opstart 会接管后续：选 task → 派 op-coder → review → 收口。
 
 ## 相关文件
 
@@ -194,5 +194,5 @@ op-start 会接管后续：选 task → 派 op-coder → review → 收口。
 |---|---|
 | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | plan 模板 |
 | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板（输入） |
-| `skills/op-generate-spec/SKILL.md` | 上一步：op-generate-spec |
-| `skills/op-start/SKILL.md` | 下一步：op-start |
+| `skills/opspec/SKILL.md` | 上一步：opspec |
+| `skills/opstart/SKILL.md` | 下一步：opstart |

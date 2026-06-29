@@ -5,8 +5,8 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 ## 快速开始
 
 ```
-/op-start    # 统一入口：自动判断状态 → 选 task → 派 op-coder → review → 收口 → 下一个
-/op-debt2tasks    # 功能 task 全完成后：扫技术债 → 归类 → 生成偿还 task
+/opstart    # 统一入口：自动判断状态 → 选 task → 派 op-coder → review → 收口 → 下一个
+/opdebt    # 功能 task 全完成后：扫技术债 → 归类 → 生成偿还 task
 ```
 
 ## 目录结构
@@ -28,12 +28,12 @@ Claude Code 多 Agent 协作工作流系统。leader 编排、op-coder 开发、
 │   └── op-closer.md            #   收口机械步骤（按需启用）
 │
 ├── skills/                  # Claude Code Skills
-│   ├── op-start/            #   统一工作流入口
+│   ├── opstart/            #   统一工作流入口
 │   │   └── scripts/         #     收口验收脚本
-│   ├── op-task/           #   需求→task 前置
-│   ├── op-generate-spec/    #   spec 生成
-│   ├── op-generate-plan/    #   plan 生成
-│   └── op-debt2tasks/       #   技术债偿还
+│   ├── optask/           #   需求→task 前置
+│   ├── opspec/    #   spec 生成
+│   ├── opplan/    #   plan 生成
+│   └── opdebt/       #   技术债偿还
 │
 └── docs_template/omni_powers/ # 文档模板（三态模型）
     ├── README.md            #   模板用法和命名约定

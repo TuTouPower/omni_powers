@@ -1,8 +1,8 @@
 ---
-name: op-task
+name: optask
 description: >
   需求→task 统一入口。默认深度模式（一问一答协作讨论 + 可选 visual companion），
-  用户说"快速模式/快速决定/直接生成"才走快速。内部调 op-generate-spec 和 op-generate-plan。
+  用户说"快速模式/快速决定/直接生成"才走快速。内部调 opspec 和 opplan。
   触发：/intake、新需求、拆 task、需求入轨。
 ---
 
@@ -34,16 +34,16 @@ description: >
 ## 深度模式
 
 1. **读上下文**：tasks_list.json（⚠️ 严禁 Read 整文件，必须用 `jq` 查询） + ref 文档（prd/spec/architecture/domain）
-2. **讨论需求（第一轮 op-generate-spec）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
+2. **讨论需求（第一轮 opspec）**：一问一答逐项确认目标/范围/方案，可选 visual companion。产出需求共识（不写文件，仅讨论）
 3. **从结论拆 task**：提取需求范围 → 拆 task → 确认 → 更新 tasks_list.json → 建目录
-4. **生成 spec/plan**（可选）：主会话逐 task 调用 `Skill("op-generate-spec")`（深度模式）→ `Skill("op-generate-plan")`（深度模式）。如果用户此时只要求拆分到列表，可不生成，将 task 保持为 `待规划` 状态；若生成完毕，通过 `scripts/op_status.sh` 改为 `待开始`。
+4. **生成 spec/plan**（可选）：主会话逐 task 调用 `Skill("opspec")`（深度模式）→ `Skill("opplan")`（深度模式）。如果用户此时只要求拆分到列表，可不生成，将 task 保持为 `待规划` 状态；若生成完毕，通过 `scripts/op_status.sh` 改为 `待开始`。
    *深度模式需用户一问一答交互，必须在主会话完成，不用子代理。多个 task 时串行处理。*
 
 <HARD-GATE>
-如果要生成 spec/plan，必须对每个 task 调用 `Skill("op-generate-spec")` 和 `Skill("op-generate-plan")`，禁止手写 spec/plan。
+如果要生成 spec/plan，必须对每个 task 调用 `Skill("opspec")` 和 `Skill("opplan")`，禁止手写 spec/plan。
 </HARD-GATE>
 
-5. **汇报**：task 已就位，下一步 /op-start
+5. **汇报**：task 已就位，下一步 /opstart
 
 ## 快速模式
 
@@ -53,15 +53,15 @@ description: >
 2. **确认需求范围**：从输入提取，输出确认
 3. **更新 ref**（按需）：prd/spec/architecture/domain/test
 4. **拆 task**：确认 → 更新 tasks_list.json → 建目录
-5. **生成 spec/plan**（可选）：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 op-generate-spec skill（快速模式）和 op-generate-plan skill（快速模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。如果用户明确只要拆分不要详细生成，可跳过这一步并保持状态为 `待规划`。生成完成后，将状态改为 `待开始`。
+5. **生成 spec/plan**（可选）：为每个 task 用 `Agent({ subagent_type: "general-purpose", model: "sonnet", prompt: "..." })` 启动一个子代理，子代理内依次调用 opspec skill（快速模式）和 opplan skill（快速模式），输出到各 task 的指定目录。每个 task 的子代理独立运行，多个 task 的子代理可并发。如果用户明确只要拆分不要详细生成，可跳过这一步并保持状态为 `待规划`。生成完成后，将状态改为 `待开始`。
 
 <HARD-GATE>
-如果要生成 spec/plan，必须对每个 task 调用 op-generate-spec 和 op-generate-plan skill，禁止手写 spec/plan。
+如果要生成 spec/plan，必须对每个 task 调用 opspec 和 opplan skill，禁止手写 spec/plan。
 </HARD-GATE>
 
 > 深度模式直接在主会话调 Skill（需要用户交互），快速模式用子代理（无需交互可并发）。两种方式不同是因为深度模式需要一问一答，子代理无法与用户交互。
 
-6. **汇报**：task 已就位，下一步 /op-start
+6. **汇报**：task 已就位，下一步 /opstart
 
 ## 拆 task 规则
 
@@ -98,18 +98,18 @@ context.md 暂不填（空模板，op-coder 后续维护）。
 ```
 /intake（默认深度模式）
     │
-    ├── 深度：op-generate-spec（深度讨论）→ 拆 task → op-generate-spec/op-generate-plan（深度）
+    ├── 深度：opspec（深度讨论）→ 拆 task → opspec/opplan（深度）
     │
-    └── 快速：确认范围 → 拆 task → op-generate-spec/op-generate-plan（快速）
+    └── 快速：确认范围 → 拆 task → opspec/opplan（快速）
                 │
                 ▼
-         /op-start
+         /opstart
 ```
 
-- **op-generate-spec**：intake 内部调用，可独立调用 `/op-generate-spec`
-- **op-generate-plan**：intake 内部调用，可独立调用 `/op-generate-plan`
-- **op-debt2tasks**：技术债偿还走 op-debt2tasks，新功能走 intake
-- **op-start**：完成后调 /op-start 进入开发循环
+- **opspec**：intake 内部调用，可独立调用 `/opspec`
+- **opplan**：intake 内部调用，可独立调用 `/opplan`
+- **opdebt**：技术债偿还走 opdebt，新功能走 intake
+- **opstart**：完成后调 /opstart 进入开发循环
 
 ## 注意事项
 

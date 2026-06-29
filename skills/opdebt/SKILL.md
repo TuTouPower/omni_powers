@@ -1,21 +1,21 @@
 ---
-name: op-debt2tasks
+name: opdebt
 description: >
   技术债偿还——扫 tech_debt.md，按主题归类，拆成偿还 task，生成 spec/plan，更新 tasks_list.json。
   默认快速模式（直接归类拆 task），用户说"深度模式/深度讨论"才走深度（逐债项讨论）。
   功能 task 全部完成后由 leader 触发。
 ---
 
-# op-debt2tasks：技术债偿还
+# opdebt：技术债偿还
 
 ## 触发
 
 - 所有功能 task 状态为 `完成` 后，leader 调用本 skill
-- 用户显式说 `/op-debt2tasks`、还债、偿还技术债
+- 用户显式说 `/opdebt`、还债、偿还技术债
 
 ## 模式选择
 
-**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 op-generate-spec/op-generate-plan（快速）。
+**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 opspec/opplan（快速）。
 
 **深度模式**：仅当用户**明确说**以下关键词时才走深度：
 - "深度模式"、"深度讨论"、"逐项讨论"、"详细讨论"
@@ -23,7 +23,7 @@ description: >
 进入 skill 后先确认：
 
 ```
-/op-debt2tasks
+/opdebt
 
 默认快速归类直接拆。说"深度"则逐债项讨论。开始？
 ```
@@ -142,7 +142,7 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 3. 用户确认后，将新 task 追加到 tasks_list.json，初始状态设为 `待规划`。如果有明确的细节可以直接调用生成并改为 `待开始`。
 
 <HARD-GATE>
-如果决定要生成详细的 spec 和 plan，spec.md 和 plan.md 的内容必须通过 Skill 工具调用 op-generate-spec 和 op-generate-plan 生成。禁止手动写。
+如果决定要生成详细的 spec 和 plan，spec.md 和 plan.md 的内容必须通过 Skill 工具调用 opspec 和 opplan 生成。禁止手动写。
 </HARD-GATE>
 
 对每个需要详细规划的偿还 task：
@@ -152,13 +152,13 @@ ID 格式：`T{NN}`，两位数，不足两位前面补零。
 bash scripts/op_new_task.sh {TID}
 ```
 
-2. 调 op-generate-spec 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
+2. 调 opspec 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
 
-3. 调 op-generate-plan 生成 plan.md
+3. 调 opplan 生成 plan.md
 
-**快速模式（默认）**：每个需要详细规划的偿还 task 用子代理并发调用 op-generate-spec（快速模式）→ op-generate-plan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。生成完成后将状态从 `待规划` 改为 `待开始`。
+**快速模式（默认）**：每个需要详细规划的偿还 task 用子代理并发调用 opspec（快速模式）→ opplan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。生成完成后将状态从 `待规划` 改为 `待开始`。
 
-**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("op-generate-spec")`（深度模式）→ `Skill("op-generate-plan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。生成完成后将状态从 `待规划` 改为 `待开始`。
+**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("opspec")`（深度模式）→ `Skill("opplan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。生成完成后将状态从 `待规划` 改为 `待开始`。
 
 ### step 7：更新 tech_debt.md
 
@@ -195,8 +195,8 @@ tech_debt.md 已清理。
 ## 与其他 skill 的关系
 
 - **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
-- **op-start**（统一工作流入口）：偿还 task 创建完成后，走 /op-start 进入标准开发循环（选 task→派 op-coder→review→收口）。收口流程与功能 task 相同。
-- 恢复后偿还 task 与功能 task 无区别，/op-start 统一按 tasks_list.json 的 status 和 depends_on 调度。
+- **opstart**（统一工作流入口）：偿还 task 创建完成后，走 /opstart 进入标准开发循环（选 task→派 op-coder→review→收口）。收口流程与功能 task 相同。
+- 恢复后偿还 task 与功能 task 无区别，/opstart 统一按 tasks_list.json 的 status 和 depends_on 调度。
 
 ## 注意事项
 

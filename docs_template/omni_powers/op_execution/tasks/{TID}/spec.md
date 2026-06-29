@@ -1,7 +1,7 @@
 # {TID} {title} Spec
 
 > 来源：`docs/omni_powers/op_blueprint/prd.md`、`docs/omni_powers/op_blueprint/spec.md`、`docs/omni_powers/op_blueprint/architecture.md`、`docs/omni_powers/op_blueprint/domain.md`。
-> 生成方式：`op-generate-spec` skill。
+> 生成方式：`opspec` skill。
 
 ## 目标
 

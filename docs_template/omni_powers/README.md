@@ -9,8 +9,8 @@
 
 | 模板 | 用途 | 谁写 |
 |---|---|---|
-| [op_execution/tasks/{TID}/spec.md](op_execution/tasks/{TID}/spec.md) | 单 task 规格（op-generate-spec 生成） | leader |
-| [op_execution/tasks/{TID}/plan.md](op_execution/tasks/{TID}/plan.md) | 实施计划（op-generate-plan 生成） | leader |
+| [op_execution/tasks/{TID}/spec.md](op_execution/tasks/{TID}/spec.md) | 单 task 规格（opspec 生成） | leader |
+| [op_execution/tasks/{TID}/plan.md](op_execution/tasks/{TID}/plan.md) | 实施计划（opplan 生成） | leader |
 | [op_execution/tasks/{TID}/context.md](op_execution/tasks/{TID}/context.md) | op-op-coder 开发记录，每轮追加 | op-coder |
 | [op_execution/tasks/{TID}/review_code.md](op_execution/tasks/{TID}/review_code.md) | 代码审查 + op-coder 修改记录（只追加） op-code-reviewer + op-coder |
 | [op_execution/tasks/{TID}/review_test.md](op_execution/tasks/{TID}/review_test.md) | 测试审查 + op-coder 修改记录（只追加） | op-test-reviewer + op-coder |
