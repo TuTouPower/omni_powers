@@ -17,7 +17,7 @@ read_verdict() {
     local file="$1"
     [ -f "$file" ] || die "review 文件不存在: $file"
     local verdict
-    verdict="$(grep -oE 'verdict:[[:space:]]*(PASS|FAIL)' "$file" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
+    verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$file" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
     [ -n "$verdict" ] || die "review verdict 不存在: $file"
     printf '%s\n' "$verdict"
 }

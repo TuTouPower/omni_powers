@@ -10,3 +10,15 @@
 上面三个项目的介绍在这里，/home/karon/karson_ubuntu/user_config_backup/overview
 
 划分 task 要合理 避免 一个 task 太大 
+
+https://github.com/github/spec-kit
+
+https://github.com/affaan-m/everything-claude-code
+
+https://mp.weixin.qq.com/s/hyY3ZGuzr4YFEwQi0YrCXA
+
+https://github.com/mindfold-ai/trellis
+
+https://github.com/garrytan/gstack
+
+https://github.com/bmad-code-org/bmad-method

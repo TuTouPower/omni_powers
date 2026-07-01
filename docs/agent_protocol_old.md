@@ -1,5 +1,7 @@
 # 多 Agent 协作工作流协议
 
+> ⚠️ **已废弃**：本文档为旧版常驻 teammate 协议，仅作历史参考。当前编排依据见 `RULES.md`（全线 Sub Agent）。文中英文状态映射（pending/coding 等）已不再使用。
+
 > 总指挥（leader, opus）编排 4 个常驻 teammate 完成 tasks_list.json 中的全部 task。
 > 全自主运行，无需用户介入。本协议是唯一编排依据，compact 后靠它 + tasks_list.json + checkpoint 恢复。
 
