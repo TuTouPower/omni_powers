@@ -1,57 +1,47 @@
 ---
-name: opstart
+name: oprun
 description: >
-  统一工作流入口——用户只需 /opstart，leader 进入自治循环。
-  触发：/opstart、继续、下一步、干活。
+  从 checkpoint 续跑：task 循环 → spec 级验收 → 闸门 C → 归档。
+  触发：/oprun、继续、下一步、干活。
+  controller 即 leader 主会话，被本 skill 驱动。
 ---
 
-# Op Start Skill
+# Op Run Skill
 
-`/opstart` 是多 Agent 协作的启动按钮。leader 查看状态、派活、收口，自动推进所有 task。
+`/oprun` 从 checkpoint 续跑就绪的 task。leader 查状态、派 implementer、review、收口，自动推进。
 
-**用户再触发 `/opstart`** 只在：compact 恢复、crash 恢复、想查进度。
+协议规则、状态机、review 判定等见 `RULES.md`。入口分拣与 spec 编写见 `opintake`。
 
-协议规则、状态机、review 判定等见 `RULES.md`。
+## 派发模型规则
+
+派发 Sub Agent 时，Agent 工具的 `model` 参数按以下规则传：
+
+1. 读对应环境变量（`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`）
+2. **设了** → `model` 参数传该值（必须是 `haiku`/`sonnet`/`opus` 之一，对应 settings.json 的 `ANTHROPIC_DEFAULT_*_MODEL`）
+3. **没设** → `model` 参数**不传**，Agent 继承主会话当前模型（用户可用 `/model` 随时切换）
+
+下面派发示例的 `model:` 行注明"按规则传"——leader 据上述规则决定传不传、传什么。设计 task（brief 指明"只产方案纸"）临时把 implementer 的模型设为 `opus`，覆盖环境变量。
 
 ## 步骤一：确认工作目录 + 读状态
 
 ### 1.1 确认工作目录
 
-先查仓库分支：
-
 ```bash
-# 查远端默认分支
 git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
 ```
 
-问用户：
+问用户：worktree（推荐）/ 主分支 / 当前分支。
 
-```
-/opstart
-
-在哪开发？
-1. worktree（推荐）：创建隔离区，搞砸一键删除
-2. 主分支（{main或master}）：直接在主分支改
-3. 当前分支（{当前分支名}）
-```
-
-- **选 worktree**：`git worktree add .worktrees/op-dev -b feat/op-dev` → `cd .worktrees/op-dev`
-- **选主分支**：`git checkout {main或master}`，当前目录就是工作目录
-- **选当前分支**：不动分支，当前目录就是工作目录
+- **worktree**：`git worktree add .worktrees/op-dev -b feat/op-dev` → `cd .worktrees/op-dev`
+- **主分支**：`git checkout {main或master}`
+- **当前分支**：不动分支
 - 记下 `<work_dir>` = 当前 `pwd` + 原分支名
-
-用户也可以指定分支名：`/opstart feat/my-branch` → `git worktree add .worktrees/my-branch -b feat/my-branch`
 
 ### 1.2 读状态
 
 ```bash
-# 上次断在哪
 cat docs/omni_powers/op_execution/leader_checkpoint.md
-
-# 当前 task 状态（⚠️ 严禁 Read 整文件，用 jq 查）
 jq '[.tasks[] | {id, status, depends_on}]' docs/omni_powers/op_execution/tasks_list.json
-
-# 规则手册（compact 恢复必读）
 cat RULES.md
 ```
 
@@ -62,209 +52,165 @@ cat RULES.md
 | 全部 status=完成 | 循环结束，进入收尾 |
 | 存在 status=收口中 | 从 checkpoint 恢复，跳到收口子步骤 |
 | 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
-| 存在 status=进行中 | 进入循环，先检查 coder 是否完成（`bash skills/opstart/scripts/op-context-read.sh {TID}`） |
+| 存在 status=进行中 | 进入循环，先检查 implementer 是否完成（读 `tasks/{TID}/report.md` 顶部总报告状态） |
 | 存在可跑 task | 进入循环 |
-| 存在 status=待规划 | 输出提醒：多个待规划 task 可用 `/optask` 快速生成 spec/plan；按当前能力逐个或批量完成规划文档 |
+| 存在 status=待规划 | 提醒：用 `/opintake` 生成 spec |
 | 全部阻塞/跳过/挂起 | 输出原因，等外部解除或用户修改状态 |
-
----
-
-## 步骤二：生成 DAG
-
-```bash
-bash skills/opstart/scripts/dag_gen.sh
-# exit 非 0 → 禁止继续，修复后重跑
-```
-
-### 规划并行（阶段1）
-
-发现多个 `待规划` task 时，leader 可先批量派生 spec/plan 生成：只写 `docs/omni_powers/op_execution/tasks/{TID}/` 下的规划文档，不改代码、不进入 coder。
-
-规划完成后，task 回到正常 `/opstart` 流程；coder 执行仍保持单 task 串行，收口仍单 task。B 阶段2（代码执行并行）暂不启用。
 
 ---
 
 ## 循环
 
 ```
-进入循环
+选 task（3.1）── 无 task ──▶ 循环结束 ──▶ 收尾
   │
-  ▼
-选 task（3.1）
-  │
-  ├────▶ 无 task ──▶ 循环结束 ──▶ 收尾
-  │
-  ▼
 有 task
-  │
   ▼
-派 coder（3.2，前台 Sub Agent）
+派 op-implementer（3.2，前台）
   │ mode=normal ──▶ 正向开发
-  │ mode=fail（第1/2轮）──▶ 修复 blocker
-  │ mode=blocked（第3轮 FAIL 后）──▶ 阻塞，回到 3.1
-  │
+  │ mode=fail（第1轮）──▶ 修复 blocker
+  │ mode=blocked（第2轮 FAIL 后）──▶ 阻塞，回 3.1
   ▼
-派 review（3.3，后台 Sub Agent ×3 并行）
-  │
+派 op-reviewer（3.3，前台，双裁决）
   ▼
-判定 review 结果（3.4）
-  │
-  ├────▶ 三 PASS ──▶ 收口（3.5）──▶ 回到 3.1
-  │
-  ▼
-任一 FAIL
-  ├────▶ 第1/2轮 ──▶ 回到 3.2（coder 进入 fail 模式修复）
-  └────▶ 第3轮 ──▶ 阻塞（写 issues/{TID}_quality.md）──▶ 回到 3.1
+判定（3.4）
+  ├─ 双裁决 PASS ──▶ 收口（3.5）──▶ 回 3.1
+  └─ 任一 FAIL
+       ├─ 第1轮 ──▶ 回 3.2（implementer fail 模式）
+       └─ 第2轮 ──▶ 阻塞（写 issues/{TID}_quality.md）──▶ 回 3.1
 ```
 
 ### 子步骤 3.1：选 task
 
-选取条件（4 条全满足，取 ID 最小）：status=待开始、depends_on 全部完成（且依赖的不能是 `待规划` 或 `挂起` 等未就绪节点）、不在阻塞范围、ID 最小。
+选取条件（全满足，取 ID 最小）：status=待开始、depends_on 全部完成、不在阻塞范围、ID 最小。
 
 无符合条件的 task → 循环结束，进入收尾。
 
-### 子步骤 3.2：派 coder
+### 子步骤 3.2：派 op-implementer
 
 ```bash
-bash skills/opstart/scripts/op-coder-check.sh {TID}
-# 输出: mode=normal|fail|blocked, round=1|2|3
+bash skills/oprun/scripts/op-coder-check.sh {TID}
+# 输出: mode=normal|fail|blocked, round=1|2
 # exit 0=可继续, exit 1=阻塞
 ```
 
 | mode | round | 动作 |
 |------|-------|------|
-| normal | 1 | 正向开发：读 spec/plan，TDD |
-| fail | 2 | FAIL 轮：读 review_*.md，改 blocker |
-| fail | 3 | FAIL 轮（最后一轮）：修完或阻塞 |
-| blocked | — | exit 1，直接阻塞，不再派 coder |
+| normal | 1 | 正向开发：读 brief.md（指向 spec 路径）→ 读工作 spec → TDD（先写映射 AC 的结构层单测，不跑 e2e） |
+| fail | 2 | FAIL 轮（最后一轮）：读 review.md，改 blocker |
+| blocked | — | exit 1，直接阻塞，不再派 implementer |
+
+**派 implementer 前 leader 先生成 brief.md**：
+
+```
+docs/omni_powers/op_execution/tasks/{TID}/brief.md：
+
+{tasks_list 中本 task 的完整记录——AC/INV/depends_on/预计工作集}
+工作 spec 路径：docs/omni_powers/op_execution/specs/{spec}.md
+定向包（上下文紧张时附）：{architecture.md 摘要 + conventions.md 命名规则}
+完成定义：{一句话可测试行为 + 验证命令}
+```
 
 ```bash
 bash scripts/op_status.sh {TID} 进行中
 ```
 
 ```js
-Agent({ name: "op-coder", subagent_type: "op-coder", model: "haiku",
-  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op-coder-check.sh {TID} 确定模式。读 docs/omni_powers/op_execution/tasks/{TID}/ 下的 spec/plan。完成后用 op-context-append.sh 写摘要到 context.md。" })
+Agent({ name: "op-implementer", subagent_type: "op-implementer",
+  // model: 按顶部"派发模型规则"传——读 OP_IMPLEMENTER_MODEL，设了传该值，没设不传 model
+  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op-coder-check.sh {TID} 确定模式。读 tasks/{TID}/brief.md + 指向的工作 spec。TDD 实现（只跑结构层单测，不跑 e2e）。写 report.md（顶部总报告 + 分 Round 追加）。" })
 ```
 
-coder 返回后，读摘要验证产出：
+implementer 返回后读摘要验证产出：
 
 ```bash
-bash skills/opstart/scripts/op-context-read.sh {TID}
-# 只读顶部摘要，不读完整 context。完整 context 交给 reviewer 细读
+head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md
 ```
 
-进入子步骤 3.3。
-
-### 子步骤 3.3：派 review
+### 子步骤 3.3：派 op-reviewer（双裁决）
 
 ```bash
 bash scripts/op_status.sh {TID} 审阅中
-```
-
-先跑 op-read-verdict.sh 判断轮次：
-
-```bash
-bash skills/opstart/scripts/op-read-verdict.sh {TID}
+bash skills/oprun/scripts/op-read-verdict.sh {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
-# round=0 → 首轮，round≥1 → FAIL 轮（重审）
 ```
-
-#### 首轮（round=0）
 
 ```js
-Agent({ name: "op-spec-reviewer", subagent_type: "op-spec-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n首轮 review {TID} spec。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md + context.md\n代码变更：git diff\n输出：docs/omni_powers/op_execution/tasks/{TID}/review_spec.md\n逐条核对实现是否与 spec 一致。文件最后一行必须写 verdict: PASS 或 FAIL。" })
-
-Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n首轮 review {TID}。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md + context.md\n代码变更：git diff\n输出：docs/omni_powers/op_execution/tasks/{TID}/review_code.md\n文件最后一行必须写 verdict: PASS 或 FAIL。" })
-
-Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n首轮 review {TID} tests。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md + context.md\n测试：tests/\n输出：docs/omni_powers/op_execution/tasks/{TID}/review_test.md\n文件最后一行必须写 verdict: PASS 或 FAIL。" })
+Agent({ name: "op-reviewer", subagent_type: "op-reviewer",
+  // model: 按顶部"派发模型规则"传——读 OP_REVIEWER_MODEL，设了传该值，没设不传 model
+  prompt: "cd <work_dir> && pwd\nreview {TID}。\n读 tasks/{TID}/brief.md → 工作 spec（op_execution/specs/{spec}.md）。\n读 tasks/{TID}/report.md（顶部总报告 + 分轮）。\n代码变更：git diff\n输出：tasks/{TID}/review.md\n双裁决：①规格合规（覆盖 AC/不偏航/不自由发挥）②测试可信（测的是 AC 还是 mock/断言用户可观察/危险模式/implementer 是否偷跑了 e2e）。\n文件最后一行必须写 verdict: PASS 或 FAIL。重审在末尾追加新 verdict 行。" })
 ```
 
-#### FAIL 轮（round≥1）
-
-```js
-Agent({ name: "op-spec-reviewer", subagent_type: "op-spec-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n重审 {TID} spec。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md\n上次审查：docs/omni_powers/op_execution/tasks/{TID}/review_spec.md\n代码变更：git diff\n验证修复后，在 review_spec.md 末尾追加新 verdict 行（不覆盖已有内容）。" })
-
-Agent({ name: "op-code-reviewer", subagent_type: "op-code-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n重审 {TID}。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md\n上次审查：docs/omni_powers/op_execution/tasks/{TID}/review_code.md\n代码变更：git diff\n验证修复后，在 review_code.md 末尾追加新 verdict 行（不覆盖已有内容）。" })
-
-Agent({ name: "op-test-reviewer", subagent_type: "op-test-reviewer", model: "sonnet",
-  background: true,
-  prompt: "cd <work_dir> && pwd\n重审 {TID} tests。\n任务文件：docs/omni_powers/op_execution/tasks/{TID}/spec.md + plan.md\n上次审查：docs/omni_powers/op_execution/tasks/{TID}/review_test.md\n代码变更：git diff\n验证修复后，在 review_test.md 末尾追加新 verdict 行（不覆盖已有内容）。" })
-```
-
-**任一 reviewer 出错**：只重试出错的那个（max 3），成功的等。重试仍失败 → 该 review 文件手动写 `verdict: FAIL`。
-
-三个都返回后进入子步骤 3.4。
+reviewer 出错重试 max 3。重试仍失败 → review.md 手写 `verdict: FAIL`。
 
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
-bash skills/opstart/scripts/op-read-verdict.sh {TID}
-# 输出 round + spec_review + code_review + test_review + result
-# exit 0 = 三 PASS, exit 1 = 任一 FAIL
+bash skills/oprun/scripts/op-read-verdict.sh {TID}
+# exit 0 = PASS, exit 1 = FAIL
 ```
 
 | 结果 | 轮次 | 动作 |
 |---|---|---|
-| 三 PASS | 任意 | 收口（子步骤 3.5） |
-| 任一 FAIL | 第1/2轮 | 回到子步骤 3.2（coder 进入 fail 模式修复） |
-| 任一 FAIL | 第3轮 | `bash scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，`bash scripts/op_status.sh --batch "{下游TID列表}" 跳过`，回到子步骤 3.1 |
+| 双裁决 PASS | 任意 | 收口（3.5） |
+| 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
+| 任一 FAIL | 第2轮 | `bash scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
 
-### 子步骤 3.5：收口
+### 子步骤 3.5：收口（closer 提案制）
 
-三 PASS 后先跑收口前机械脚本：
+双裁决 PASS 后跑收口前机械脚本：
 
 ```bash
 bash scripts/op_close_pre.sh {TID}
 ```
 
-再派 op-closer（前台 Sub Agent）做判断性文档整理：
+派 op-closer 整理：
 
 ```js
-Agent({ name: "op-closer", subagent_type: "op-closer", model: "haiku",
-  prompt: "cd <work_dir> && pwd\n收口判断 {TID} \"{title}\"。整理 blueprint/tech_debt/decisions。specs 归属：{feature}。暂存项：[{列表，或无}]。决策：[{内容，或无}]。" })
+Agent({ name: "op-closer", subagent_type: "op-closer",
+  // model: 按顶部"派发模型规则"传——读 OP_CLOSER_MODEL，设了传该值，没设不传 model
+  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。specs 归属：{feature}。\n产 blueprint 更新提案到 op_record/tasks/{TID}/blueprint_update.md（diff 形态覆盖 op_blueprint 全部文档）。有决策直接 append 到 op_record/decisions.md。\n只留\"现在是什么\"，过滤被否方案。不碰 git、不改 status、不归档、不盖戳、不 stage、不写 op_blueprint/。" })
 ```
 
-op-closer 只整理 `docs/omni_powers/op_blueprint/`、`docs/omni_powers/op_execution/tech_debt.md`、`docs/omni_powers/op_record/decisions.md`。不碰 git、不改 status、不归档、不盖戳、不 stage。
-
-op-closer 返回 closer_output 后，leader 跑收口后机械脚本：
+leader 审批 closer 的 blueprint 提案 → 执行实际写入 `op_blueprint/`：
 
 ```bash
 bash scripts/op_close_post.sh {TID} {feature}
-```
-
-leader 审查：
-
-```bash
-git status --short  # 确认 stage 内容正确
+git status --short
 git commit -m "feat({TID}): {title}"
-
-# 自动写 checkpoint 机械部分（取 hash + 查 title + 写已完成列表 + 重算状态）
-bash skills/opstart/scripts/op-checkpoint.sh {TID}
-
-# leader 手动编辑 docs/omni_powers/op_execution/leader_checkpoint.md 的"关键上下文"段
-
-# 验收
-bash skills/opstart/scripts/close_check.sh {TID}
+bash skills/oprun/scripts/op-checkpoint.sh {TID}
+# leader 手动编辑 leader_checkpoint.md 的"关键上下文"段
+bash skills/oprun/scripts/close_check.sh {TID}
 ```
 
-回到循环顶部 子步骤 3.1。
+末 task（叶子最后一个）时，closer 提案顺带含叶子级归档（总述关闭、前缀释放），leader 一并审批执行。
+
+回到循环顶部 3.1。
+
+---
+
+## spec 级验收（整份 spec 跑完）
+
+所有 task 闭环后，派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 5 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
+
+**派 evaluator 前 leader 保证访问隔离**：brief 只含 spec + 生效规格 + 应用启动方式，不含 implementer 产物（report/diff/review）。优选构建产物（CI 打出的二进制），退化形态 worktree 配 Read/Grep 拦 `src/**` hook。
+
+```js
+Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
+  // model: 按顶部"派发模型规则"传——读 OP_EVALUATOR_MODEL，设了传该值，没设不传 model
+  prompt: "cd <work_dir> && pwd\nspec 级验收 {spec前缀}。\n读 op_blueprint/specs/{feature}.md + 工作 spec（op_execution/specs/{前缀}.md）。\n启动应用：{可测性契约中的启动方式}。\n逐 AC 评估（computer use/截图/CLI）→ PASS 的 AC 固化成 e2e/{前缀}/ 确定性脚本 → 每条固化测试做破坏检查（确认能红）→ 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。" })
+```
+
+## 闸门 C
+
+呈报三样给人审：验收报告 + 自决决策表（契约边界内决策，否了哪条转 rework）+ P0/P1 issue（人定阻不阻断 merge）。
+
+
+人批 → merge → 叶子归档（leader 执行：原文入 `op_record/specs/`，前缀释放）。
 
 ---
 
 ## 收尾
-
-循环结束后：
 
 **worktree 模式**：
 ```bash
@@ -276,15 +222,15 @@ cd <原项目根目录>
 
 **主分支/当前分支模式**：无额外操作。
 
-- **全部完成**：检查 tech_debt.md，有未偿债项则提示 `/opdebt`
-- **有待规划项**：输出提示，建议用户使用 `/optask` 或自行编辑补全 spec/plan
-- **全部阻塞/挂起**：输出原因，等外部解除或用户明确恢复
+- **全部完成**：检查 issues/ 有无 `tech-debt` 标签项，提示处理
+- **有待规划项**：提示用 `/opintake`
+- **全部阻塞/挂起**：输出原因，等外部解除
 
 ## compact 恢复
 
 1. 读 `RULES.md`
 2. jq 查 tasks_list.json
-3. 若有未归档 `tasks/{TID}/` 则从 context.md + review_*.md 重建状态
+3. 若有未归档 `tasks/{TID}/` 则从 report.md + review.md 重建状态
 4. 重新选 task 进入循环
 
 ## 相关文件
@@ -292,16 +238,12 @@ cd <原项目根目录>
 | 文件 | 用途 |
 |---|---|
 | `RULES.md` | 规则手册 + 操作细则 |
-| `template/` | 文档模板 |
+| `docs_template/omni_powers/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
-| `scripts/op_close_pre.sh` | 收口前机械步骤：盖戳 + status=收口中 |
-| `scripts/op_close_post.sh` | 收口后机械步骤：review 校验 + 归档 + progress + status=完成 + stage |
-| `skills/opstart/scripts/op-coder-check.sh` | coder 模式判定（正向/Fail/阻塞） |
-| `skills/opstart/scripts/op-read-verdict.sh` | verdict 读取 + 轮次判断 |
-| `skills/opstart/scripts/op-context-read.sh` | 读 context.md 摘要（不进完整上下文） |
-| `skills/opstart/scripts/op-context-append.sh` | coder 写摘要到 context.md 顶部 |
-| `skills/opstart/scripts/close_check.sh` | 收口验收 |
-| `skills/opstart/scripts/op-checkpoint.sh` | checkpoint 写入 |
-| `skills/opstart/scripts/dag_gen.sh` | DAG 生成 |
-| `scripts/op_new_task.sh` | 工作区创建 |
-| `skills/opdebt/SKILL.md` | 技术债偿还 |
+| `scripts/op_close_pre.sh` | 收口前机械步骤 |
+| `scripts/op_close_post.sh` | 收口后机械步骤 |
+| `skills/oprun/scripts/op-coder-check.sh` | implementer 模式判定 |
+| `skills/oprun/scripts/op-read-verdict.sh` | verdict 读取 + 轮次 |
+| `skills/oprun/scripts/close_check.sh` | 收口验收 |
+| `skills/oprun/scripts/op-checkpoint.sh` | checkpoint 写入 |
+| `scripts/op_jq.sh` | tasks_list.json 查询 |

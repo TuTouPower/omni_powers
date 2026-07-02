@@ -5,40 +5,43 @@
 > 决策依据见 `docs/omni_powers/op_decisions.md`，实验记录见 `docs/omni_powers/op_findings.md`。
 >
 > **核心心智模型**：磁盘是真状态，所有 agent 上下文都是可重建缓存。全线 Sub Agent，每次 fresh dispatch。
+>
+> **v5 对齐**：规格是唯一契约；两层 spec（生效规格 ⟵ 工作 spec 淬炼）；能在 spec 期解决的不留执行期；契约边界规则；测试按耦合物分层；证据由机器产出；plan 是分布式信息无独立文档；task=commit；review ≤2 轮。
 
 ## 角色
 
-| 角色             | 类型      | model  | 派发     | 职责                                                                                            |
-| ---------------- | --------- | ------ | -------- | ----------------------------------------------------------------------------------------------- |
-| leader           | 主会话    | —     | —       | 编排、commit、写 checkpoint                                                                     |
-| op-coder         | Sub Agent | haiku  | 前台     | TDD：写测试→写实现→跑测试→写 context.md。                                                    |
-| op-code-reviewer | Sub Agent | sonnet | 后台并行 | 审 git diff + 安全/架构/错误处理，写 review_code.md                                             |
-| op-test-reviewer | Sub Agent | sonnet | 后台并行 | 审测试是否真能发现问题，写 review_test.md                                                       |
-| op-spec-reviewer | Sub Agent | sonnet | 后台并行 | 逐条核对实现是否与 spec/plan 一致，写 review_spec.md                                             |
-| op-closer        | Sub Agent | haiku  | 前台     | 收口判断层：整理 op_blueprint/、tech_debt、decisions；不碰 git/status/归档/盖戳/stage |
+| 角色             | 类型      | model（环境变量，见下）  | 派发     | 职责                                                                                            |
+| ---------------- | --------- | ---------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| leader           | 主会话    | —                | —       | **controller 即 leader 主会话**，被 oplead skill 驱动。编排、commit、写 checkpoint、审批 closer 提案后执行生效规格写入 |
+| op-implementer   | Sub Agent | `OP_IMPLEMENTER_MODEL` | 前台     | TDD：写测试→写实现→跑测试→写 report。设计 task 复用之（brief 指明"只产方案纸"，临时设为 opus） |
+| op-reviewer      | Sub Agent | `OP_REVIEWER_MODEL`    | 前台     | 双裁决：①规格合规（覆盖 AC/不偏航/不自由发挥）②测试可信（防假绿/查危险 expect·assert 变更）。写 review.md |
+| op-evaluator     | Sub Agent | `OP_EVALUATOR_MODEL`   | 前台     | 验收方：spec 级真机验收与对抗探索，仅 Stage 5（所有 task 闭环后）介入。评估 → 固化 → 破坏检查，产出 e2e/ |
+| op-closer        | Sub Agent | `OP_CLOSER_MODEL`      | 前台     | 收口整理：产 blueprint_update.md 提案 + 直接追加 decisions.md；末 task 顺带叶子归档提案 |
 
 全线 Sub Agent。每次 task 重新 dispatch，上下文隔离。
+
+**模型环境变量**：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`。值只能填 `haiku` / `sonnet` / `opus` 三档之一，对应 `settings.json` 里的 `ANTHROPIC_DEFAULT_HAIKU_MODEL` / `ANTHROPIC_DEFAULT_SONNET_MODEL` / `ANTHROPIC_DEFAULT_OPUS_MODEL` 解析出的实际模型。**未设则不传 model 参数，继承主会话当前模型**（用户可用 `/model` 随时切换）。设了哪个就覆盖该 agent 用对应档位。
 
 ## 状态机
 
 ```
 待规划 → 待开始 → 进行中 → 审阅中 → 收口中 → 完成
-  ↓             ↑        ↓ (FAIL，max 3 轮)
+  ↓             ↑        ↓ (FAIL，max 2 轮)
 挂起 ───────────┘        └────────┘
-                        第 3 轮仍 FAIL → 阻塞(blocked_by=quality)
+                        第 2 轮仍 FAIL → 阻塞(blocked_by=quality)
 ```
 
 tasks_list.json status 值：
 
 | status     | 含义                                       | blocked_by                                   |
 | ---------- | ------------------------------------------ | -------------------------------------------- |
-| `待规划` | 刚从需求解析出 task，只有一句话，没有 spec/plan | null                                         |
-| `待开始` | spec/plan 就位，未开发                     | null                                         |
-| `进行中` | op-coder 开发或修复轮中                    | null                                         |
+| `待规划` | 刚从需求解析出 task，只有一句话，没有 spec | null                                         |
+| `待开始` | spec 就位，未开发                          | null                                         |
+| `进行中` | op-implementer 开发或修复轮中              | null                                         |
 | `审阅中` | review 进行中                              | null                                         |
-| `收口中` | 三 PASS 后，op-closer 执行中               | null                                         |
-| `完成`   | op-closer 返回后 commit + close_check 通过 | null                                         |
-| `阻塞`   | 3 轮 FAIL 或环境阻塞                       | `resource`/`quality`/`spawn`（必有值） |
+| `收口中` | 双裁决 PASS 后，op-closer 执行中           | null                                         |
+| `完成`   | closer 返回 + leader 审批写入 + close_check 通过 | null                                         |
+| `阻塞`   | 2 轮 FAIL 或环境阻塞                       | `resource`/`quality`/`spawn`（必有值） |
 | `跳过`   | 因下游阻塞顺延，等待阻塞解除               | null                                         |
 | `挂起`   | 用户明确指示暂时不做，需用户同意才能做     | null                                         |
 
@@ -49,7 +52,7 @@ tasks_list.json status 值：
 | 类型                        | blocked_by   | 处理                             |
 | --------------------------- | ------------ | -------------------------------- |
 | 外部资源缺失（密钥/端点等） | `resource` | 跳过，标阻塞                     |
-| 3 轮 FAIL                   | `quality`  | 写 issues/{TID}_quality.md，跳过 |
+| 2 轮 FAIL                   | `quality`  | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败                  | `spawn`    | 退避重试 2 次，仍败则标阻塞      |
 
 ### 下游传播
@@ -61,7 +64,9 @@ tasks_list.json status 值：
 
 ### 挂起项处理
 
-- `挂起`：用户主动推迟。不自动流转，除非用户要求恢复。恢复后根据是否已生成 spec/plan，回到 `待开始` 或 `待规划`。
+- `挂起`：用户主动推迟。不自动流转，除非用户要求恢复。恢复后根据是否已生成 spec，回到 `待开始` 或 `待规划`。
+
+### 回滚
 
 不用 reset（会丢历史）。
 
@@ -74,86 +79,107 @@ tasks_list.json status 值：
 
 ## 文件分层
 
-### task 工作区（全部进 git，不删）
+### task 工作区（全部进 git）
 
 ```
-docs/omni_powers/op_execution/tasks/{TID}/
-├── spec.md           # opspec 生成
-├── plan.md           # opplan 生成
-├── context.md        # op-coder 追加正向进度。FAIL 轮不碰
-├── review_spec.md    # op-spec-reviewer 写 — 逐条核对 spec 合规
-├── review_code.md    # op-code-reviewer 写 — op-coder 修改记录就近追加（只追加不覆盖）
-└── review_test.md    # op-test-reviewer 写 — 同上
+docs/omni_powers/op_execution/
+├── specs/{前缀}.md           # 工作 spec（叶子共享，全员只读。AC/INV/边界/技术决策/可测性契约）
+├── tasks/{TID}/
+│   ├── brief.md               # leader 生成（任务卡 + 定向包 + 指向 spec 路径）
+│   ├── report.md              # op-implementer 写：顶部总报告（每轮覆盖）+ 分 Round 追加
+│   └── review.md              # op-reviewer 写双裁决，FAIL 轮 implementer 追加 Fix-N
+├── tasks_list.json            # 唯一 task 真相源
+├── leader_checkpoint.md
+└── issues/
 ```
 
-- context.md = 构建边界（正向进度），review_*.md = 质量边界（FAIL 来回）。二者不重叠。
+- spec.md 不在 task 目录——spec 是叶子级共享，放 `op_execution/specs/`。
+- report.md 顶部总报告（leader/reviewer 入口，每轮覆盖为累积总结）+ 下方分 Round 追加（审计轨迹，FAIL 轮修复留得住）。
 - task 闭环后 git mv 到 `docs/omni_powers/op_record/tasks/{TID}/` 归档。
-- `docs/omni_powers/op_execution/issues/{TID}_quality.md` 记录质量阻塞（3 轮 FAIL）。
 
 ### 持久文件
 
 | 路径                                                   | 谁写               | 何时                                         |
 | ------------------------------------------------------ | ------------------ | -------------------------------------------- |
-| `docs/omni_powers/op_execution/tasks_list.json`      | 机械脚本/leader | 状态流转                                     |
-| `docs/omni_powers/op_blueprint/specs/{feature}.md`   | op-closer       | 每 task 闭环整理（当前生效规格，按功能聚合） |
+| `docs/omni_powers/op_execution/tasks_list.json`      | 机械脚本/leader | 状态流转（**唯一 task 真相源**）             |
+| `docs/omni_powers/op_blueprint/`（specs/architecture/domain/conventions/prd/test） | **leader**（基于 closer 提案） | 每 task 闭环后审批写入（最高契约）       |
 | `docs/omni_powers/op_record/progress.md`             | 机械脚本        | 闭环后追加                                   |
-| `docs/omni_powers/op_record/decisions.md`            | op-closer       | 有架构决策才追加                             |
-| `docs/omni_powers/op_execution/tech_debt.md`         | op-closer       | 闭环后追加                                   |
+| `docs/omni_powers/op_record/decisions.md`            | op-closer       | 有决策直接 append（契约边界内自决/架构决策/spec 变更 delta/测试解锁归因） |
+| `docs/omni_powers/op_record/tasks/{TID}/blueprint_update.md` | op-closer | 每 task 闭环产「blueprint 更新提案」(diff 形态，覆盖 op_blueprint 全部文档) |
 | `docs/omni_powers/op_execution/leader_checkpoint.md` | leader          | 每 task 闭环后写                             |
-| `docs/omni_powers/op_execution/dag.md`               | leader          | 每次 /opstart 从 depends_on 重算生成        |
-| `docs/omni_powers/op_blueprint/` 下其他文档          | op-closer       | 按需更新                                     |
+| `docs/omni_powers/op_execution/issues/`              | leader/reviewer/evaluator/op-closer | 范围外发现、2 轮残留、技术债（加 `tech-debt` 标签） |
 
-### 闭环整理
+技术债登记为 issue，加 `tech-debt` 标签，与 P0-P3 严重度正交，走 optriage 分级。依赖管理通过 `tasks_list.json` 的 `depends_on` + jq 查询判断拓扑顺序。
+
+### 闭环整理（closer 提案制）
 
 task 闭环分三段：
 
 1. `scripts/op_close_pre.sh {TID}`：负责 spec 盖戳和 `status=收口中`。
-2. op-closer：只做判断性文档整理，检查 `docs/omni_powers/op_blueprint/` 下所有相关文档（specs/{feature}.md、prd.md、architecture.md、domain.md、conventions.md 等），把本 task 当前生效的接口、数据模型、约束、行为整理进去；按需整理 `tech_debt.md`、`decisions.md`。只留"现在是什么"，不留方案比较/被否方案。
-3. `scripts/op_close_post.sh {TID} {feature}`：确认三份 review 最后 verdict 均 PASS、确认 spec 已盖戳，然后 git mv 归档、追加 progress、`status=完成`、git add 收口文档。
+2. **op-closer 整理**：
+   - 产「blueprint 更新提案」写入 `docs/omni_powers/op_record/tasks/{TID}/blueprint_update.md`，diff 形态覆盖 `op_blueprint/` 全部文档（新增/修改/删除各附一句理由）。只留"现在是什么"，过滤被否方案/临时假设。
+   - 直接 append 决策到 `docs/omni_powers/op_record/decisions.md`（append-only 历史，不经 leader 审批）。
+   - 末 task 顺带做叶子级归档提案（总述关闭、前缀释放）。
+   - **铁律**：op-closer 对 `op_blueprint/` 无写权限；不碰 git、不改 status、不归档、不盖戳、不 stage。
+3. leader 审批 closer 的 blueprint 提案 → 执行实际写入 `op_blueprint/` → `scripts/op_close_post.sh {TID} {feature}` 确认 review verdict PASS、spec 已盖戳，git mv 归档、追加 progress、`status=完成`、git add 收口文档。
 
-mv 在 op-closer 之后执行。归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 `op_blueprint/` 下的文件。
+归档 task spec 顶部盖戳冻结——归档后的 task spec 是历史快照，会过时；当前代码"是什么"靠 `op_blueprint/` 下的文件（由 leader 基于 closer 提案维护）。
 
 **新建文件规则**：一律先拷 `docs_template/omni_powers` 下对应模板再填内容。无对应模板才自建。
 
-### tech_debt
-
-只记修不了的问题（跨 scope/依赖环境/需架构决策/需未来 task）。能当场修的进 FAIL 轮，不进 tech_debt。每 task 闭环强制追加（无新增也写一行 "无新增"）。不允许只口头说"记 tech_debt"，必须真写文件，否则 task 不算闭环。
-
 ## 关键规则
 
-### review 判定
+### review 判定（双裁决，≤2 轮）
 
-- leader 派 op-spec-reviewer、op-code-reviewer、op-test-reviewer 为后台 Sub Agent 并行 review
+- leader 派 op-reviewer 单 agent 做 review（前台 Sub Agent）
 - review 文件**最后一行**必须是 `verdict: PASS` 或 `verdict: FAIL`（首轮写一行，重审追加一行）
-- 三 PASS → 收口。任一 FAIL → coder 修改后重新 review，同一 task 最多 3 轮
-- 第 3 轮仍任一 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task 改为 `跳过`
+- 双裁决 PASS → 收口。任一裁决 FAIL → implementer 修改后重新 review，**同一 task 最多 2 轮**
+- 第 2 轮仍 FAIL → status=阻塞, blocked_by=quality，写 `issues/{TID}_quality.md`，下游 task 改为 `跳过`
+- **双裁决内容**：①规格合规（覆盖声明 AC？偏离 spec/自由发挥/范围偏航？）②测试可信（测的是 AC 还是 mock？断言用户可观察？命中危险模式？）
 - **分类体系**：CRITICAL / HIGH / MEDIUM / LOW 四级
 - **暂存标签**：默认不暂存。暂存条件：跨 scope / 需环境变更 / 架构决策 / 依赖未来 task
 - **PASS 门槛**：所有未标暂存的问题必须修完才 PASS
-- **reviewer 出错处理**：只重试失败的 reviewer（max 3），成功的保留。重试仍失败 → 对应 review 文件写 `verdict: FAIL`
+- **reviewer 出错处理**：重试（max 3）。重试仍失败 → review.md 写 `verdict: FAIL`
+- 两轮修不平大概率是结构问题（方案错/拆分错/规格歧义），继续循环只是烧 token。
+
+### 契约边界规则（执行期决策分流）
+
+执行期一切决策先问一句——**需要改 spec 文本吗？**
+
+- **不需要**（spec 约束内选库/选内部算法/选路径）→ implementer 自决 + 记 decisions.md 打标记 + 闸门 C 批量报审，流水线不停。
+- **需要**（INV 守不住/AC 做不到/契约要变）→ spec 变更子流程：agent 提 delta → 人批 → 重新 commit → 受影响 task 失效重拆。执行期唯一允许阻塞等人的情形。
+
+### evaluator 访问隔离
+
+防evaluator 读实现源码后照着实现写测试（实现错→测试跟着错→一起绿）。两层隔离：
+
+1. **文件系统层**：优选构建产物（CI 打出的二进制 + 启动命令），源码不在 evaluator 文件系统中。退化形态 worktree 配 hook：evaluator 会话内 Read/Grep 命中 `src/**` → exit 2 硬拦。
+2. **报告回流层**：oplead 组装 evaluator brief 时，**输入白名单只有 spec + 生效规格 + 应用启动方式**，不含 implementer 的 report、diff、review。反方向信息流是安全的（FAIL 转 bug task）。
+
+> 隔离防"抄实现"，防不了"放水"。放水靠破坏检查（机械的）和刻薄化调校（P2 投入）。
 
 ### 工作区
 
 一个 task 一个 commit，在同一个工作目录上操作。当前仅规划阶段可并行；代码执行并行需要独立 worktree + 串行 merge，暂不启用。
 
-- `/opstart` 启动时查仓库主分支名（main/master），问用户：worktree（推荐）/ 主分支 / 当前分支
-- worktree 模式：`git worktree add .worktrees/op-dev -b feat/op-dev`，全 session 共用，贯穿所有 task。**所有 task 完成之后**，leader 才切回原分支合并并移除：`git checkout <原分支> && git merge feat/op-dev --ff-only && git worktree remove .worktrees/op-dev`。未完成前不拆 worktree、不 merge 分支
+- `/oprun` 启动时查仓库主分支名（main/master），问用户：worktree（推荐）/ 主分支 / 当前分支
+- worktree 模式：`git worktree add .worktrees/op-dev -b feat/op-dev`，全 session 共用，贯穿所有 task。**所有 task 完成之后**，leader 才切回原分支合并并移除。未完成前不拆 worktree、不 merge 分支
 - 主分支模式：直接在主分支（main/master）工作，不创建 worktree
 - 当前分支模式：不动分支，在当前分支直接工作
 - leader 将当前工作目录传给所有 subagent 的 dispatch prompt
 
-大 task 跑很久时，允许 `wip({TID})` 性质的纯代码落盘 sub-commit——**不触发任何收口动作**（不改 status、不归档、不写 checkpoint、不整理 ref）。收口时由 leader 定 squash 还是保留。
+大 task 跑很久时，允许 `wip({TID})` 性质的纯代码落盘 sub-commit——**不触发任何收口动作**。收口时由 leader 定 squash 还是保留。
 
-### DAG 与 depends_on
+### depends_on
 
-每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。每次 `/opstart` 从 `depends_on` 重算拓扑分层，生成 `docs/omni_powers/op_execution/dag.md`。DAG 可帮助 leader 识别多个 `待规划` task 并行补 spec/plan；进入代码执行后仍按可跑 task 单个串行推进。
+每个 task 的 `depends_on` 记录其前置依赖（数组，无依赖则 `null`）。依赖通过 jq 查询 `tasks_list.json` 判断拓扑顺序。
 
 ### tasks_list 拆分预案
 
 默认不拆，单文件靠 jq 查询。task 量大到单文件过大、查询变慢时启用：
 
 - `docs/omni_powers/op_execution/tasks_list.json` — 只留未完成（待开始/进行中/审阅中/收口中/阻塞/跳过）
-- `docs/omni_powers/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit），删 verification
+- `docs/omni_powers/op_record/tasks_done.json` — 已完成 task，裁剪到最小（id/title/depends_on/commit）
 - 依赖检查：活表查不到的依赖 → 查 done 表确认完成
 - 收口时 task 从活表移到 done 表
 
@@ -174,12 +200,14 @@ bash scripts/op_jq.sh downstream {TID}  # 查下游
 bash scripts/op_jq.sh all          # 全部概览
 ```
 
-**checkpoint 只给断点，不给调度结论**——恢复后必须重算 DAG。
+**checkpoint 只给断点，不给调度结论**——恢复后必须重算可跑 task。
 
-**恢复步骤**：读 checkpoint → 用 jq 查询 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 context.md + review_*.md 重建状态 → 重新选 task。Sub Agent 每次重新 dispatch，不需要恢复 agent 实例。
+**恢复步骤**：读 checkpoint → 用 jq 查询 tasks_list → 读本协议 → 若有未归档 `tasks/{TID}/` 则从 report.md + review.md 重建状态 → 重新选 task。Sub Agent 每次重新 dispatch，不需要恢复 agent 实例。
 
 ## 不做
 
-- 不停下问用户（除非全部可跑 task 跑完仍剩阻塞）
+- 不停下问用户（除非全部可跑 task 跑完仍剩阻塞，或契约边界规则触发 spec 变更）
 - Sub Agent 之间不直接通信
 - 中间状态不 commit
+- op-closer 不直接写 `op_blueprint/`（产提案，leader 审批后写入；decisions.md 直接追加）
+- 不生成 dag.md

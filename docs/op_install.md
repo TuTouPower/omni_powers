@@ -1,4 +1,4 @@
-# omni_powers 通用化方案
+# omni_powers 通用化方案(暂时不做)
 
 ## 需求
 

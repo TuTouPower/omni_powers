@@ -1,0 +1,35 @@
+{
+  "_comment": "omni_powers hooks 配置模板。opinit 安装时合并到 ~/.claude/settings.json（或项目 .claude/settings.json）。",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash",
+        "hooks": [
+          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/pre_tool_use.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/post_tool_use.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/stop.sh" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/session_start.sh" }
+        ]
+      }
+    ]
+  }
+}

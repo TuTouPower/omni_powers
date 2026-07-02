@@ -1,206 +1,126 @@
 ---
-name: opdebt
+name: optriage
 description: >
-  技术债偿还——扫 tech_debt.md，按主题归类，拆成偿还 task，生成 spec/plan，更新 tasks_list.json。
-  默认快速模式（直接归类拆 task），用户说"深度模式/深度讨论"才走深度（逐债项讨论）。
-  功能 task 全部完成后由 leader 触发。
+  issue 分级与转 task。扫 issues/ 目录，按 P0-P3 分级，将需修的转正式 task 走对应 change type 流程。
+  由 oplead 收尾时调用，或用户显式 /optriage。
 ---
 
-# opdebt：技术债偿还
+# optriage：issue 分级与转 task
 
 ## 触发
 
-- 所有功能 task 状态为 `完成` 后，leader 调用本 skill
-- 用户显式说 `/opdebt`、还债、偿还技术债
-
-## 模式选择
-
-**默认：快速模式**——直接扫 tech_debt.md → 归类 → 拆 task → 调 opspec/opplan（快速）。
-
-**深度模式**：仅当用户**明确说**以下关键词时才走深度：
-- "深度模式"、"深度讨论"、"逐项讨论"、"详细讨论"
-
-进入 skill 后先确认：
-
-```
-/opdebt
-
-默认快速归类直接拆。说"深度"则逐债项讨论。开始？
-```
+- oplead 收尾时调用（每叶子收尾 triage 一次）
+- 用户显式 `/optriage`、分诊、处理 issue
 
 ## 输入
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `tech_debt_path` | `docs/omni_powers/op_execution/tech_debt.md` | 技术债清单 |
-| `tasks_list_path` | `docs/omni_powers/op_execution/tasks_list.json` | 当前 task 清单（⚠️ 体积大，严禁 Read 整文件，必须用 `jq` 查询） |
-| `tasks_list_template` | `docs_template/omni_powers/op_execution/tasks_list.json` | tasks_list.json 模板 |
-| `spec_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/spec.md` | spec 模板 |
-| `plan_template` | `docs_template/omni_powers/op_execution/tasks/{TID}/plan.md` | plan 模板 |
+| `issues_dir` | `docs/omni_powers/op_execution/issues/` | issue 目录 |
+| `tasks_list_path` | `docs/omni_powers/op_execution/tasks_list.json` | ⚠️ 严禁 Read 整文件，用 jq |
 
-## 输出
+issue 文件命名：`I-{YYYYMMDD}-{NN}.md` 或 `{TID}_quality.md`。
 
-1. 归类报告（终端输出，不落盘）
-2. 更新 `tasks_list.json`（追加偿还 task）
-3. 为每个偿还 task 生成 `docs/omni_powers/op_execution/tasks/{TID}/spec.md` + `plan.md`
+## issue 文件格式
+
+```markdown
+# I-20260702-01: {标题}
+来源: {review两轮到顶残留 / reviewer范围外 / evaluator范围外 / 系统层夜跑 / 定期体检}
+所属 spec: {spec前缀}
+严重度: P0阻断上线 / P1下个spec前必修 / P2排期 / P3可容忍
+标签: tech-debt, {其他}
+状态: open → triaged → 转 task → closed
+描述: {内容}
+```
 
 ## 步骤
 
-### step 1：读 tech_debt.md
+### step 1：扫 issue
 
-读 `tech_debt_path`，解析全部债项。
-
-解析规则：
-- 跳过注释行（`>` 开头）和空行
-- 识别 `## 环境限制` 节下的表格 → 环境债
-- 识别 `## {TID} {title}` 节下的表格 → 功能 task 遗留债
-
-每行债项提取字段：
-
-| 字段 | 环境债列 | 功能债列 |
-|---|---|---|
-| id | `ID` | `ID` |
-| task_id | `任务`（如 `T01`） | 从节标题 `## {TID}` 提取 |
-| source | — | `来源` |
-| debt | `债项` | `债项` |
-| severity | — | `严重度` |
-| reason | `暂存原因` | `暂存原因` |
-
-### step 2：归类
-
-按以下优先级归类，同一债项可匹配多条规则，取优先级最高的那条：
-
-1. **环境债**：单独成 task，标 `blocked_by`
-2. **同文件/模块**：债项描述中提到相同文件或模块 → 合为一个 task
-3. **同主题**：跨 scope 但同主题（如"所有错误处理优化"、"统一日志格式"）→ 合为一个 task
-4. **来源为 `环境`** 但不在环境限制节下的 → 归入环境债组
-5. **剩余独立债项**：每项单独成 task
-
-归类输出格式（终端打印）：
-
-```
-=== 技术债归类结果 ===
-
-环境债：
-  [E1] T01 真实 DB 集成测试未跑 → 偿还 task: T{next_id}（blocked_by=key）
-
-模块: src/api/auth/
-  [T02-3] review-code | 缺少 token 刷新逻辑 | HIGH
-  [T02-5] review-test | 未覆盖 token 过期场景 | MEDIUM
-  → 偿还 task: T{next_id+1}
-
-主题: 错误处理
-  [T03-1] review-code | API 层未统一错误格式 | MEDIUM
-  [T05-2] review-test | 异常路径无测试 | MEDIUM
-  → 偿还 task: T{next_id+2}
-
-独立:
-  [T01-7] review-code | 缺 rate limiting | HIGH → 偿还 task: T{next_id+3}
+```bash
+ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
 ```
 
-### step 3：确定 task ID
+逐个读 issue 文件，解析严重度、标签、所属 spec、状态。
 
-用 jq 查询 `tasks_list.json`，取当前最大 task ID（如 `T05`），新偿还 task 从 `T06` 开始递增。
+### step 2：分级与过滤
 
-ID 格式：`T{NN}`，两位数，不足两位前面补零。
+跳过 `状态: closed` 的。对 open issue：
 
-### step 4：分配 task 属性
+- **P0 阻断上线** → 必须转 task，本 spec 收尾前必修。闸门 C 呈报，人定阻不阻断 merge。
+- **P1 下个 spec 前必修** → 转 task，排进下个 spec。
+- **P2 排期** → 标 `tech-debt`，登记不转 task，等用户排期。
+- **P3 可容忍** → 标 `tech-debt`，登记不转 task。
 
-每个偿还 task 确定以下属性：
+技术债（`tech-debt` 标签）与 P0-P3 严重度正交——任何 P 级都可能带 `tech-debt` 标签。
 
-**depends_on**：
-- 环境债：`depends_on` 为 `null`
-- 功能遗留债：填该债项所属的原始 task ID。如 `T02-3` 和 `T02-5` 合并，则依赖 `["T02"]`。如合并了多个来源 task，取并集。
+### step 3：转 task（P0/P1）
 
-**blocked_by**：
-- 环境债：按原因填 `key` / `domain` / 其他
-- 功能遗留债：填 `null`
+对要转 task 的 issue：
 
-**title**：格式为 `还债: {简要描述}`
+1. 用 jq 取当前最大 TID，新 task 从 `T{NN+1}` 开始
+2. 确定 change type：
+   - bug → `fix`（契约=那条回归测试，先红后绿）
+   - 改进 → `feat` 或 `refactor`
+   - 性能 → `perf`
+3. 分配属性：
+   - `title`: `修issue: {简要描述}`
+   - `status`: `待规划`（有细节直接 `待开始`）
+   - `spec`: issue 的所属 spec
+   - `depends_on`: 推导
+   - `covers_ac` / `touches_inv`: 从 issue 描述推导
+4. 用 jq 追加到 `tasks_list.json`
+5. issue 文件状态改 `triaged → 转 task`，记录转到的 TID
 
-**verification**：从债项描述推导验收标准，一句话。
-
-**status**：统一填 `待规划`。如果有明确的细节可以直接调用生成并改为 `待开始`。
-
-### step 5：更新 tasks_list.json
-
-用 jq 读取 `tasks_list.json`，在 `tasks` 数组末尾追加新 task。不改已有 task。
-
-如存在环境债，同步更新 `blockers` 数组：
-
-```json
-{
-  "id": "B{n}",
-  "desc": "{环境依赖描述}",
-  "affects": ["{TID}"],
-  "status": "待提供"
-}
-```
-
-### step 6：生成 spec + plan
-
-3. 用户确认后，将新 task 追加到 tasks_list.json，初始状态设为 `待规划`。如果有明确的细节可以直接调用生成并改为 `待开始`。
-
-<HARD-GATE>
-如果决定要生成详细的 spec 和 plan，spec.md 和 plan.md 的内容必须通过 Skill 工具调用 opspec 和 opplan 生成。禁止手动写。
-</HARD-GATE>
-
-对每个需要详细规划的偿还 task：
-
-1. 建目录拷模板：
 ```bash
 bash scripts/op_new_task.sh {TID}
 ```
 
-2. 调 opspec 生成 spec.md（输入：债项描述 + 严重度 + 暂存原因）
+转 task 后的 issue 走标准 `/oprun` 循环，**不走免检通道**——issue 是登记处不是免检通道。
 
-3. 调 opplan 生成 plan.md
+### step 4：P2/P3 登记
 
-**快速模式（默认）**：每个需要详细规划的偿还 task 用子代理并发调用 opspec（快速模式）→ opplan（快速模式）。每个子代理对一个 task 依次完成 spec+plan。生成完成后将状态从 `待规划` 改为 `待开始`。
-
-**深度模式**（用户明确说"深度"时才走）：主会话逐 task 直接调用 `Skill("opspec")`（深度模式）→ `Skill("opplan")`（深度模式）。深度模式需用户一问一答交互，必须在主会话完成，不用子代理，串行处理。生成完成后将状态从 `待规划` 改为 `待开始`。
-
-### step 7：更新 tech_debt.md
-
-从 tech_debt.md 中删除被偿还 task 覆盖的债项表格行。只删被覆盖的行，不删整节。该节下所有行都删完后，删该节标题。
-
-偿还 task 本身已在 tasks_list.json 中，无需在 tech_debt.md 中重复记录。
-
-### step 8：汇报
-
-终端输出最终汇总：
+不转 task。issue 文件状态改 `triaged`，在终端汇报：
 
 ```
-=== 偿还 task 已创建 ===
+=== issue triage 结果 ===
 
-T06 还债: auth 模块 token 刷新逻辑（依赖 T02）→ spec/plan 已生成
-T07 还债: 统一错误处理（依赖 T03, T05）→ spec/plan 已生成
-T08 还债: 环境-真实 DB 集成测试（blocked_by=key）→ spec/plan 已生成
+P0（本 spec 必修，已转 task）:
+  I-20260702-01 会话列表滚动掉帧 → T06
 
-共 3 个偿还 task 已追加到 tasks_list.json。
-tech_debt.md 已清理。
+P1（下个 spec 前修，已转 task）:
+  I-20260702-02 错误格式不统一 → T07
+
+P2 排期（tech-debt，未转 task）:
+  I-20260702-03 日志未脱敏
+
+P3 可容忍（tech-debt，未转 task）:
+  I-20260702-04 文档 typo
 ```
+
+### step 5：闸门 C 呈报
+
+P0/P1 在闸门 C 呈报给用户：人定阻不阻断 merge。不阻断 merge 的 P0/P1 留 issue，下个 spec 处理。
 
 ## task 数量限制
 
-- 合并后偿还 task 总数不超过 10 个。如超过，优先合并同模块项，必要时将低严重度项合并到主题 task。
-- 每 task 覆盖债项不超过 5 个。超过则拆分为同主题的多个 task。
+- 转 task 总数不超过 10 个。超过则优先合并同模块项。
+- 每 task 覆盖 issue 不超过 5 个。
 
 ## 边界情况
 
-- **tech_debt.md 为空或所有债项已转化为偿还 task**：输出 "无技术债，无需偿还"，不创建 task。
-- **tech_debt.md 不存在**：报错 "tech_debt.md 不存在，请确认路径"。
-- **功能 task 未全部完成**：警告 "尚有功能 task 未完成（列出未完成的 TID），按协议应等功能 task 全部收口后再偿还。是否继续？"
+- **无 issue**：输出"无 issue，无需 triage"。
+- **issue 全 closed**：输出"所有 issue 已处理"。
+- **P0 与当前 spec 无关**：警告"P0 不属于当前 spec，是否仍在本 spec 修？"
 
 ## 与其他 skill 的关系
 
-- **intake**（需求→task 前置）：新功能 task 走 intake，偿还 task 走本 skill。二者输出格式一致（都追加到 tasks_list.json + 生成 spec/plan）。
-- **opstart**（统一工作流入口）：偿还 task 创建完成后，走 /opstart 进入标准开发循环（选 task→派 op-coder→review→收口）。收口流程与功能 task 相同。
-- 恢复后偿还 task 与功能 task 无区别，/opstart 统一按 tasks_list.json 的 status 和 depends_on 调度。
+- **oplead**：收尾时调本 skill 做分诊。分诊需全局视野，留在 oplead 不并入 closer（信息流相反）。
+- **opintake**：转出的 task 走 `/oprun` 标准循环，与功能 task 流程一致。
+- **oprun**：转 task 后由 `/oprun` 调度执行。
 
-## 注意事项
+## 注意
 
-- leader 是本 skill 的唯一调用者。op-coder/op-code-reviewer/test-reviewer 不调用本 skill。
-- 偿还 task 走标准开发循环（spec/plan/op-coder/review/收口），与功能 task 流程完全一致。
-- 不在功能 task 跑到一半插偿还 task——等当前 task 收口。
-- 环境债的 blocked_by 在环境就位后由 leader 手动改为 null，然后走标准循环。
+- leader 是本 skill 的唯一调用者。
+- issue 不直接改代码，转正式 task 后走对应 change type 流程。
+- 不在功能 task 跑到一半插 issue task——等当前 task 收口。

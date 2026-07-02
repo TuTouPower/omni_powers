@@ -190,3 +190,26 @@
 - SKILL.md 收口从 5 小步简化为：op-closer 一步（spec 盖戳 + git mv + 更新 tasks_list.json + specs + tech_debt + git add -A + commit）
 - agent prompt 中的 `.worktrees/{TID}` 路径改为项目根目录
 - `close_check.sh` 不再检查主 repo 不干净（无此概念）
+
+## D17：v5 对齐——closer 提案制、删 dag/tech_debt/using-omni-powers、controller=leader（2026-07-02）
+
+基于 `vendors/omni_powers_harness_v5.md` 重构。以下决策记录依据，正式规则见 RULES.md。
+
+| 决策 | 依据 |
+|---|---|
+| closer 产 blueprint_update 提案，直接追加 decisions.md，对 op_blueprint/ 无写权 | 改最高契约（生效规格）需隔离执行方，防静默改写。decisions.md 是 append-only 历史 closer 直接写。blueprint 提案写 `op_record/tasks/{TID}/blueprint_update.md`（diff 形态，覆盖 op_blueprint 全部文档），leader 审批后写入 |
+| controller = leader 主会话（被 oplead 驱动） | 单设 controller agent 与 leader 职责重叠，多一层间接。状态走 checkpoint |
+| 删 using-omni-powers meta skill | SessionStart hook 已动态注入路由，opstatus 渲染状态，内部 skill 由编排者调用。规则摘要放 CLAUDE.md |
+| 删 oparchive skill，归档由 closer 末 task 顺带 | 归档即"改生效规格"，已由 closer 提案制覆盖，无需独立 skill |
+| 删 dag.md，依赖走 depends_on + jq | DAG 文件是 tasks_list.json 的过期复印件，jq 直接查拓扑即可 |
+| 删 tech_debt.md，技术债归 issues 加 `tech-debt` 标签 | 单独文件易过期，与 issues 重复。标签与 P0-P3 严重度正交 |
+| review 合并为 op-reviewer 双裁决，≤2 轮 | 三 reviewer 并行是同档盲区，单 agent 双裁决（规格合规+测试可信）更准。两轮修不平是结构问题，继续循环烧 token |
+| optriage 留 oplead，不并入 closer | 分诊需全局视野，信息流与 closer（收口提案）相反 |
+| agents 模型用环境变量（OP_*_MODEL） | 用户可自定义 haiku/sonnet/opus，未设回退默认档 |
+| plan 无独立文档 | plan 信息四归宿：顺序依赖→tasks_list+spec 执行图；跨 task 决策→spec；接口契约→代码先行；工作集→任务卡 |
+
+**影响**：
+- agents: 5 → 4（删三 reviewer，加 op-reviewer/op-evaluator；op-coder→op-implementer）
+- skills: 6 → 7（删 opstart/opplan/optask/opdebt，加 opintake/oprun/opstatus/opred/optriage）
+- hooks: 新增 pre/post_tool_use、stop、session_start
+- 详见 `docs/vendors/reconstruction-proposal.md`、`docs/vendors/v5-revision-notes.md`
