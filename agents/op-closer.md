@@ -36,7 +36,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 ### 3. 产「blueprint 更新提案」
 
-写入 `docs/omni_powers/op_record/tasks/{TID}/blueprint_update.md`，**diff 形态**——覆盖 `op_blueprint/` 下所有可能改动（specs/{feature}.md、architecture.md、domain.md、conventions.md、prd.md、test.md）：
+写入 `docs/omni_powers/op_record/tasks/{TID}/blueprint_update.md`，**diff 形态**——覆盖 `op_blueprint/` 下所有可能改动（specs/{feature}.md、architecture.md、domain.md、conventions.md、prd.md、test.md、baselines/）：
 
 ```markdown
 # {TID} Blueprint 更新提案

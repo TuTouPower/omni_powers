@@ -193,7 +193,7 @@ bash skills/oprun/scripts/close_check.sh {TID}
 
 所有 task 闭环后，派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 5 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
-**派 evaluator 前 leader 保证访问隔离**：brief 只含 spec + 生效规格 + 应用启动方式，不含 implementer 产物（report/diff/review）。优选构建产物（CI 打出的二进制），退化形态 worktree 配 Read/Grep 拦 `src/**` hook。
+**派 evaluator 前 leader 保证访问隔离**：brief 只含 spec + 生效规格 + 应用启动方式，不含 implementer 产物。初期 worktree + hook 拦 `src/**`，后期升级为独立验证环境（CI 构建产物，源码不入 evaluator 文件系统）。
 
 ```js
 Agent({ name: "op-evaluator", subagent_type: "op-evaluator",

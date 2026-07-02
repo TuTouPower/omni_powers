@@ -87,7 +87,8 @@ docs/omni_powers/op_execution/
 ├── tasks/{TID}/
 │   ├── brief.md               # leader 生成（任务卡 + 定向包 + 指向 spec 路径）
 │   ├── report.md              # op-implementer 写：顶部总报告（每轮覆盖）+ 分 Round 追加
-│   └── review.md              # op-reviewer 写双裁决，FAIL 轮 implementer 追加 Fix-N
+│   ├── review.md              # op-reviewer 写双裁决，FAIL 轮 implementer 追加 Fix-N
+│   └── baselines/             # evaluator 产出的基准快照（临时，待 closer 提案 + leader 审批合入 op_blueprint）
 ├── tasks_list.json            # 唯一 task 真相源
 ├── leader_checkpoint.md
 └── issues/
@@ -102,7 +103,7 @@ docs/omni_powers/op_execution/
 | 路径                                                   | 谁写               | 何时                                         |
 | ------------------------------------------------------ | ------------------ | -------------------------------------------- |
 | `docs/omni_powers/op_execution/tasks_list.json`      | 机械脚本/leader | 状态流转（**唯一 task 真相源**）             |
-| `docs/omni_powers/op_blueprint/`（specs/architecture/domain/conventions/prd/test） | **leader**（基于 closer 提案） | 每 task 闭环后审批写入（最高契约）       |
+| `docs/omni_powers/op_blueprint/`（specs/architecture/domain/conventions/prd/test/baselines） | **leader**（基于 closer 提案） | 每 task 闭环后审批写入（最高契约，含基准快照）       |
 | `docs/omni_powers/op_record/progress.md`             | 机械脚本        | 闭环后追加                                   |
 | `docs/omni_powers/op_record/decisions.md`            | op-closer       | 有决策直接 append（契约边界内自决/架构决策/spec 变更 delta/测试解锁归因） |
 | `docs/omni_powers/op_record/tasks/{TID}/blueprint_update.md` | op-closer | 每 task 闭环产「blueprint 更新提案」(diff 形态，覆盖 op_blueprint 全部文档) |
@@ -149,14 +150,23 @@ task 闭环分三段：
 - **不需要**（spec 约束内选库/选内部算法/选路径）→ implementer 自决 + 记 decisions.md 打标记 + 闸门 C 批量报审，流水线不停。
 - **需要**（INV 守不住/AC 做不到/契约要变）→ spec 变更子流程：agent 提 delta → 人批 → 重新 commit → 受影响 task 失效重拆。执行期唯一允许阻塞等人的情形。
 
-### evaluator 访问隔离
+### evaluator 访问隔离与刻薄化调教
 
 防evaluator 读实现源码后照着实现写测试（实现错→测试跟着错→一起绿）。两层隔离：
 
-1. **文件系统层**：优选构建产物（CI 打出的二进制 + 启动命令），源码不在 evaluator 文件系统中。退化形态 worktree 配 hook：evaluator 会话内 Read/Grep 命中 `src/**` → exit 2 硬拦。
+1. **文件系统层**：初期 worktree + hook——evaluator 在隔离 worktree 中工作，hook 硬拦 Read/Grep 命中 `src/**`（机械可审计，零基建）。后期升级为独立验证环境：CI 构建产打包应用，evaluator 仅接触产物+spec+e2e，源码不在文件系统中。
 2. **报告回流层**：oplead 组装 evaluator brief 时，**输入白名单只有 spec + 生效规格 + 应用启动方式**，不含 implementer 的 report、diff、review。反方向信息流是安全的（FAIL 转 bug task）。
 
-> 隔离防"抄实现"，防不了"放水"。放水靠破坏检查（机械的）和刻薄化调校（P2 投入）。
+> 隔离防"抄实现"，防不了"放水"。放水靠三样：hard-pass gate（evaluator prompt 内置，禁止推论式 PASS）+ 破坏检查（机械的——固化测试必须能红）+ 刻薄化调教循环（以下）。
+
+**刻薄化调教循环**：
+
+stock evaluator 默认对 LLM 产出宽容——能发现 bug 但会说服自己"不太严重"放行，或只测成功路径不探边界。调教目标是让它足够刻薄。操作方式：
+
+1. **每次 spec 验收后，leader 做二阶判断**：从验收报告中随机抽 1-2 条 AC，对照评估证据。评估深度够不够？evaluator 有没有只测了成功路径？证据是否亲眼观察而非推测？
+2. **写偏差指令而非评分**：发现放水，在验收报告末尾追加一条具体指令——"AC-N 你只测了提交成功，边界的密码错误转向路径没测。补测后重新判定。" 这种指令型偏差比"上次偏了 12%"更有用——它直接告诉 evaluator 下次遇到同类 AC 要测到什么深度。
+3. **积累校准素材**：每积累 5 条偏差指令，从中选 2 条最典型的改写为 few-shot 校准样例，进入 evaluator agent prompt 的"校准样例"段。旧样例可淘汰。
+4. **收敛标准**：连续 3 spec 验收中 evaluator 提出的 FAIL 项至少 1 条是 implementer/reviewer 都未发现的真 bug；或系统层夜跑 30 天内抓到 ≥1 次回归。达到 → 标记调校完成，降频为每 5 spec 抽查一次。达不到 → 每次验收都抽查，持续积累偏差指令。
 
 ### 工作区
 
