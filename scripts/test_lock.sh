@@ -6,7 +6,7 @@
 #   bash scripts/test_lock.sh list              # 列锁定文件
 #   bash scripts/test_lock.sh check <file>      # 检查是否锁定（exit 0=锁, 1=未锁）
 
-set -uo pipefail
+set -euo pipefail   # #32: 加 -e（原仅 set -uo pipefail）
 
 root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$root"
@@ -14,6 +14,10 @@ cd "$root"
 lockfile="docs/omni_powers/op_execution/.test_locks"
 mkdir -p "$(dirname "$lockfile")"
 touch "$lockfile"
+
+# #33: flock 防并发 add/remove 重复或丢记录
+exec 9>"$lockfile.lock"
+flock 9
 
 cmd="${1:?用法: test_lock.sh add|remove|list|check [file]}"
 file="${2:-}"
