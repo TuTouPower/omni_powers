@@ -30,6 +30,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 - **不自由发挥**：有没有 spec 之外的"顺手改进"或额外功能？
 - **INV 守住**：spec 的不变量有没有被违反？
 - **技术决策落地**：spec 技术决策区写的决策，实现是否遵守？
+- **契约边界复核**：implementer 自决的"不需改 spec"决策逐条审——真在 spec 约束内？实际需改 spec 则打回变更子流程（防自决越界，design §5.2）
 
 refactor 型加审：结构层变更是否只动调用部分？删除的覆盖仍在更高层？
 
