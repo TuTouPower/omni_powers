@@ -158,6 +158,6 @@ npm test -- path/to/test.test.ts  # 或项目对应的测试命令
 - 盲改 review 意见不验证
 - 改测试迎合代码（除非 review 指出测试错了，且走红灯归因）
 - 删除/反转 expect、放宽断言、加 .skip/.only——这些自动触发 reviewer 危险模式扫描
-- 碰 `e2e/` 或 `BUG-*` 文件（evaluator 所有，hook 硬阻断）
+- 碰 `e2e/`（evaluator 所有，hook 硬阻断）；`BUG-*` 新增可写（fix 回归带归因 + 解锁审批）、修改既有禁止
 - 在同一轮里改 spec（spec 变更走子流程，人批）
 - 写 `op_blueprint/`（leader 基于 closer 提案写）

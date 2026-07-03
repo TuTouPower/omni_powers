@@ -103,7 +103,7 @@ leader 在 spec 所有 task 闭环 + Stage 4 验收 PASS 后派你。产 bluepri
 
 ## 叶子级归档提案
 - 总述关闭：{前缀} 全部叶子完成
-- 前缀释放：{前缀} 可 reused
+- 前缀标记完成：{前缀} 永不复用
 - 归档：原文入 op_record/specs/，追加五行完成情况
 ```
 
