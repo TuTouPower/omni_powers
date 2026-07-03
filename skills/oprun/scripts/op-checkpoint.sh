@@ -5,6 +5,9 @@
 # 跑完后 leader 手动编辑"关键上下文"段，然后跑 close_check.sh 验收。
 set -euo pipefail
 
+# #48: 临时文件异常清理
+trap 'rm -f /tmp/op_checkpoint_status_$$.md /tmp/op_checkpoint_$$.md' EXIT INT TERM
+
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TID="${1:?用法: op-checkpoint.sh <TID>}"
 

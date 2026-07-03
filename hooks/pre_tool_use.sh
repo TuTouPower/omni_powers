@@ -60,19 +60,15 @@ case "$rel" in
     ;;
 esac
 
-# --- e2e/** 与 BUG-* 测试锁 ---
+# --- e2e/** 与 BUG-* 行为层测试锁（design §10：全局路径匹配，不查锁清单）---
 case "$rel" in
   e2e/*|*BUG-*)
-    # 读当前 task 类型
-    tid="$(jq -r '.current_task // empty' docs/omni_powers/op_execution/leader_checkpoint.md 2>/dev/null)"
-    # 简化：默认全锁，解锁靠 test-lock 脚本登记
-    lockfile="docs/omni_powers/op_execution/.test_locks"
-    if [ -f "$lockfile" ] && grep -qF "$rel" "$lockfile" 2>/dev/null; then
-      # 锁定中，只允许 evaluator（OP_AGENT_ROLE=evaluator）写
-      if [ "${OP_AGENT_ROLE:-}" != "evaluator" ]; then
-        echo "[Hook] BLOCKED: $rel 是锁定行为层测试，归 op-evaluator 所有。implementer 永久无写权限。" >&2
-        exit 2
-      fi
+    # 行为层测试归 evaluator 所有，implementer 永久无写权限
+    # evaluator（OP_AGENT_ROLE=evaluator）放行；其余一律拦
+    # 注：#17 待落地——oprun dispatch evaluator 时主会话需 export OP_AGENT_ROLE=evaluator
+    if [ "${OP_AGENT_ROLE:-}" != "evaluator" ]; then
+      echo "[Hook] BLOCKED: $rel 是行为层测试（e2e/BUG-*），归 op-evaluator 所有。implementer 永久无写权限。解锁走人工（归因记 decisions.md）。" >&2
+      exit 2
     fi
     ;;
 esac

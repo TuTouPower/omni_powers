@@ -27,6 +27,12 @@ current_task:
 last_completed:
 next_step:
 关键上下文:
+
+## 已完成 task
+<!-- AUTO：op-checkpoint.sh 追加 "- {TID} "{title}" ✅ {hash}" -->
+
+## tasks_list 状态
+<!-- AUTO：op-checkpoint.sh 更新（完成/待开始/待规划/阻塞/跳过/挂起）-->
 EOF
 cat > docs/omni_powers/op_execution/.test_locks << 'EOF'
 # 锁定的行为层测试文件路径（每行一个），归 op-evaluator 所有
