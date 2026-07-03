@@ -52,8 +52,8 @@ Claude Code 多 Agent 协作工作流系统（v6 对齐）。leader 编排（被
 ```bash
 git clone <omni_powers_repo>
 cd omni_powers
-./install.sh    # 写全局配置 → 建 symlink → 设 SessionStart hook
-# 重启 Claude Code 生效
+export OP_HOME="$(pwd)"    # 插件安装目录，opinit 会写入使用方 settings.json env
+# 在 Claude Code 里对目标项目跑 /opinit（skill 安装：三区骨架 + hooks 注册 + $OP_HOME env）
 ```
 
 > 通用化方案详见 `docs/op_install.md`
