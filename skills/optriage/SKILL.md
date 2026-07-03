@@ -19,7 +19,7 @@ description: >
 | `issues_dir` | `docs/omni_powers/op_execution/issues/` | issue 目录 |
 | `tasks_list_path` | `docs/omni_powers/op_execution/tasks_list.json` | ⚠️ 严禁 Read 整文件，用 jq |
 
-issue 文件命名：`I-{YYYYMMDD}-{NN}.md` 或 `{TID}_quality.md`。
+issue 文件命名两种（用途不同，非不一致）：`I-{YYYYMMDD}-{NN}.md`（泛 issue——evaluator/reviewer/系统层范围外发现）+ `{TID}_quality.md`（绑 review 2 轮 FAIL 的 task，RULES.md 阻塞项 `blocked_by=quality`）。
 
 ## issue 文件格式
 

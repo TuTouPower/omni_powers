@@ -43,7 +43,7 @@ EOF
 
 ## 步骤二：识别并归档旧文档
 
-将非结构化 md 移入 `docs/archive`。排除 `README.md`、`CLAUDE.md`、`RULES.md`。
+将非结构化 md 移入 `docs/archive`。排除 `README.md`、`CLAUDE.md`、`RULES.md`。**#37：移前列清单问用户确认每个文件确属废弃**——项目已有的设计文档/规格不要误移，不确定就保留原位。
 
 ```bash
 find . -maxdepth 1 -name "*.md" -not -name "README.md" -not -name "CLAUDE.md" -not -name "RULES.md" -exec mv {} docs/archive/ \;
