@@ -1,6 +1,8 @@
 # omni_powers 决策记录
 
 > 记录架构和设计决策及其依据。最终规则见 RULES.md。
+>
+> **术语演变**：早期决策用旧 agent 名 `op-coder`（→ v6 `op-implementer`）、`op-code-reviewer` / `op-test-reviewer`（→ v6 `op-reviewer`，双裁决合并）。读到这些旧名时按 v6 角色对应，不视为新角色。
 
 ## D1：Agent Team vs Workflow（2026-06-25）— ⚠️ 已被 D15 取代
 

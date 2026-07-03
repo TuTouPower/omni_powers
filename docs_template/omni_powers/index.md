@@ -1,5 +1,8 @@
 # 文档导航
 
+> 给 agent 看的目录页（SessionStart hook 注入其摘要）。三态模型 + 各文档定位。
+> 设计理由见 `$OP_HOME/docs/omni_powers_design.md`；运行时操作见 `$OP_HOME/RULES.md`。
+
 ## 三态模型
 
 | 目录 | 含义 | 规则 |
@@ -8,35 +11,43 @@
 | `op_execution/` | 流动工作区 | 正在做什么，高频变动，会话间交接 |
 | `op_record/` | 冻结历史 | 曾经发生什么，只追加/只读，永不修改 |
 
-## op_blueprint/ — 稳定真相
+## op_blueprint/ — 稳定真相（"应该是什么"）
 
 | 文档 | 内容 |
 |---|---|
-| `op_blueprint/prd.md` | 产品需求：为什么做、给谁、成功标准 |
-| `op_blueprint/spec.md` | 全局总纲 + specs/ 目录索引 |
-| `op_blueprint/specs/{feature}.md` | 各功能当前生效规格（每 task 闭环整理） |
-| `op_blueprint/architecture.md` | 技术架构：模块、分层、数据流 |
-| `op_blueprint/conventions.md` | 编码约定、命名、技术栈 |
-| `op_blueprint/domain.md` | 领域知识：术语表、业务规则 |
-| `op_blueprint/test.md` | 测试策略、关键用例 |
+| `prd.md` | 产品需求纪要：为什么做、给谁、成功标准 |
+| `spec_index.md` | specs/ 目录索引：功能清单 + 一句话说明 + 文件指引 |
+| `specs/{feature}.md` | 各功能当前生效规格（per-leaf 收尾时整理，含 baselines 引用） |
+| `architecture.md` | 技术架构：模块、分层、跨模块契约 |
+| `conventions.md` | 编码约定、命名、技术栈 |
+| `domain.md` | 领域知识：术语表 + 跨功能全局不变量 |
+| `test.md` | 测试宪章：可写性矩阵、红灯归因、危险模式 |
+| `baselines/baselines_index.md` | 基准文件索引：前缀→AC→文件（结构化硬门 + 视觉 advisory） |
 
-## op_execution/ — 流动工作区
-
-| 文档 | 内容 |
-|---|---|
-| `op_execution/tasks_list.json` | task 清单 + 依赖 + status（用查询不整体读） |
-| `op_execution/dag.md` | DAG 依赖图（Mermaid + 分层表，由 dag_gen.sh 生成） |
-| `op_execution/tasks/{TID}/` | 进行中 task 的 spec/plan/context/review_* |
-| `op_execution/tech_debt.md` | 已知技术债（每 task 闭环强制追加） |
-| `op_execution/leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |
-| `../RULES.md` | 核心协议（compact 恢复必读，含操作细则） |
-| `op_decisions.md` | 决策记录 |
-| `op_execution/issues/{TID}_quality.md` | 质量阻塞记录 |
-
-## op_record/ — 冻结历史
+## op_execution/ — 流动工作区（"现在在干什么"）
 
 | 文档 | 内容 |
 |---|---|
-| `op_record/progress.md` | 进度日志（每 task 闭环追加） |
-| `op_record/decisions.md` | 架构决策（ADR 精简，只追加） |
-| `op_record/tasks/{TID}/` | 已完成 task 的 spec/plan/context/review_* 归档 |
+| `specs/{前缀}.md` | 工作 spec（叶子共享，AC/INV/边界/技术决策/可测性契约） |
+| `tasks_list.json` | 唯一 task 真相源（jq 查，禁 Read 整文件） |
+| `tasks/{TID}/` | 活跃 task 三文件：brief.md / report.md / review.md |
+| `acceptance/{前缀}/` | 验收工作区：evaluator 产出（baselines 临时区 + 验收报告）+ closer per-leaf 提案 |
+| `issues/` | 问题登记（含 tech-debt 标签，转 task 走 change type 流程） |
+| `leader_checkpoint.md` | compact 恢复断点（机器读）+ 会话交接（人读"关键上下文"段） |
+
+## op_record/ — 冻结历史（"发生过什么"，append-only）
+
+| 文档 | 内容 |
+|---|---|
+| `decisions.md` | 决策记录（spec 编写者设计探索 + closer 执行期自决，append-only） |
+| `progress.md` | 每 task 完成一行（commit 区间 + review 结论 + AC 覆盖） |
+| `specs/` | 已归档工作 spec（前缀保留组关系，前缀永不复用） |
+| `tasks/` | 已归档 task 的 brief/report/review |
+| `acceptance/{前缀}/` | 已归档叶子验收工作区（blueprint_update.md + baselines 快照） |
+
+## 引用
+
+| 文档 | 定位 |
+|---|---|
+| `$OP_HOME/RULES.md` | 运行时操作手册（compact 恢复入口 + 全局状态机） |
+| `$OP_HOME/docs/omni_powers_design.md` | 设计档案（为什么这么设计，不进运行时） |

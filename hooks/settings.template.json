@@ -5,7 +5,7 @@
       {
         "matcher": "Edit|Write|MultiEdit|Bash",
         "hooks": [
-          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/pre_tool_use.sh" }
+          { "type": "command", "command": "bash $OP_HOME/hooks/pre_tool_use.sh" }
         ]
       }
     ],
@@ -13,21 +13,21 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/post_tool_use.sh" }
+          { "type": "command", "command": "bash $OP_HOME/hooks/post_tool_use.sh" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/stop.sh" }
+          { "type": "command", "command": "bash $OP_HOME/hooks/stop.sh" }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/hooks/session_start.sh" }
+          { "type": "command", "command": "bash $OP_HOME/hooks/session_start.sh" }
         ]
       }
     ]

@@ -1,4 +1,8 @@
-# omni_powers 通用化方案(暂时不做)
+# omni_powers 通用化方案（已废弃，留作参考）
+
+> ⚠️ 本文档描述的 **Claude Code plugin 模式**（`$CLAUDE_PLUGIN_ROOT` / plugin.json / hooks.json / `claude plugins install`）**已废弃**。
+> v6 改用 **skill 安装 + `$OP_HOME` 环境变量** 模型：用户 git clone 仓库 → `/opinit` skill 安装 → opinit 写 `$OP_HOME` 到使用方 `settings.json` env 段。详见 `docs/omni_powers_design.md` §11。
+> 本文档待 P1 按 skill+`$OP_HOME` 模式重写，或删除。
 
 ## 需求
 
