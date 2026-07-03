@@ -156,7 +156,7 @@ bash skills/oprun/scripts/op-read-verdict.sh {TID}
 | 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
 | 任一 FAIL | 第2轮 | `bash scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
 
-### 子步骤 3.5：收口（closer 提案制）
+### 子步骤 3.5：per-task 收口（轻，closer 提案制两段节奏之一）
 
 双裁决 PASS 后跑收口前机械脚本：
 
@@ -164,18 +164,18 @@ bash skills/oprun/scripts/op-read-verdict.sh {TID}
 bash scripts/op_close_pre.sh {TID}
 ```
 
-派 op-closer 整理：
+派 op-closer 做 per-task 收口（只 append decisions，不产 blueprint 提案）：
 
 ```js
 Agent({ name: "op-closer", subagent_type: "op-closer",
   // model: 按顶部"派发模型规则"传——读 OP_CLOSER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。specs 归属：{feature}。\n产 blueprint 更新提案到 op_record/tasks/{TID}/blueprint_update.md（diff 形态覆盖 op_blueprint 全部文档）。有决策直接 append 到 op_record/decisions.md。\n只留\"现在是什么\"，过滤被否方案。不碰 git、不改 status、不归档、不盖戳、不 stage、不写 op_blueprint/。" })
+  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。specs 归属：{feature}。\n这是 per-task 收口：只 append 决策到 op_record/decisions.md，暂存项转 issues。不产 blueprint 提案、不碰 op_blueprint、不归档、不盖戳、不 stage。" })
 ```
 
-leader 审批 closer 的 blueprint 提案 → 执行实际写入 `op_blueprint/`：
+per-task 收口不审批（decisions.md append-only）。直接跑归档脚本：
 
 ```bash
-bash scripts/op_close_post.sh {TID} {feature}
+bash scripts/op_close_post.sh {TID}
 git status --short
 git commit -m "feat({TID}): {title}"
 bash skills/oprun/scripts/op-checkpoint.sh {TID}
@@ -183,30 +183,44 @@ bash skills/oprun/scripts/op-checkpoint.sh {TID}
 bash skills/oprun/scripts/close_check.sh {TID}
 ```
 
-末 task（叶子最后一个）时，closer 提案顺带含叶子级归档（总述关闭、前缀释放），leader 一并审批执行。
-
 回到循环顶部 3.1。
 
 ---
 
-## spec 级验收（整份 spec 跑完）
+## spec 级验收（Stage 4，整份 spec 所有 task 闭环后）
 
-所有 task 闭环后，派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 5 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
+派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 4 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
-**派 evaluator 前 leader 保证访问隔离**：brief 只含 spec + 生效规格 + 应用启动方式，不含 implementer 产物。初期 worktree + hook 拦 `src/**`，后期升级为独立验证环境（CI 构建产物，源码不入 evaluator 文件系统）。
+**派 evaluator 前 leader 保证访问隔离（三层，design §8.1）**：
+1. 跑 `scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
+2. hook 拦 evaluator 命中 `src/**` + `op_execution/tasks/**`（report/review/diff）。**前期**单机 worktree+hook（非 UI 类 AC 完整可验，UI 操作类受限）；**后期**独立验证环境（CI 构建产物 + 一台独立机器自由操作 UI，源码与 task 目录不入 evaluator 文件系统）。
+3. dispatch prompt 固定模板，hook 审计不含 task 路径/report/diff 片段（落地待 P2 验证）。
 
 ```js
 Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
   // model: 按顶部"派发模型规则"传——读 OP_EVALUATOR_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\nspec 级验收 {spec前缀}。\n读 op_blueprint/specs/{feature}.md + 工作 spec（op_execution/specs/{前缀}.md）。\n启动应用：{可测性契约中的启动方式}。\n逐 AC 评估（computer use/截图/CLI）→ PASS 的 AC 固化成 e2e/{前缀}/ 确定性脚本 → 每条固化测试做破坏检查（确认能红）→ 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。" })
+  prompt: "cd <work_dir> && pwd\n读 {eval_brief_path}，按 brief 执行 spec 级验收 {spec前缀}。" })
+```
+
+> prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、AC、可测性契约执行：逐 AC 评估 → PASS 的 AC 固化成 e2e/{前缀}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
+
+验收范围内 FAIL → 修复 task 回流（走 task 循环）重验收。验收 PASS → 进 per-leaf 收尾。
+
+## per-leaf 收尾（Stage 4 验收 PASS 后，closer 两段节奏之二）
+
+派 op-closer 产 per-leaf 提案（吸收验收结果）：
+
+```js
+Agent({ name: "op-closer", subagent_type: "op-closer",
+  // model: 按顶部"派发模型规则"传
+  prompt: "cd <work_dir> && pwd\n收尾叶子 {前缀} \"{title}\"。验收已 PASS。\n产 blueprint 更新提案到 op_execution/acceptance/{前缀}/blueprint_update.md（diff 覆盖 op_blueprint 全部文档 + baselines 合入段 + 叶子归档提案）。吸收验收发现的边界行为、FAIL 修复后的最终形态。只留\"现在是什么\"，过滤被否方案。不碰 git、不改 status、不归档、不盖戳、不 stage、不写 op_blueprint/。" })
 ```
 
 ## 闸门 C
 
-呈报三样给人审：验收报告 + 自决决策表（契约边界内决策，否了哪条转 rework）+ P0/P1 issue（人定阻不阻断 merge）。
+呈报四样给人审：验收报告 + 自决决策表（契约边界内决策，否了哪条转 rework）+ P0/P1 issue（人定阻不阻断 merge）+ closer 的 per-leaf 收尾提案。
 
-
-人批 → merge → 叶子归档（leader 执行：原文入 `op_record/specs/`，前缀释放）。
+人批 → leader 执行实际写入 `op_blueprint/`（specs + baselines 合入）→ merge → 叶子归档（原文入 `op_record/specs/`，acceptance 工作区归档，前缀释放）。
 
 ---
 
@@ -237,7 +251,7 @@ cd <原项目根目录>
 
 | 文件 | 用途 |
 |---|---|
-| `RULES.md` | 规则手册 + 操作细则 |
+| `RULES.md` | 运行时操作手册（compact 恢复入口） |
 | `docs_template/omni_powers/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
 | `scripts/op_close_pre.sh` | 收口前机械步骤 |

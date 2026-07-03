@@ -34,6 +34,8 @@ description: >
 
 ## 步骤二：工作 spec 编写（含内联设计探索）
 
+> spec 编写归 leader 主会话，建议本步骤前 `/model` 切 Opus（错误放大系数最大，design §5.2）。
+
 调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{前缀}_{名称}.md`（前缀编号：单需求 a_，多 task b_ 总述 + b01/b02 叶子，封顶两层）。
 
 spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。

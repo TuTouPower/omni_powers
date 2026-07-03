@@ -1,6 +1,6 @@
 # omni_powers
 
-Claude Code 多 Agent 协作工作流系统（v5 对齐）。leader 编排（被 oplead 驱动）、op-implementer 开发、op-reviewer 双裁决审查、op-evaluator 验收、op-closer 产收口提案。规格是唯一契约，全线 Sub Agent。
+Claude Code 多 Agent 协作工作流系统（v6 对齐）。leader 编排（被 oprun 驱动）、op-implementer 开发、op-reviewer 双裁决审查、op-evaluator 验收、op-closer 两段节奏收口。规格是唯一契约，全线 Sub Agent。
 
 ## 快速开始
 
@@ -11,12 +11,12 @@ Claude Code 多 Agent 协作工作流系统（v5 对齐）。leader 编排（被
 /opstatus    # 读 tasks_list.json + checkpoint，渲染人类可读状态
 ```
 
-模型可由环境变量自定义：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 三档之一（对应 `settings.json` 的 `ANTHROPIC_DEFAULT_*_MODEL`）。未设则不传 model 参数，继承主会话当前模型。
+模型可由环境变量自定义：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 三档之一（对应 `settings.json` 的 `ANTHROPIC_DEFAULT_*_MODEL`）。未设则不传 model 参数，继承主会话当前模型。**spec 编写（含设计探索）归 leader 主会话**，不走 dispatch，闸门 A 前 `/model` 切 Opus。
 
 ## 目录结构
 
 ```
-├── RULES.md        # 核心协议（规则手册 + 操作细则，v5 对齐）
+├── RULES.md        # 运行时操作手册（compact 恢复入口 + 全局状态视图，v6 对齐）
 │
 ├── docs/                    # 项目文档
 │   ├── op_decisions.md      #   决策记录
@@ -37,7 +37,7 @@ Claude Code 多 Agent 协作工作流系统（v5 对齐）。leader 编排（被
 │   ├── opstatus/          #   状态渲染（外部）
 │   ├── opspec/            #   spec 模板 + 设计探索（内部，opintake 调用）
 │   ├── opred/             #   红灯归因协议（内部，implementer/reviewer 引用）
-│   └── optriage/          #   issue 分级与转 task（内部，oplead 收尾调用）
+│   └── optriage/          #   issue 分级与转 task（内部，oprun 收尾时调用）
 │
 └── docs_template/omni_powers/ # 文档模板（三态模型）
     ├── README.md            #   模板用法和命名约定

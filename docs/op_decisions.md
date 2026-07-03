@@ -213,3 +213,23 @@
 - skills: 6 → 7（删 opstart/opplan/optask/opdebt，加 opintake/oprun/opstatus/opred/optriage）
 - hooks: 新增 pre/post_tool_use、stop、session_start
 - 详见 `docs/vendors/reconstruction-proposal.md`、`docs/vendors/v5-revision-notes.md`
+
+---
+
+## baseline 形态裁定（2026-07-03）
+
+| 决策 | 理由 |
+|---|---|
+| baseline 按信号性质分三层：结构化/语义（硬门）、视觉（锚点）、操作（手段） | 不按应用类型枚举——任何有外部可观察产物的系统都覆盖（DB/API/进程/消息/定时任务），形态由应用暴露的可观察接口决定 |
+| 结构化信号进硬门机械断言，视觉截图不进机械硬门（交 evaluator 多模态对照） | 像素 diff 高 flaky（字体渲染、合法 UI 演化）；结构化信号可复现零放水。多模态比像素 diff 强（看语义级差异），但继承 stock model 放水，靠 hard-pass gate+预期失败模式+钓鱼审计兜 |
+| baseline 可信——重验时 evaluator 对照 baseline + spec 看新结果 | baseline 是首次评经 hard-pass gate+破坏检查验过能红的 PASS 证据，锚定安全；确认偏误由 §8.1 防放水机制兜 |
+| evaluator 自己操作应用复现 AC（computer use/独立机器），截图是锚点非比对对象 | "亲自观察"=自己操作触发，非看别人截的图。重验 = 重新操作复现路径逐步对照 |
+| 前期单机（非 UI 类完整、UI 受限）/ 后期独立验证环境 + 独立机器自由操作 UI | 非 UI 类不依赖操作能力前期就完整；UI 类随操作能力升级。与文件系统隔离同阶段线 |
+| 夜跑判定以结构化硬门信号为准，视觉对照不阻断 | 视觉 flaky 不进硬门，避免误报风暴 |
+
+**影响**：
+- design.md §8 表格 spec 层、§8.1 文件系统层、§8.2 重写（信号三层表+时序+阶段差+自己操作）
+- agents/op-evaluator.md：步骤 1 自己操作+截图锚点、步骤 2 基准信号两层、访问隔离阶段差
+- skills/opspec/SKILL.md：可测性契约"测试方式"→"验收信号"，入口扩到 DB/进程/消息/定时任务
+- skills/oprun/SKILL.md：补阶段差
+- agents/op-closer.md：baselines 合入段标注信号类型
