@@ -25,7 +25,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 - **首次评（裸评建基准）**：无 baseline 可读。直接进步骤 1，对照 spec 推导期望→观察实际，PASS 经 hard-pass gate + 破坏检查（步骤 3）后才在步骤 2 存基准快照。
 - **重验（对照评）**：有 baseline，读基准位置按时序分：
   - **同 Stage 4 内重验**（首次 FAIL→修 task→二次评，per-leaf 收尾未跑）：读 `op_execution/acceptance/{前缀}/baselines/`（首次评刚存的临时区，`op_blueprint/baselines/` 此阶段仍空）。
-  - **跨叶子 / 后续迭代重验**（前叶子已收尾合入）：读 `op_blueprint/baselines/index.md` + `op_blueprint/baselines/{前缀}/`。
+  - **跨叶子 / 后续迭代重验**（前叶子已收尾合入）：读 `op_blueprint/baselines/baselines_index.md` + `op_blueprint/baselines/{前缀}/`。
 
 后续评估对照基准——新快照和基准不一致且非预期改进 → 标记 REGRESSION。
 
