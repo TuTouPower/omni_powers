@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# PostToolUse hook: src/** 编辑后自动跑受影响测试，留机器证据
-# 证据存 docs/omni_powers/op_execution/tasks/{TID}/context.md（implementer 追加）
-# 5 分钟内的新鲜证据由 Stop hook 校验
+# PostToolUse hook: 代码/测试编辑后自动跑受影响测试，留机器证据
+# 证据存 docs/omni_powers/op_execution/tasks/{TID}/test_evidence_*.log
+# Stop hook 校验 5 分钟内新鲜证据；本 hook 保留 60 分钟审计轨迹（职责不同，非不一致）
 
 set -uo pipefail
 
@@ -15,9 +15,9 @@ file_path="$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
 root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 rel="${file_path#$root/}"
 
-# 只管 src/**
+# #20: 管理测试相关路径——src/** + tests/** + e2e/**（原仅 src/**，漏 tests/e2e 致 Stop 误伤 #19）
 case "$rel" in
-  src/*) ;;
+  src/*|tests/*|e2e/*) ;;
   *) exit 0 ;;
 esac
 
@@ -51,7 +51,7 @@ evidence="$tasks_dir/test_evidence_${ts}.log"
   echo "--- exit: $? ---"
 } > "$evidence" 2>&1
 
-# 清理 5 分钟前旧证据
+# 清理旧证据：保留 60 分钟审计轨迹（Stop hook 只认 5 分钟内新鲜，#47）
 find "$tasks_dir" -name 'test_evidence_*.log' -mmin +60 -delete 2>/dev/null
 
 exit 0
