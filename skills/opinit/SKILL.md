@@ -85,6 +85,11 @@ else
 fi
 
 # 2. 合并 hooks 配置（settings.template.json 的 hook 命令用 $OP_HOME/hooks/*.sh）
+# #42：jq '*' 对 array 是覆盖语义——若你已有 hooks 段，会被 template 数组覆盖，故先备份告警
+if [ -f .claude/settings.json ] && jq -e '.hooks' .claude/settings.json >/dev/null 2>&1; then
+  echo "[WARN] .claude/settings.json 已有 hooks 段，jq '*' 会覆盖数组，已备份，请手动确认共存"
+  cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
+fi
 if [ -f .claude/settings.json ]; then
   jq -s '.[0] * .[1]' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json

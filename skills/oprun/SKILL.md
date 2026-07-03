@@ -195,6 +195,7 @@ bash skills/oprun/scripts/close_check.sh {TID}
 1. 跑 `scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
 2. hook 拦 evaluator 命中 `src/**` + `op_execution/tasks/**` + `op_record/tasks/**`（Stage 4 已归档）+ `op_record/decisions.md`；Bash 读源码审计拦 cat/git show+src|tasks 路径。**前期**单机 worktree+hook（非 UI 类 AC 完整可验，UI 操作类受限）；**后期**独立验证环境（CI 构建产物 + 一台独立机器自由操作 UI，源码与 task 目录不入 evaluator 文件系统）。
 3. dispatch prompt 固定模板，hook 审计不含 task 路径/report/diff 片段（落地待 P2 验证）。
+4. **dispatch 前 leader 主会话 `export OP_AGENT_ROLE=evaluator`**（#17：hook 据此放行 evaluator 写 e2e/BUG-*；hook 对非 evaluator 全局拦）。dispatch 后 `unset OP_AGENT_ROLE`。env 向 subagent 的传递机制待 P2 验证。
 
 ```js
 Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
