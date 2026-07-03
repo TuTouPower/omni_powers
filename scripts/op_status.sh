@@ -5,7 +5,7 @@
 #   op-status --batch <TID1,TID2,...> <status>     批量 task（同状态）
 #
 # status 有效值: 待规划 待开始 进行中 审阅中 收口中 完成 阻塞 跳过 挂起
-# blocked_by 仅在 status=阻塞 时填写 (key/domain/quality/spawn)，其余留空
+# blocked_by 仅在 status=阻塞 时填写 (resource/quality/spawn)，其余留空
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -43,8 +43,8 @@ esac
 if [ "$blocked" = "null" ] || [ -z "$blocked" ]; then
     blocked_json="null"
 else
-    case "$blocked" in key|domain|quality|spawn) ;;
-        *) die "无效 blocked_by: $blocked（有效值: key domain quality spawn）" ;;
+    case "$blocked" in resource|quality|spawn) ;;
+        *) die "无效 blocked_by: $blocked（有效值: resource quality spawn）" ;;
     esac
     blocked_json="\"$blocked\""
 fi

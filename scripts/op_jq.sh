@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# op-jq：tasks_list.json 通用查询
+# op_jq：tasks_list.json 通用查询
 # 用法: op_jq.sh <query> [args...]
 # 查询项:
 #   pending              — 查所有待开始 task
@@ -16,7 +16,7 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
 CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|skipped|suspended|downstream|status|all> [args...]}"
-shift 2>/dev/null || true
+shift
 
 case "$CMD" in
 pending)
@@ -27,16 +27,17 @@ pending_plan)
     ;;
 deps)
     TID="${1:?用法: op_jq.sh deps <TID>}"
-    DEPS=$(jq -r '.tasks[] | select(.id=="'"$TID"'") | .depends_on[]?' "$TASKS" 2>/dev/null || true)
+    DEPS=$(jq --arg tid "$TID" -r '.tasks[] | select(.id==$tid) | .depends_on[]?' "$TASKS" 2>/dev/null || true)
     if [ -z "$DEPS" ]; then
         echo "无依赖"
         exit 0
     fi
     has_unready=0
     for d in $DEPS; do
-        st=$(jq -r '.tasks[] | select(.id=="'"$d"'") | .status' "$TASKS")
+        st=$(jq --arg d "$d" -r '.tasks[] | select(.id==$d) | .status' "$TASKS")
         echo "$d: $st"
-        if [[ "$st" == "待规划" || "$st" == "挂起" || "$st" != "完成" ]]; then
+        # 未就绪 = 非完成（#22：原条件含冗余的 待规划/挂起 分支，等价于 st != 完成）
+        if [ "$st" != "完成" ]; then
             has_unready=1
         fi
     done
@@ -55,11 +56,11 @@ suspended)
     ;;
 downstream)
     TID="${1:?用法: op_jq.sh downstream <TID>}"
-    jq --arg tid "$TID" '.tasks[] | select(.depends_on != null and (.depends_on | index($tid))) | .id' "$TASKS"
+    jq --arg tid "$TID" -r '.tasks[] | select(.depends_on != null and (.depends_on | index($tid))) | .id' "$TASKS"
     ;;
 status)
     TID="${1:?用法: op_jq.sh status <TID>}"
-    jq -r '.tasks[] | select(.id=="'"$TID"'") | .status' "$TASKS"
+    jq --arg tid "$TID" -r '.tasks[] | select(.id==$tid) | .status' "$TASKS"
     ;;
 all)
     jq '[.tasks[] | {id, status, depends_on}]' "$TASKS"
