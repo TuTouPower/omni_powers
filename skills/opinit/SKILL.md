@@ -64,22 +64,32 @@ Agent({
 
 ## 步骤五：注册 hooks
 
-读取 `hooks/settings.template.json`，合并到项目的 `.claude/settings.json`（或全局 `~/.claude/settings.json`）：
+先引导用户确认 `$OP_HOME`（插件安装目录 = 本仓库 git clone 位置）并写入使用方 `.claude/settings.json` 的 `env` 段；再合并 hooks 配置：
 
 ```bash
-# 项目级（推荐）
+# 1. 引导设 $OP_HOME（opinit 在 $OP_HOME/skills/opinit/，上两级即插件根）
+OP_HOME_SUGGESTED="$(cd "$(dirname "$0")/../.." && pwd)"
+echo "检测到插件目录: $OP_HOME_SUGGESTED（确认或让用户修正）"
 mkdir -p .claude
+if [ -f .claude/settings.json ]; then
+  jq --arg p "$OP_HOME_SUGGESTED" '.env.OP_HOME = $p' .claude/settings.json > .claude/settings.json.tmp \
+    && mv .claude/settings.json.tmp .claude/settings.json
+else
+  printf '{"env":{"OP_HOME":"%s"}}' "$OP_HOME_SUGGESTED" | jq . > .claude/settings.json
+fi
+
+# 2. 合并 hooks 配置（settings.template.json 的 hook 命令用 $OP_HOME/hooks/*.sh）
 if [ -f .claude/settings.json ]; then
   jq -s '.[0] * .[1]' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json
 else
   cp hooks/settings.template.json .claude/settings.json
 fi
-chmod +x hooks/*.sh
-echo "[OK] hooks 已注册到 .claude/settings.json"
+chmod +x "$OP_HOME/hooks/"*.sh
+echo "[OK] $OP_HOME 写入 env，hooks 已注册"
 ```
 
-> hook 脚本路径用 `$CLAUDE_PROJECT_DIR/hooks/` 引用，随项目走。
+> hook 与脚本统一通过 `$OP_HOME`（插件安装目录）引用：`$OP_HOME/hooks/*.sh`、`$OP_HOME/scripts/*.sh`。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制（op_install.md 描述的 plugin 模式待 P1 重写为 skill+$OP_HOME）。
 
 ## 步骤六：提取未执行计划
 

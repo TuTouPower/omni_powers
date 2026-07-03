@@ -67,11 +67,11 @@ cd omni_powers
 
 | 要查什么 | 去哪看 |
 |---|---|
-| 完整协议规则 + 操作细则 | `RULES.md` |
+| 运行时操作手册 + 状态机 | `RULES.md` |
+| 设计档案（为什么这么设计） | `docs/omni_powers_design.md` |
 | 决策记录 | `docs/op_decisions.md` |
-| 实验发现 | `docs/omni_powers/op_findings.md` |
-| 历史踩坑 | `docs/experience.md` |
+| 实验发现（归档） | `docs/archive/op_findings.md` |
 | 文档模板 | `docs_template/omni_powers/README.md` |
-| 文档导航 | `docs_template/omni_powers/index.md`（部署后为 `docs/index.md`） |
-| v5 重构方案 | `docs/vendors/reconstruction-proposal.md` |
-| v5 修订意见 | `docs/vendors/v5-revision-notes.md` |
+| 文档导航（模板） | `docs_template/omni_powers/index.md`（部署后为 `docs/omni_powers/index.md`） |
+| 厂商分析 | `docs/vendors_analyze/overview.md` |
+| 通用化安装方案 | `docs/op_install.md` |
