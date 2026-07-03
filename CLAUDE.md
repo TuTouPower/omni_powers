@@ -68,7 +68,7 @@ cd omni_powers
 | 要查什么 | 去哪看 |
 |---|---|
 | 完整协议规则 + 操作细则 | `RULES.md` |
-| 决策记录 | `docs/omni_powers/op_decisions.md` |
+| 决策记录 | `docs/op_decisions.md` |
 | 实验发现 | `docs/omni_powers/op_findings.md` |
 | 历史踩坑 | `docs/experience.md` |
 | 文档模板 | `docs_template/omni_powers/README.md` |
