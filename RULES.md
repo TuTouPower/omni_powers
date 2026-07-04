@@ -107,6 +107,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - 磁盘是真状态，agent 上下文是可重建缓存
 - 全线 Sub Agent，每次 fresh dispatch，上下文隔离
 - 证据由机器产出，无新鲜机器证据的"完成"无效
+- **入口检查环境**：任何 skill/agent 入口先跑 `bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法提示），绝不闷头失败——Windows 无 jq 是常见坑
 - task = commit，粒度沿低耦合缝隙切
 - review ≤2 轮；Stage 4 验收 ≤3 轮（到顶按严重度分流，详见 op-reviewer.md / design §8）
 - issue 不直接改代码，转正式 task 走 change type 流程

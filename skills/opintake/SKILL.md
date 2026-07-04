@@ -8,6 +8,8 @@ description: >
 
 # Op Intake Skill
 
+> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+
 `/opintake "<需求>"` 是需求入口。分拣 → spec → 闸门 A → 拆 task → 就绪。
 
 协议规则见 `RULES.md`。spec 模板与设计探索流程见内部 skill `opspec`。

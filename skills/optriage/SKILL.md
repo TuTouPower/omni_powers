@@ -7,6 +7,8 @@ description: >
 
 # optriage：issue 分级与转 task
 
+> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+
 ## 触发
 
 - leader 收尾时调用（每叶子收尾 triage 一次，oprun 驱动）

@@ -8,6 +8,8 @@ description: >
 
 # Op Run Skill
 
+> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+
 `/oprun` 从 checkpoint 续跑就绪的 task。leader 查状态、派 implementer、review、收口，自动推进。
 
 协议规则、状态机、review 判定等见 `RULES.md`。入口分拣与 spec 编写见 `opintake`。

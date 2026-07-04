@@ -8,6 +8,8 @@ description: >
 
 # Op Status Skill
 
+> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+
 `/opstatus` 渲染当前状态。只读，不改任何文件。
 
 ## 步骤

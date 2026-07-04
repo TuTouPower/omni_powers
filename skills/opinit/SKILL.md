@@ -7,6 +7,8 @@ description: >
 
 # Op Init Skill
 
+> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）——Windows 无 jq 是常见坑
+
 `/opinit` 在已有项目中初始化 omni_powers 工作流骨架，归档旧文档，注册 hooks。一次性。
 
 > **问询原则**：步骤零先浏览所有文档 + 整理所有问题，AskUserQuestion **一次问完**。后续步骤（二/六等）按零答案执行，**不再问**——除非遇严重阻塞（OP_HOME 未设 / 插件资源缺失 / 关键文件读不到，直接 die 提示，不是问）。
