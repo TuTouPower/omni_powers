@@ -54,15 +54,17 @@ find docs -maxdepth 1 -name "*.md" -print 2>/dev/null
 
 用 AskUserQuestion 让用户确认每个文件是否归档。用户确认后逐个 `mv {file} docs/archive/`，不确认的保留原位。
 
-## 步骤三：生成 Blueprint
+## 步骤三：生成 Blueprint（按职责矩阵分工 + specs 不空）
 
-派发 Agent 读取归档区，提炼当前事实：
+派发 Agent 读归档区 + git log + 现有代码，提炼"现在是什么"，按 `$OP_HOME/docs/omni_powers_design.md §3.3` 文档职责矩阵生成（各文档单一职责，重复内容独占一份，其他"详见 X.md"）：
 
 ```js
 Agent({
   name: "blueprint-generator", model: "sonnet",
-  prompt: "读取 docs/archive/ 中的文档。根据现有业务和架构，生成符合 omni_powers 规范的文档到 docs/omni_powers/op_blueprint/（prd.md、architecture.md、domain.md、conventions.md、test.md）。只描述'现在是什么'，丢弃过时内容。" })
+  prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §3.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。" })
 ```
+
+完成后**提示用户瘦身心 CLAUDE.md**：CLAUDE.md 是"门牌"，只留项目一句话定位 + dev/build/test 命令 + 指向 `docs/omni_powers/op_blueprint/` 各文档；与 blueprint 重复的段（技术栈/目录树/架构约束/命名/日志）删，改为"详见 architecture.md / conventions.md / ..."。
 
 ## 步骤四：重写导航 (index.md)
 

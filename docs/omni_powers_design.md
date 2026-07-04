@@ -142,6 +142,31 @@ docs/omni_powers/op_execution/
 
 ---
 
+### 3.3 文档职责矩阵（去重边界）
+
+每个文档单一职责，重复内容只留一份（独占者），其他文档"详见 X.md"。CLAUDE.md 是"门牌"（指路），不重复 blueprint 内容。
+
+| 文档 | 唯一职责 | 不该有（指向即可） |
+|---|---|---|
+| `CLAUDE.md`（项目入口） | 项目一句话定位 + dev/build/test 命令 + 指向 `op_blueprint/` 各文档 | 技术栈/目录树/架构约束/命名/日志/调试规则 |
+| `prd.md` | 产品需求：定位/用户/功能/成功标准/不做 | 技术实现 |
+| `architecture.md` | 架构真相：**技术栈 + 目录结构 + 模块划分 + 数据流 + 跨模块契约**（唯一目录/技术栈真相） | 命名规范/编码风格（→ conventions） |
+| `domain.md` | 领域语言（术语表）+ 跨功能**业务**不变量（如"刷新恢复""hook 隔离原则""AI 实例不进 store"） | 编码风格/实现细节（→ conventions） |
+| `conventions.md` | 编码约定：命名/风格/文件组织/浏览器 API/不可变性/日志规则/适配器开发步骤（**编码独占**） | 业务不变量（→ domain）/架构（→ architecture） |
+| `test.md` | 测试宪章：分层/覆盖/lane/Mock 规则/调试入口（CDP 等） | 命名/架构 |
+| `spec_index.md` | **纯 specs/ 索引**：功能清单 + 一句话说明 + 文件指引 | 技术栈/架构/安全（→ architecture/domain） |
+| `specs/{feature}.md` | 各功能生效规格：接口/数据模型/行为（每功能一份） | — |
+
+**常见重复治理**：
+- 目录结构/技术栈 → `architecture.md` 独占（CLAUDE.md/spec_index 删）
+- 命名/编码风格/日志规则/不可变性/适配器步骤 → `conventions.md` 独占
+- 业务术语（如 bot→ai）→ `domain.md` 独占
+- 调试入口（CDP 端口等）→ `test.md` 独占
+
+**已有项目 opinit**：blueprint-generator 从 `docs/archive/` + git log + 现有代码提炼**已实现功能**到 `specs/{feature}.md`（非空，每功能一份），spec_index 索引；新增功能（未实现）不生成，留 `/opintake` 拆分时补。详见 `skills/opinit/SKILL.md` 步骤三。
+
+---
+
 ## 4. 全流程总览（对应用户旅程：opintake 管 Stage 0-2，oprun 管 Stage 3-6）
 
 ```

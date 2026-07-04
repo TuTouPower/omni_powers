@@ -1,8 +1,8 @@
 # 产品需求文档 (PRD)
 
-> 产品层面的"做什么"和"为什么"。技术怎么实现不写这，写 architecture.md。
-> 需求变更时改本文件，再拆 task。
-> 本文件由 grill-me 产出（grill-me 由外部 repo 提供）。
+> 职责（design §3.3）：产品需求——定位/用户/功能/成功标准/不做。
+> 不在此：技术实现（→ architecture.md）。
+> 本文件由 grill-me 产出（grill-me 由外部 repo 提供）。需求变更时改本文件，再拆 task。
 
 ## 产品定位
 （一句话：给谁、解决什么问题）

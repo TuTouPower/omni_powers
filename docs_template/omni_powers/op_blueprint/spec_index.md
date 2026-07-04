@@ -1,27 +1,18 @@
-# 技术规格总纲
+# 功能规格索引
 
-> 全局总纲 + specs/ 目录索引。需求变更时改。
-> 各功能当前生效规格在 specs/{feature}.md，每 task 闭环时整理更新。
+> 职责（design §3.3）：**纯 specs/ 索引**——功能清单 + 一句话说明 + 文件指引。
+> 不在此：技术栈（→ architecture.md）、安全不变量（→ domain.md）、架构（→ architecture.md）。
 
-## 技术栈
-- Web: {前端框架/语言}
-- API: {后端框架/语言}
-- DB: {数据库}
+## 功能清单
 
-## 架构分层
-（简要，详见 architecture.md）
+> 每行：功能名 → specs/{feature}.md + 一句话说明 + 状态。
+> 已实现功能 opinit 时从 archive + 代码提炼填入；新增功能 /opintake 拆分时补。
 
-## 安全边界
-- 浏览器/客户端不接触后端高权限密钥（service key 等）
-- API Key 加密存储，不明文返回
-- secret 由环境提供，不硬编码
+| 功能 | 规格 | 一句话说明 | 状态 |
+|---|---|---|---|
+| {功能名} | [specs/{feature}.md](specs/{feature}.md) | {说明} | 已实现 / 待 opintake |
 
-## 功能规格索引
+## 设计资产指引（可选）
 
-> 示例格式（占位，真实项目按 task 闭环时生成 specs/ 下文件后填真实链接）。
-
-| 功能 | 规格 | 负责 task |
-|---|---|---|
-| 注册登录 | specs/auth.md | T5, T26, T32 |
-| 用户设置 | specs/user_settings.md | T6 |
-| ... | ... | ... |
+- {项目设计参考路径，如 docs/design/}
+- {产品规格，如 docs/SPEC.md（若未归档）}
