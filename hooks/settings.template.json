@@ -1,11 +1,11 @@
 {
-  "_comment": "omni_powers hooks 配置模板。opinit 安装时合并到 ~/.claude/settings.json（或项目 .claude/settings.json）。",
+  "_comment": "omni_powers hooks 配置模板。opinit 安装时合并到 ~/.claude/settings.json。hook command 走 polyglot wrapper（run-hook.cmd），跨 Windows/macOS/Linux——参数不带 .sh（避免 Claude Code 2.1.x Windows 自动 bash 检测），wrapper 内部补 .sh。",
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|Bash",
         "hooks": [
-          { "type": "command", "command": "bash $OP_HOME/hooks/pre_tool_use.sh" }
+          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" pre_tool_use" }
         ]
       }
     ],
@@ -13,7 +13,7 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "bash $OP_HOME/hooks/post_tool_use.sh" }
+          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" post_tool_use" }
         ]
       }
     ],
@@ -21,14 +21,14 @@
       {
         "matcher": "op-implementer",
         "hooks": [
-          { "type": "command", "command": "bash $OP_HOME/hooks/stop.sh" }
+          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" stop" }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash $OP_HOME/hooks/session_start.sh" }
+          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" session_start" }
         ]
       }
     ]

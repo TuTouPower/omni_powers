@@ -62,6 +62,8 @@ export OP_HOME="$(pwd)"    # 插件安装目录，opinit 会写入使用方 sett
 
 - `jq`（tasks_list.json 查询）
 - `git`（worktree 隔离，可选）
+- **Windows 用户**：Git for Windows（提供 bash + cygpath；hook 走 polyglot wrapper，见 `hooks/README.md`）
+- `bats`（开发测试，可选；`npm install -g bats`）
 
 ## 相关文档
 
