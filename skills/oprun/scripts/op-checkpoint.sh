@@ -17,9 +17,12 @@ TASKS_LIST="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
 HASH=$(git rev-parse HEAD)
 TITLE=$(jq -r ".tasks[] | select(.id == \"$TID\") | .title" "$TASKS_LIST" 2>/dev/null || echo "")
 
-# --- 1. 追加已完成 task ---
-if [ -n "$TITLE" ] && [ -n "$HASH" ]; then
-    sed -i "/^## 已完成 task$/a - ${TID} \"${TITLE}\" ✅ ${HASH}" "$CHECKPOINT"
+# --- 1. 追加已完成 task（P1-7：幂等 + awk 避免 TITLE 特殊字符破坏 sed）---
+if [ -n "$TITLE" ] && [ -n "$HASH" ] && ! grep -qE "^- ${TID} " "$CHECKPOINT"; then
+    awk -v tid="$TID" -v title="$TITLE" -v hash="$HASH" '
+        /^## 已完成 task$/ { print; print "- " tid " \"" title "\" ✅ " hash; next }
+        { print }
+    ' "$CHECKPOINT" > "$CHECKPOINT.tmp" && mv "$CHECKPOINT.tmp" "$CHECKPOINT"
 fi
 
 # --- 2. 生成 tasks_list 状态 ---

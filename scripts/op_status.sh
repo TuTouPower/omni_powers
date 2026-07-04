@@ -67,8 +67,9 @@ if $batch; then
         "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     echo "[OK] $tids → $status"
 else
-    # 阻塞需要同时设 blocked_by
+    # 阻塞需要同时设 blocked_by（P1-5：必须有值）
     if [ "$status" = "阻塞" ]; then
+        [ "$blocked" != "null" ] && [ -n "$blocked" ] || die "status=阻塞 必须提供 blocked_by（resource/quality/spawn）"
         jq --arg tid "$tid" --arg status "$status" --argjson blocked "$blocked_json" \
             '.tasks |= map(if .id == $tid then .status = $status | .blocked_by = $blocked else . end)' \
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"

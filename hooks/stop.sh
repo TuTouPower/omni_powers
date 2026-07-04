@@ -15,13 +15,18 @@ fi
 checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
 tid="$(awk -F': *' '/^current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
 
-# 无活跃 task → 放行
-[ -z "$tid" ] && exit 0
+# 无活跃 task → WARN（不静默放行；current_task 应由 oprun 派 implementer 前写入）
+if [ -z "$tid" ]; then
+  echo "[Hook] WARN: current_task 为空，无法校验新鲜证据。oprun 派 implementer 前应写 current_task 到 leader_checkpoint.md。" >&2
+  exit 0
+fi
 
 tasks_dir="docs/omni_powers/op_execution/tasks/$tid"
 
+# P1-6：无测试框架项目（只有 NONE 标记）→ 放行
+[ -f "$tasks_dir/test_evidence_NONE.log" ] && exit 0
 # 找 5 分钟内的证据
-evidence="$(find "$tasks_dir" -name 'test_evidence_*.log' -mmin -5 2>/dev/null | head -1)"
+evidence="$(find "$tasks_dir" -name 'test_evidence_*.log' -not -name 'test_evidence_NONE.log' -mmin -5 2>/dev/null | head -1)"
 if [ -z "$evidence" ]; then
   echo "[Hook] BLOCKED: $tid 无 5 分钟内新鲜测试证据。跑测试产出证据后再收工。" >&2
   exit 2

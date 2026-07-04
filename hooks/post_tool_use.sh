@@ -35,8 +35,15 @@ if [ -f "$root/package.json" ] && jq -e '.scripts.test' "$root/package.json" >/d
   test_cmd="npm test -- ${rel%.ts}.test.ts 2>/dev/null || npm test 2>/dev/null"
 elif [ -f "$root/pytest.ini" ] || [ -d "$root/tests" ]; then
   test_cmd="pytest -q 2>/dev/null"
+elif [ -n "${OP_TEST_COMMAND:-}" ]; then
+  test_cmd="$OP_TEST_COMMAND 2>/dev/null"
 fi
-[ -z "$test_cmd" ] && exit 0
+if [ -z "$test_cmd" ]; then
+  # P1-6：无测试框架——写 NONE 标记，Stop 据此放行（不阻塞无测试项目）
+  evidence="$tasks_dir/test_evidence_NONE.log"
+  { echo "=== PostToolUse: 未识别测试入口（无 package.json/pytest/OP_TEST_COMMAND）==="; echo "file: $rel"; } > "$evidence" 2>&1
+  exit 0
+fi
 
 ts="$(date +%Y%m%d_%H%M%S 2>/dev/null || echo manual)"
 evidence="$tasks_dir/test_evidence_${ts}.log"

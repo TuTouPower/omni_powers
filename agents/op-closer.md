@@ -60,7 +60,7 @@ leader 在 spec 所有 task 闭环 + Stage 4 验收 PASS 后派你。产 bluepri
 
 ### 1. 读 spec + 验收报告 + 现有 blueprint
 
-读 `op_execution/specs/{前缀}.md` 全文 + 验收报告 `op_execution/specs/{spec}_acceptance.md` + 对照 `op_blueprint/` 现有文档（specs/prd/architecture/domain/conventions/test/baselines），提取本 spec 当前生效的：
+读 `op_execution/specs/{前缀}.md` 全文 + 验收报告 `op_execution/acceptance/{前缀}/acceptance_report.md` + 对照 `op_blueprint/` 现有文档（specs/prd/architecture/domain/conventions/test/baselines），提取本 spec 当前生效的：
 - 接口/数据模型/约束/行为
 - 哪些进 op_blueprint、哪些被上游覆盖而删除、哪些是修改
 - 验收发现的边界行为补进生效规格

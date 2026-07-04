@@ -73,7 +73,7 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
 5. issue 文件状态改 `triaged → 转 task`，记录转到的 TID
 
 ```bash
-bash scripts/op_new_task.sh {TID}
+bash "$OP_HOME/scripts/op_new_task.sh {TID}
 ```
 
 转 task 后的 issue 走标准 `/oprun` 循环，**不走免检通道**——issue 是登记处不是免检通道。

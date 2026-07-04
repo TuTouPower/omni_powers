@@ -22,7 +22,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 **收到任务后先跑判断脚本**：
 
 ```bash
-bash skills/oprun/scripts/op-coder-check.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh {TID}
 # 输出 mode + round，据此决定走哪个流程
 ```
 

@@ -53,6 +53,10 @@ fi
 
 bash "$PLUGIN_ROOT/scripts/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
 
+# P0-4：收口完成，清 current_task（hook 不再校验本 task 证据）
+CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
+[ -f "$CHECKPOINT" ] && sed -i "s/^current_task:.*/current_task:/" "$CHECKPOINT" || true
+
 # stage 边界收窄（#25）：只 add 本 task 归档 + progress + tasks_list，不 blanket add op_blueprint/op_execution
 git add \
     "docs/omni_powers/op_record/tasks/$TID" \

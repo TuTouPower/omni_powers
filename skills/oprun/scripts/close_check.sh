@@ -19,7 +19,7 @@ warn=0
 echo "=== per-task 收口检查: $TID ==="
 
 # 1. leader_checkpoint.md 含本 task
-if grep -q "$TID" docs/omni_powers/op_execution/leader_checkpoint.md 2>/dev/null; then
+if grep -qE "^- ${TID} " docs/omni_powers/op_execution/leader_checkpoint.md 2>/dev/null; then
     echo "[PASS] leader_checkpoint.md 含 ${TID}"
 else
     echo "[FAIL] leader_checkpoint.md 未更新 ${TID}"

@@ -1,6 +1,6 @@
 # {TID} 质量阻塞
 
-> 第 3 轮 review 仍 FAIL 时写。跳过该 task 继续。
+> review 满 2 轮仍 FAIL 时写（第 2 轮 FAIL → 阻塞，下游跳过）。
 
 ## task
 {TID} {title}
@@ -9,7 +9,7 @@
 （从 review.md 摘要残留的 CRITICAL/HIGH）
 
 ## 已尝试轮数
-3 轮
+2 轮（review 上限）
 
 ## 影响
 - 该 task 标"status=阻塞, blocked_by=quality"

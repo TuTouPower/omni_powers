@@ -43,7 +43,7 @@ rel="${file_path#$root/}"
 
 # --- spec 写保护：op_blueprint/** 下 approved/in_progress 的 spec 拦截 ---
 case "$rel" in
-  docs/omni_powers/op_blueprint/specs/*.md|docs/omni_powers/op_blueprint/*.md)
+  docs/omni_powers/op_blueprint/specs/*.md|docs/omni_powers/op_blueprint/*.md|docs/omni_powers/op_blueprint/baselines/*)
     if [ -f "$file_path" ]; then
       status="$(awk -F': *' '/^status:/{print $2; exit}' "$file_path" 2>/dev/null | tr -d ' ')"
       if [ "$status" = "approved" ] || [ "$status" = "in_progress" ]; then

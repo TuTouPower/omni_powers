@@ -2,77 +2,40 @@
   "tasks": [
     {
       "id": "T01",
-      "title": "{title}",
+      "title": "{语义级标题，一句 commit message 能说清}",
+      "status": "待开始",
+      "spec": "{前缀}",
+      "type": "实现",
+      "covers_ac": ["AC-1"],
+      "touches_inv": [],
       "depends_on": null,
-      "status": "完成",
-      "verification": "{验收标准}",
-      "blocked_by": null,
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
+      "risk_probe": false,
+      "workset": ["src/..."]
     },
     {
       "id": "T02",
       "title": "{title}",
+      "status": "待开始",
+      "spec": "{前缀}",
+      "type": "实现",
+      "covers_ac": ["AC-2"],
+      "touches_inv": ["INV-1"],
       "depends_on": ["T01"],
-      "status": "审阅中",
-      "verification": "{验收标准}",
-      "blocked_by": null,
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
+      "risk_probe": false,
+      "workset": ["src/..."]
     },
     {
       "id": "T03",
       "title": "{title}",
-      "depends_on": ["T01"],
-      "status": "进行中",
-      "verification": "{验收标准}",
-      "blocked_by": null,
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
-    },
-    {
-      "id": "T04",
-      "title": "{title}",
-      "depends_on": ["T01"],
-      "status": "待规划",
-      "verification": "{验收标准}",
-      "blocked_by": null,
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
-    },
-    {
-      "id": "T05",
-      "title": "{title}",
-      "depends_on": ["T02"],
       "status": "阻塞",
-      "verification": "{验收标准}",
-      "blocked_by": "key",
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
-    },
-    {
-      "id": "T06",
-      "title": "{title}",
-      "depends_on": null,
-      "status": "挂起",
-      "verification": "{验收标准}",
-      "blocked_by": null,
-      "created_at": "2026-01-01T00:00:00+08:00",
-      "updated_at": "2026-01-01T00:00:00+08:00"
-    }
-  ],
-  "blockers": [
-    {
-      "id": "B1",
-      "desc": "{外部依赖缺失描述，如 API key/域名/凭据}",
-      "affects": ["T04"],
-      "status": "待提供"
-    },
-    {
-      "id": "B2",
-      "desc": "{域名/外部端点缺失描述}",
-      "affects": ["T05"],
-      "status": "待提供"
+      "blocked_by": "resource",
+      "spec": "{前缀}",
+      "type": "实现",
+      "covers_ac": ["AC-3"],
+      "touches_inv": [],
+      "depends_on": ["T01"],
+      "risk_probe": false,
+      "workset": ["src/..."]
     }
   ]
 }

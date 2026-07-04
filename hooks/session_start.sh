@@ -35,7 +35,7 @@ if [ -d "docs/omni_powers/op_blueprint/specs" ]; then
     [ -f "$spec" ] || continue
     status="$(awk -F': *' '/^status:/{print $2; exit}' "$spec" 2>/dev/null | tr -d ' ')"
     if [ "$status" = "approved" ] || [ "$status" = "in_progress" ]; then
-      if ! git diff --quiet -- "$spec" 2>/dev/null; then
+      if ! git diff --quiet HEAD -- "$spec" 2>/dev/null; then
         echo "[Hook] WARN: $spec 状态=$status 但有未 commit 改动，疑似规格漂移。走变更子流程。" >&2
       fi
     fi

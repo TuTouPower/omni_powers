@@ -89,7 +89,7 @@ cat RULES.md
 ### 子步骤 3.2：派 op-implementer
 
 ```bash
-bash skills/oprun/scripts/op-coder-check.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh {TID}
 # 输出: mode=normal|fail|blocked, round=1|2
 # exit 0=可继续, exit 1=阻塞
 ```
@@ -112,7 +112,9 @@ docs/omni_powers/op_execution/tasks/{TID}/brief.md：
 ```
 
 ```bash
-bash scripts/op_status.sh {TID} 进行中
+bash "$OP_HOME/scripts/op_status.sh {TID} 进行中
+# P0-4：写 current_task，PostToolUse/SubagentStop hook 据此校验新鲜证据
+sed -i "s/^current_task:.*/current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
 ```
 
 ```js
@@ -130,8 +132,8 @@ head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md
 ### 子步骤 3.3：派 op-reviewer（双裁决）
 
 ```bash
-bash scripts/op_status.sh {TID} 审阅中
-bash skills/oprun/scripts/op-read-verdict.sh {TID}
+bash "$OP_HOME/scripts/op_status.sh {TID} 审阅中
+bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
 ```
 
@@ -146,7 +148,7 @@ reviewer 出错重试 max 3。重试仍失败 → review.md 手写 `verdict: FAI
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
-bash skills/oprun/scripts/op-read-verdict.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
 # exit 0 = PASS, exit 1 = FAIL
 ```
 
@@ -154,14 +156,14 @@ bash skills/oprun/scripts/op-read-verdict.sh {TID}
 |---|---|---|
 | 双裁决 PASS | 任意 | 收口（3.5） |
 | 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
-| 任一 FAIL | 第2轮 | `bash scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
+| 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
 
 ### 子步骤 3.5：per-task 收口（轻，closer 提案制两段节奏之一）
 
 双裁决 PASS 后跑收口前机械脚本：
 
 ```bash
-bash scripts/op_close_pre.sh {TID}
+bash "$OP_HOME/scripts/op_close_pre.sh {TID}
 ```
 
 派 op-closer 做 per-task 收口（只 append decisions，不产 blueprint 提案）：
@@ -175,12 +177,12 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 per-task 收口不审批（decisions.md append-only）。直接跑归档脚本：
 
 ```bash
-bash scripts/op_close_post.sh {TID}
+bash "$OP_HOME/scripts/op_close_post.sh {TID} {feature}
 git status --short
 git commit -m "feat({TID}): {title}"
-bash skills/oprun/scripts/op-checkpoint.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-checkpoint.sh {TID}
 # leader 手动编辑 leader_checkpoint.md 的"关键上下文"段
-bash skills/oprun/scripts/close_check.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
 ```
 
 回到循环顶部 3.1。

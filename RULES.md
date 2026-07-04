@@ -112,7 +112,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - issue 不直接改代码，转正式 task 走 change type 流程
 - 中间状态不 commit；大 task 允许 `wip({TID})` 纯代码 sub-commit，不触发收口
 - Sub Agent 之间不直接通信
-- worktree 对称隔离：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（hook 对 subagent deny 失效，硬锁靠结构，design §8.1/§10，依据 `op_decisions.md` D18）；分支模式见 oprun/SKILL.md
+- worktree 对称隔离：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（hook 对 subagent deny 失效，硬锁靠结构，design §8.1/§10，依据 `op_decisions.md` D18；**实现待 design §12 P2 sparse-checkout 落地，当前普通 worktree 未排除，过渡期 advisory**）；分支模式见 oprun/SKILL.md
 - 不生成 dag.md
 
 ## 不做

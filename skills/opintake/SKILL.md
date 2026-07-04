@@ -36,7 +36,7 @@ description: >
 
 > spec 编写归 leader 主会话，建议本步骤前 `/model` 切 Opus（错误放大系数最大，design §5.2）。
 
-调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{前缀}_{名称}.md`（前缀编号：单需求 a_，多 task b_ 总述 + b01/b02 叶子，封顶两层）。
+调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{前缀}.md`（前缀编号：单需求 a_darkmode，多 task b_website 总述 + b01_pages/b02_contact 叶子，封顶两层；命名统一 `{前缀}.md`，标题放 markdown H1，与 opspec/design/eval brief 一致）。
 
 spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 

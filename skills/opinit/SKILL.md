@@ -43,12 +43,16 @@ EOF
 
 ## 步骤二：识别并归档旧文档
 
-将非结构化 md 移入 `docs/archive`。排除 `README.md`、`CLAUDE.md`、`RULES.md`。**#37：移前列清单问用户确认每个文件确属废弃**——项目已有的设计文档/规格不要误移，不确定就保留原位。
+将非结构化 md 移入 `docs/archive`。排除 `README.md`、`CLAUDE.md`、`RULES.md`。**P1-8：先列清单，AskUserQuestion 逐文件确认，再移**——项目已有的设计文档/规格不要误移，不确定就保留原位。
 
 ```bash
-find . -maxdepth 1 -name "*.md" -not -name "README.md" -not -name "CLAUDE.md" -not -name "RULES.md" -exec mv {} docs/archive/ \;
-find docs -maxdepth 1 -name "*.md" -exec mv {} docs/archive/ \; 2>/dev/null || true
+# 列候选清单（不直接移）
+echo "=== 归档候选（排除 README/CLAUDE/RULES）==="
+find . -maxdepth 1 -name "*.md" -not -name "README.md" -not -name "CLAUDE.md" -not -name "RULES.md" -print
+find docs -maxdepth 1 -name "*.md" -print 2>/dev/null
 ```
+
+用 AskUserQuestion 让用户确认每个文件是否归档。用户确认后逐个 `mv {file} docs/archive/`，不确认的保留原位。
 
 ## 步骤三：生成 Blueprint
 
@@ -84,14 +88,18 @@ else
   printf '{"env":{"OP_HOME":"%s"}}' "$OP_HOME_SUGGESTED" | jq . > .claude/settings.json
 fi
 
-# 2. 合并 hooks 配置（settings.template.json 的 hook 命令用 $OP_HOME/hooks/*.sh）
-# #42：jq '*' 对 array 是覆盖语义——若你已有 hooks 段，会被 template 数组覆盖，故先备份告警
-if [ -f .claude/settings.json ] && jq -e '.hooks' .claude/settings.json >/dev/null 2>&1; then
-  echo "[WARN] .claude/settings.json 已有 hooks 段，jq '*' 会覆盖数组，已备份，请手动确认共存"
-  cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
-fi
+# 2. 合并 hooks 配置（P1-1：按事件 concat 数组，不覆盖用户已有 hooks）
+# settings.template.json 的 hook 命令用 $OP_HOME/hooks/*.sh
 if [ -f .claude/settings.json ]; then
-  jq -s '.[0] * .[1]' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
+  cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
+  jq -s '
+    .[0] as $u | .[1] as $t
+    | $u
+    | .hooks = (reduce ($t.hooks // {} | to_entries[]) as $e ($u.hooks // {});
+        .[$e.key] = ((.[$e.key] // []) + $e.value)
+      ))
+    | .env = (($u.env // {}) + ($t.env // {}))
+  ' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json
 else
   cp hooks/settings.template.json .claude/settings.json
@@ -108,7 +116,7 @@ echo "[OK] $OP_HOME 写入 env，hooks 已注册"
 ls docs/archive/ | grep -iE 'task|plan|todo' || echo "无未执行计划文件"
 ```
 
-发现疑似未执行计划文件 → **停下来问用户**：是否提取【还没做】的 task 加入 tasks_list.json？用户选 `y` 则派 Agent 提取（严格过滤已完成的），每项调 `bash scripts/op_new_task.sh "标题" "详情"`。
+发现疑似未执行计划文件 → **停下来问用户**：是否提取【还没做】的 task 加入 tasks_list.json？用户选 `y` 则派 Agent 提取（严格过滤已完成的），每项调 `bash "$OP_HOME/scripts/op_new_task.sh "标题" "详情"`。
 
 ## 步骤七：完成报告
 
