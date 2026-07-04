@@ -1,7 +1,7 @@
 ---
 name: opintake
 description: >
-  需求入口：分拣 → spec 编写（含设计探索）→ 闸门 A 批复 → 自动拆 task → tasks_list.json 就绪 + 执行图入 spec。
+  需求入口：分拣 → spec 编写（含设计探索）→ 闸门 A 批复 → 自动拆 task → tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
   触发：/opintake "<需求>"、新需求、做个功能。
   终点：状态标为"就绪"，交给 /oprun。
 ---
@@ -79,13 +79,13 @@ token 消耗 ≈ 工作集 × 2-3。预算红线 ≈ 名义上限一半：`spec 
 
 **接口先行 task**：被 2+ task 依赖的接口/数据模型，用代码先占位提交（编译器强制，严格强于文档签名）。
 
-## 步骤五：执行图追加进 spec
+## 步骤五：顺序依赖归位（不进 spec 本体）
 
-在 spec 末尾追加执行图（≤10 行）：task 依赖概览 + 接口 task 位置。Stage 2 自检可扫（可跳过）。
+顺序依赖已在步骤四写入 `tasks_list.json`（`depends_on` 字段，机读）+ `leader_checkpoint.md`（人扫）。**不进 spec 本体**——spec 经闸门 A 写保护后追加会冲突。Stage 2 自检扫 `tasks_list.json` 依赖 + 拆 task 自检（跨 task 决策遗漏则回补 spec 再过 A，可跳过）。
 
 ## 终点：就绪
 
-`tasks_list.json` 就绪 + 执行图入 spec + 状态标"就绪"。交接给 `/oprun`。
+`tasks_list.json` 就绪（顺序依赖机读）+ 状态标"就绪"。交接给 `/oprun`。
 
 ## compact 恢复
 
