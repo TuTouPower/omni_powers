@@ -17,6 +17,11 @@ cd "$ROOT"
   echo "[FAIL] \$OP_HOME/hooks 不存在（OP_HOME=$OP_HOME 指向错误，应为 omni_powers 仓库根）" >&2
   exit 1
 }
+# jq 依赖（Windows 默认无，需手装）
+command -v jq >/dev/null 2>&1 || {
+  echo "[FAIL] jq 未装（合并 hooks 必需）。Windows: choco install jq 或 scoop install jq 或 https://jqlang.github.io/jq/download/；macOS: brew install jq" >&2
+  exit 1
+}
 echo "[OK] 全局 OP_HOME=$OP_HOME（不写项目级，全局共享）"
 
 # 2. 合并 hooks 配置到项目 .claude/settings.json（concat 数组，不覆盖用户已有 hooks，不碰 env）
