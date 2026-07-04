@@ -51,10 +51,13 @@ case "$rel" in
         exit 2
       fi
     fi
-    # 新建 op_blueprint 文件也拦——只有 leader 基于 closer 提案写入，由 dispatch 上下文保证
-    # closer 对 op_blueprint 无写权：这里统一拦，leader 写入时需显式跳过（通过环境变量 OP_LEADER_WRITE=1）
-    if [ "${OP_LEADER_WRITE:-0}" != "1" ]; then
-      echo "[Hook] BLOCKED: op_blueprint/ 由 leader 基于 closer 提案写入。设 OP_LEADER_WRITE=1 跳过（仅 leader）。" >&2
+    # blueprint 写保护：subagent 拦，主会话放行
+    # 不再依赖 OP_LEADER_WRITE 环境变量（主会话 env 难热加载，leader 卡死）
+    # 主会话（无 agent_type）= leader = 人控，写 blueprint 是合法操作（基于 closer 提案 / 闸门 C 审批）
+    # subagent（有 agent_type）写 op_blueprint 靠 worktree 结构隔离（D18，hook 对 subagent 失效，此拦截留痕）
+    agent_type="$(echo "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
+    if [ -n "$agent_type" ]; then
+      echo "[Hook] BLOCKED: $rel op_blueprint/ subagent 不可写（leader 基于 closer 提案写）。subagent 隔离靠 worktree（D18）。" >&2
       exit 2
     fi
     ;;

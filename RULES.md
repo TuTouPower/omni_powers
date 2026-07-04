@@ -13,7 +13,7 @@
 
 leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewer + op-evaluator + op-closer。职责细节见各 agent.md。全线 Sub Agent，每次 task fresh dispatch，上下文隔离。
 
-模型环境变量：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 之一；未设则继承主会话当前模型。**spec 编写（含设计探索）归 leader 主会话**，不走 dispatch——闸门 A 前 `/model` 切 Opus（错误放大系数最大）。
+模型环境变量：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 之一；未设则**不传 model 参数，继承主会话当前模型——dispatch 绝不准自行指定 model**（推荐档仅作用户配置参考）。**spec 编写（含设计探索）归 leader 主会话**，不走 dispatch——闸门 A 前 `/model` 切 Opus（错误放大系数最大）。
 
 ## 状态机
 

@@ -367,7 +367,7 @@ closer 拆成两种节奏：per-task 只做轻的那半（append decisions），
 | op-reviewer | Opus | 3 | 读 spec+diff+report 做双裁决，只读不写，每 task 一次；强审弱错开同档盲区 |
 | op-closer | Haiku（最轻量） | 4（最低） | 读 review+spec+blueprint，写提案+追加 decisions |
 
-模型由环境变量参数化：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`。值填 `haiku` / `sonnet` / `opus` 三档之一，对应 `settings.json` 的 `ANTHROPIC_DEFAULT_*_MODEL` 解析出的实际模型。**未设则不传 model 参数，继承主会话当前模型**（用户可用 `/model` 随时切换）。设了哪个就覆盖该 agent 用对应档位。
+模型由环境变量参数化：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`。值填 `haiku` / `sonnet` / `opus` 三档之一，对应 `settings.json` 的 `ANTHROPIC_DEFAULT_*_MODEL` 解析出的实际模型。**未设则不传 model 参数，继承主会话当前模型**（用户可用 `/model` 随时切换）。设了哪个就覆盖该 agent 用对应档位。**dispatch 时绝不准自行指定 model**——读 OP_*_MODEL，设了传，没设不传（继承主会话）；推荐档（本节表）仅作用户配置参考，dispatch 不自动用。
 
 ---
 

@@ -2,6 +2,7 @@
 
 > 职责（design §3.3）：测试宪章——分层/覆盖/lane/Mock 规则/调试入口（CDP 等）。
 > 不在此：命名/架构。
+> **命令勿臆造**：测试/运行命令必须从项目实际提取（CLAUDE.md / README / 旧 test.md / package.json scripts / scripts/ / Makefile 各处都可能），找不到标 NEEDS CLARIFICATION 问用户。
 
 ## 分层
 | 层 | 工具 | 范围 | 覆盖目标 |
