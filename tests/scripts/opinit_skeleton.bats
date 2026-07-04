@@ -19,7 +19,7 @@ teardown() {
 }
 
 @test "opinit_skeleton: 建三区骨架（目录+baselines+tasks_list+checkpoint+.test_locks）" {
-  run bash "$OP_HOME/scripts/opinit_skeleton.sh"
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
   [ "$status" -eq 0 ]
   [ -d docs/omni_powers/op_blueprint/specs ]
   [ -d docs/omni_powers/op_blueprint/baselines ]
@@ -32,12 +32,12 @@ teardown() {
 }
 
 @test "opinit_skeleton: 重跑幂等——不覆盖 tasks_list/checkpoint" {
-  bash "$OP_HOME/scripts/opinit_skeleton.sh" >/dev/null
+  bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh" >/dev/null
   # 模拟用户已有数据
   echo '{"tasks":[{"id":"T01"}]}' > docs/omni_powers/op_execution/tasks_list.json
   echo "user checkpoint content" > docs/omni_powers/op_execution/leader_checkpoint.md
   # 重跑
-  run bash "$OP_HOME/scripts/opinit_skeleton.sh"
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
   [ "$status" -eq 0 ]
   # 内容保留（不被覆盖）
   [ "$(cat docs/omni_powers/op_execution/tasks_list.json)" = '{"tasks":[{"id":"T01"}]}' ]

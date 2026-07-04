@@ -45,7 +45,7 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 ## 步骤一：创建标准目录结构
 
 ```bash
-bash "$OP_HOME/scripts/opinit_skeleton.sh"
+bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
 ```
 
 > 脚本建三区目录 + baselines_index 模板 + tasks_list + checkpoint + .test_locks。**重跑幂等**：已存在的 tasks_list/checkpoint/.test_locks/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
@@ -95,7 +95,7 @@ Agent({
 ## 步骤五：注册 hooks（到使用方 .claude/settings.json）
 
 ```bash
-bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 ```
 
 > 脚本校验全局 OP_HOME（未设/指向错 die 提示）+ 合并 hooks 到项目 `.claude/settings.json`（按事件 concat，不覆盖用户已有 hooks，不碰 env）。OP_HOME 由用户**全局** settings.json 设，**opinit 不写项目级 OP_HOME**。hook command 用 `$OP_HOME/hooks/run-hook.cmd`（polyglot wrapper，跨平台）。

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # opinit_register_hooks：校验全局 OP_HOME + 合并 hooks 到使用方 .claude/settings.json
-# 用法: 在使用方项目根跑 bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+# 用法: 在使用方项目根跑 bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 # OP_HOME 由用户全局 settings.json 设（一次性，所有项目共享，subagent 继承）。opinit 不写项目级 OP_HOME。
 # 合并策略：按事件 concat 数组（不覆盖用户已有 hooks），不碰 env 段。
 set -euo pipefail

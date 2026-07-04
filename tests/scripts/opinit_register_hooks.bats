@@ -14,19 +14,19 @@ teardown() {
 }
 
 @test "opinit_register_hooks: OP_HOME 未设 die" {
-  OP_HOME="" run bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+  OP_HOME="" run bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
   [ "$status" -ne 0 ]
   [[ "$output" == *"未设 OP_HOME"* ]]
 }
 
 @test "opinit_register_hooks: OP_HOME 指向错（hooks 不存在）die" {
-  OP_HOME="/nonexistent" run bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+  OP_HOME="/nonexistent" run bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
   [ "$status" -ne 0 ]
   [[ "$output" == *"指向错误"* ]]
 }
 
 @test "opinit_register_hooks: 首次注册生成 .claude/settings.json 含 omni_powers hooks" {
-  run bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
   [ "$status" -eq 0 ]
   [ -f .claude/settings.json ]
   jq -e '.hooks.PreToolUse' .claude/settings.json >/dev/null
@@ -36,7 +36,7 @@ teardown() {
 @test "opinit_register_hooks: concat 不覆盖用户已有 hooks" {
   mkdir -p .claude
   echo '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"user-formatter"}]}]}}' > .claude/settings.json
-  run bash "$OP_HOME/scripts/opinit_register_hooks.sh"
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
   [ "$status" -eq 0 ]
   # 用户 hook 保留 + omni_powers hook 追加（PreToolUse ≥2 条）
   count=$(jq '.hooks.PreToolUse | length' .claude/settings.json)

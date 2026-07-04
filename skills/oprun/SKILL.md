@@ -163,7 +163,7 @@ bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
 双裁决 PASS 后跑收口前机械脚本：
 
 ```bash
-bash "$OP_HOME/scripts/op_close_pre.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op_close_pre.sh {TID}
 ```
 
 派 op-closer 做 per-task 收口（只 append decisions，不产 blueprint 提案）：
@@ -177,7 +177,7 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 per-task 收口不审批（decisions.md append-only）。直接跑归档脚本：
 
 ```bash
-bash "$OP_HOME/scripts/op_close_post.sh {TID} {feature}
+bash "$OP_HOME/skills/oprun/scripts/op_close_post.sh {TID} {feature}
 git status --short
 git commit -m "feat({TID}): {title}"
 bash "$OP_HOME/skills/oprun/scripts/op-checkpoint.sh {TID}
@@ -194,7 +194,7 @@ bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
 派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 4 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
 **派 evaluator 前 leader 保证访问隔离（结构单层 + 报告回流，design §8.1；hook 对 subagent 失效，依据 `op_decisions.md` D18）**：
-1. 跑 `scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
+1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
 2. **evaluator worktree 无 src**：evaluator 在独立 worktree，只挂载 spec + 生效规格 + baselines + 构建产物 + `e2e/`——`src/**`、task 目录、`decisions.md` 物理不挂载。implementer 分支跑 CI 产构建产物供 evaluator 操作。
 3. dispatch prompt 固定模板（advisory 留痕，不拦截）。
 
@@ -256,8 +256,8 @@ cd <原项目根目录>
 | `RULES.md` | 运行时操作手册（compact 恢复入口） |
 | `docs_template/omni_powers/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
-| `scripts/op_close_pre.sh` | 收口前机械步骤 |
-| `scripts/op_close_post.sh` | 收口后机械步骤 |
+| `skills/oprun/scripts/op_close_pre.sh` | 收口前机械步骤 |
+| `skills/oprun/scripts/op_close_post.sh` | 收口后机械步骤 |
 | `skills/oprun/scripts/op-coder-check.sh` | implementer 模式判定 |
 | `skills/oprun/scripts/op-read-verdict.sh` | verdict 读取 + 轮次 |
 | `skills/oprun/scripts/close_check.sh` | 收口验收 |

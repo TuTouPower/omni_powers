@@ -339,9 +339,9 @@ closer 拆成两种节奏：per-task 只做轻的那半（append decisions），
 
 **per-task 收口（轻，task 闭环即做）**——closer 与 leader 分工：
 
-1. leader 跑 `scripts/op_close_pre.sh {TID}`：`tasks_list.json` 标记 `status=收口中`（**不盖戳 spec**——approved spec 受写保护，per-task 不碰，免被自家 hook 拦）。
+1. leader 跑 `skills/oprun/scripts/op_close_pre.sh {TID}`：`tasks_list.json` 标记 `status=收口中`（**不盖戳 spec**——approved spec 受写保护，per-task 不碰，免被自家 hook 拦）。
 2. **op-closer 只做这步**：append 本 task 的暂存项/架构决策到 `op_record/decisions.md`（append-only，不经 leader 审批）。注：decisions.md 是**多写者**文件（implementer 红灯归因/解锁、leader 降级 delta、closer 收口均按来源标记 append），task 全程已有其他写入者条目，closer 在此补收口决策。
-3. leader 跑 `scripts/op_close_post.sh {TID}`：确认 closer 回报完成 + review verdict PASS，git mv 归档 task 目录到 `op_record/tasks/{TID}/`、追加 progress、`tasks_list.json` 标 `status=完成`。
+3. leader 跑 `skills/oprun/scripts/op_close_post.sh {TID}`：确认 closer 回报完成 + review verdict PASS，git mv 归档 task 目录到 `op_record/tasks/{TID}/`、追加 progress、`tasks_list.json` 标 `status=完成`。
    - **铁律**：per-task 阶段 closer **只写 decisions.md**——不跑脚本、不碰 git、不改 status、不 stage、不产 blueprint 提案、不碰 spec。脚本（tasks_list.json/git mv/progress）全归 leader。
 
 **per-leaf 收尾（重，Stage 4 验收 PASS 后做一次）**：
@@ -393,7 +393,7 @@ stock model 默认对 LLM 产出宽容——能发现 bug 但会说服自己"不
    - **非 UI 类（API/DB/CLI/进程）**：构建产物 + 结构化信号（stdout/API 响应/DB 查询/进程日志）直接完整可验。
    - **UI 类**：evaluator 操作构建产物启动的应用（computer use / 独立机器点击），自由探 UI 边界；视觉信号作锚点由 evaluator 多模态对照。
    - ⚠️ **实现状态**：当前 oprun 创建普通 worktree（`git worktree add`），未用 sparse-checkout 排除 `src/e2e`——硬底线的**实现待 §12 P2 落地**。过渡期靠 agent 提示词 + 路径约定（advisory，非物理强制）。
-2. **报告回流层（脚本机械组装，保留——不依赖 hook）**：brief 由 `scripts/op_assemble_eval_brief.sh {前缀}` 生成，内容源全固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 应用启动方式），leader 不参与内容生成、只 dispatch。evaluator 作为独立 subagent 只读 brief 文件，leader 主会话上下文（满是 task 交接污染）物理上传不过去——脚本取代纪律性白名单。per-task 阶段不写 op_blueprint，故验收时生效规格天然是开工前版本，隔离防线不被自家归档流程打穿。
+2. **报告回流层（脚本机械组装，保留——不依赖 hook）**：brief 由 `skills/oprun/scripts/op_assemble_eval_brief.sh {前缀}` 生成，内容源全固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 应用启动方式），leader 不参与内容生成、只 dispatch。evaluator 作为独立 subagent 只读 brief 文件，leader 主会话上下文（满是 task 交接污染）物理上传不过去——脚本取代纪律性白名单。per-task 阶段不写 op_blueprint，故验收时生效规格天然是开工前版本，隔离防线不被自家归档流程打穿。
 3. **dispatch 协议层（advisory 留痕，非拦截）**：leader 调 evaluator 的 prompt 固定模板（"读 {brief_path}，按 brief 执行评估"）。Task matcher 能 fire 但 deny 拦不住 dispatch（依据见 D18），故这层只做**事后审计/留痕**（记 dispatch prompt 日志备查），不主张拦截——内容通道闭环靠第 1 层（源码不在）+ 第 2 层（brief 机械组装），不靠 dispatch 拦截。
 
 **evaluator 读写权（结构 + 脚本共同实现，非 hook 拦截）**：
