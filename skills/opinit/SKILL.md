@@ -104,12 +104,16 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 
 > hook 与脚本统一通过 `$OP_HOME`（全局 settings.json 设，subagent 继承）引用。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制。
 
-## 步骤六：提取未执行计划（按步骤零答案）
+## 步骤六：提取未执行计划 → issues/（不进 tasks_list）
 
-若步骤零用户**确认提取**，分两步（leader + agent 分工）：
+> **规则**：没拆 task + 没技术方案的"未执行计划" → **issues**（backlog 收件箱），**不进 tasks_list**。tasks_list 是"排好序、随时可领用执行"的队列，塞残缺 task（无 AC/工作集/依赖）会卡 oprun。拆 task + 写技术方案是 `/opintake` 的活，opinit 只捞进 issue 等消化。
+>
+> 一句话：issue = "有这事，还没决定怎么做"；task = "决定好了，照着干"。opinit 不负责拆。
+
+若步骤零用户**确认提取**，分两步（leader + agent）：
 1. **leader 扫候选**：`grep -rilE '待办|未做|todo|待完成|TODO' docs/archive/ 2>/dev/null | head -10`
-2. **派 Agent 读候选文件**，提炼【还没做】的 task（严格过滤已完成 + 暂缓项），返回结构化清单（id/title/type/source 行号/一句话）
-3. **leader 据清单录 tasks_list.json**（status: 待规划，jq 写），**不建 task 工作区**（待规划种子未到执行阶段，design §3.1 tasks/ 是活跃 task 目录）
+2. **派 Agent 读候选文件**，提炼【还没做】的项（严格过滤已完成 + 暂缓项），返回清单（title / source 行号 / 一句话 / severity 建议）
+3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §9 格式：`id: I-YYYYMMDD-NN` + `title` + `source: 提取自归档前 XXX.md` + `status: open` + `severity`/`tags`）
 
 否则跳过。**不再次问**。
 
