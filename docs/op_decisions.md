@@ -267,3 +267,17 @@
 - #8（Stop hook）：SubagentStop 落点 + stop_hook_active 防递归已补；但审阅称"PreToolUse deny 在 bypass 下可拦"——**错误**，bypass 下 deny 同样失效（[#43772](https://github.com/anthropics/claude-code/issues/43772)）
 
 **影响（design.md）**：§0 原则6、§2（行为层锁定改 worktree 对称）、§3（baselines 按功能名统一）、§4（Stage 2 自检 + 验收 3 轮 + 自举例外）、§5.1（frontmatter 加 `feature` 字段）、§7.5（模型表合并）、§8.1（访问隔离单层化：worktree 无 src + 报告回流 + dispatch advisory）、§8.2（双键统一功能名 + 跨功能更新）、§10（结构+git 层、SubagentStop、防线↔实现映射表）、§11（hooks 清单净化、Task advisory、issue 依据指 D18）、§12（spike 换 worktree 无 src、P2 硬要求）
+
+## D19：evaluator 执行后端接线 CUA（CDP 优先铁律 + cua 独立 lane）（2026-07-05）
+
+**触发**：用户要求 evaluator 参考个人测试总方案（`~/karson_ubuntu/my_file/TESTING_PLAN.md`）使用 [CUA](https://github.com/trycua/cua) 作 UI/桌面自动化执行后端。插件在 Win 宿主 Claude Code 内调用，evaluator 与 cua-driver 同机，无跨环境桥接。
+
+| 决策 | 理由 |
+|---|---|
+| 通道判定进 spec 可测性契约：每条 AC 加 `通道: CDP \| cua \| 直驱` 字段，判定决策树进 opspec | **CDP 能力边界优先**（TESTING_PLAN §0 核心原则）：能用 CDP 一律 CDP（快/稳/可断言 DOM），CDP 做不到的（Electron 原生壳层、浏览器 chrome、OS 对话框）才 cua，无 UI 直驱。写 spec 时判定，evaluator 照单执行——判定是 spec 期决策不是执行期决策 |
+| evaluator 加「执行后端」节：cua CLI 用法（Look→Act→Verify）+ 降级规则 | cua 不可用 → 该 AC 判 INSUFFICIENT_EVIDENCE 并写明缺失，禁止跳过/降级推断/用 CDP 假装模拟 OS 行为——堵住"环境缺失变相放水"通道 |
+| cua 域固化物独立 lane（`// channel: cua`）：夜跑失败开 issue 不阻断；破坏检查一次性验证不进回归硬门 | cua 域测试天然 flaky（焦点漂移/DPI/时序），进 CDP 硬门会产假红腐蚀夜跑信号。对应 TESTING_PLAN §9 CI 分组（cua 域 nightly） |
+| eval brief 组装脚本探测 cua 可用性写进 brief | 机械组装原则不变：可用性是环境事实，脚本 `command -v cua` 探测比 evaluator 现场试错省一轮 |
+| TESTING_PLAN 作上游宪章引用，不复写进插件 | 用例矩阵（TP-*）/边界表/CI 矩阵属个人测试资产，插件模板 test.md 留引用位；避免两处维护漂移 |
+
+**影响**：`skills/opspec/SKILL.md`（模板加通道字段 + 通道判定节）、`agents/op-evaluator.md`（执行后端节 + 步骤 1/2 接通道）、`skills/oprun/scripts/op_assemble_eval_brief.sh`（brief 加执行后端段 + cua 探测）、`docs_template/omni_powers/op_blueprint/test.md`（lane 表）。design.md §8 未动——通道选择是 §8.2「操作层」的实现细节，design 不下沉到工具名。

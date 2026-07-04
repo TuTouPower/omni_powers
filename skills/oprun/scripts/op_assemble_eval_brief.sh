@@ -58,6 +58,19 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "从上方工作 spec 的「可测性契约」段提取。"
   echo
 
+  echo "## 执行后端（按 AC 通道字段选，CDP 优先）"
+  echo
+  echo "- 通道字段在上方可测性契约每条 AC 上（CDP | cua | 直驱）。能用 CDP 一律 CDP。"
+  echo "- CDP: Playwright（Electron 用 _electron.launch；扩展用 launchPersistentContext + --load-extension，headed）"
+  if command -v cua >/dev/null 2>&1; then
+    echo "- cua: 可用（$(cua --version 2>/dev/null | head -1)）。用法: cua do screenshot / click / type / key / window ls / zoom（Look→Act→Verify，每次 UI 变化后重截图）"
+    echo "  - 当前 target: $(cua do status 2>/dev/null | head -3 | tr '\n' ' ' || echo '未知，先 cua do status 确认')"
+  else
+    echo "- cua: **不可用**（本机未装）。cua 通道的 AC 一律判 INSUFFICIENT_EVIDENCE 并写明缺失，禁止跳过或降级推断。"
+  fi
+  echo "- 直驱: Bash/HTTP/SQL（CLI/DB/API/进程类 AC）"
+  echo
+
 } > "$BRIEF"
 
 echo "[OK] evaluator brief 组装完成: $BRIEF"

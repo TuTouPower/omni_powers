@@ -10,6 +10,15 @@
 | 集成 | pytest + TEST_DATABASE_URL | API+DB | 核心流程 |
 | E2E | Playwright | 用户流程 | 关键路径 |
 
+## E2E 通道与 lane
+| lane | 通道 | 判定 | 夜跑失败 |
+|---|---|---|---|
+| cdp | CDP（Playwright）/ 直驱（Bash/HTTP/SQL） | 结构化信号进机械硬门 | 阻断，自动开 issue |
+| cua | CUA driver（OS 级真输入，`// channel: cua` 标注） | advisory（天然 flaky：焦点/DPI/时序） | 不阻断，开 issue |
+
+通道判定见 opspec「通道判定」：Chromium 渲染的用 CDP，OS 原生壳层用 cua，无 UI 直驱。
+<!-- 若有个人测试总方案（如 TESTING_PLAN.md），在此引用作上游宪章：用例矩阵/CI 分组/边界表不复写 -->
+
 ## 运行
 - API: `cd src/api && .venv/bin/pytest`
 - Web: `cd src/web && npx vitest run`
