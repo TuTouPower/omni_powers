@@ -28,12 +28,11 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 
 据浏览结果整理需问的点，用 **AskUserQuestion 一次问完**（合并多问题到一个 AskUserQuestion 调用）：
 
-1. **旧文档归档**（**强制列全候选，不要漏**——这是步骤二的输入，漏列即漏归档）：
-   - 根目录 md（除 `README.md`/`CLAUDE.md`/`RULES.md`）—— 如 `review.md` 等历史审查/报告
-   - `docs/` 下 md（除 `docs/omni_powers/`）—— 如 `SPEC.md`/`TASKS.md`/`TEST.md`/`continuous_optimization_*.md`/`reviw_*.md` 等历史规格审查
-   - `docs/` 下历史子目录（除 `omni_powers/`、`design/`）—— 如 `docs/superpowers/`/`docs/plans/` 等，**整目录**归档
-   - `docs/design/` 是 UI 真相源（prd 引用），**保留原位，不归档**
-   列出全部候选，问用户归档哪些（默认全归 `docs/archive/`，README/CLAUDE/RULES/design 保留）
+1. **旧文档归档**（**用户指令优先 + 列计划让用户批准**）：
+   - 先听用户初始指令（如"重构所有文档"/"归档所有"）——**用户说"所有"则所有进候选，不偷偷排除**
+   - 列全部归档候选：根 md + docs md + docs 子目录（含 `design/`/`superpowers/` 等全部，**不预设排除**）
+   - 标注"建议保留"（仅供用户参考，**用户指令覆盖**）：`README.md`（项目入口）/ `CLAUDE.md`（步骤三重构）/ `docs/omni_powers/`（本次生成）。`docs/design/` 默认建议保留（UI 真相源），但**用户说"所有"则归档**，不擅自排除
+   - AskUserQuestion 呈现计划（候选 + 建议保留），用户批准或调整。用户已说"所有/全部"时**不要二次确认每一个**
 2. **未执行计划提取**：docs/archive/ 有 task/plan/todo 文件？问是否提取为 tasks_list.json 的 task
 3. **其他歧义**：多个冲突 SPEC / 现有三区已存在 / CLAUDE.md 重复范围等
 
@@ -46,6 +45,8 @@ mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
 mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
 mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
 mkdir -p docs/archive e2e
+# baselines 索引骨架（首次空，验收后填——blueprint-generator 不生成此文件，首次无基准数据）
+cp "$OP_HOME/docs_template/omni_powers/op_blueprint/baselines/baselines_index.md" docs/omni_powers/op_blueprint/baselines/baselines_index.md 2>/dev/null || echo "# baselines 索引（首次空，验收后填）" > docs/omni_powers/op_blueprint/baselines/baselines_index.md
 
 touch docs/omni_powers/op_record/progress.md
 touch docs/omni_powers/op_record/decisions.md
@@ -90,15 +91,15 @@ Agent({
   prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §3.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。" })
 ```
 
-完成后**自动瘦身 CLAUDE.md**（dispatch agent 改，不靠用户手动）：
+完成后**重构 CLAUDE.md**（dispatch agent 改——对齐"重构所有文档"指令，不只是去重，是重新组织）：
 
 ```js
 Agent({
-  name: "claude-md-slimmer", model: "sonnet",
-  prompt: "读项目根 CLAUDE.md + docs/omni_powers/op_blueprint/ 各文档。瘦 CLAUDE.md：只留 (1) 项目一句话定位 (2) dev/build/test 命令 (3) 指向 docs/omni_powers/op_blueprint/ 各文档的导航。删与 blueprint 重复的段（技术栈/目录树/架构约束/命名规范/日志规则/调试规则/适配器步骤），改'详见 architecture.md / conventions.md / domain.md / test.md'。CLAUDE.md 是'门牌'，不重复 blueprint 内容。保留 CLAUDE.md 已有的 omni_powers 启用声明 + 项目特有约束（如 CDP 端口指向 test.md）。直接改 CLAUDE.md。" })
+  name: "claude-md-refactor", model: "sonnet",
+  prompt: "读项目根 CLAUDE.md + docs/omni_powers/op_blueprint/ 各文档。重构 CLAUDE.md（按职责矩阵重组，非仅去重）：(1) 项目一句话定位 (2) dev/build/test 命令 (3) 指向 docs/omni_powers/op_blueprint/ 各文档的导航 (4) 项目特有约束（如 CDP 端口等指向 test.md）。删与 blueprint 重复的段（技术栈/目录树/架构约束/命名规范/日志规则/调试规则/适配器步骤），改'详见 architecture.md / conventions.md / domain.md / test.md'。CLAUDE.md 是'门牌'，不重复 blueprint。保留 omni_powers 启用声明。直接改 CLAUDE.md。" })
 ```
 
-> 瘦身后 git diff 可回顾；不满意 `git checkout CLAUDE.md` 还原。
+> 重构后 git diff 可回顾；不满意 `git checkout CLAUDE.md` 还原。
 
 ## 步骤四：重写导航（index.md + README.md）
 
