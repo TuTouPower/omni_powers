@@ -60,7 +60,7 @@ export OP_HOME="$(pwd)"    # 插件安装目录，opinit 会写入使用方 sett
 
 ## 依赖
 
-- `jq`（tasks_list.json 查询）
+- `jq`（tasks_list.json 查询、opinit hooks 合并；Windows 需手装：`choco install jq` / `scoop install jq` / [官网下载](https://jqlang.github.io/jq/download/)）
 - `git`（worktree 隔离，可选）
 - **Windows 用户**：Git for Windows（提供 bash + cygpath；hook 走 polyglot wrapper，见 `hooks/README.md`）
 - `bats`（开发测试，可选；`npm install -g bats`）
