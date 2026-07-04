@@ -235,3 +235,35 @@
 - skills/opspec/SKILL.md：可测性契约"测试方式"→"验收信号"，入口扩到 DB/进程/消息/定时任务
 - skills/oprun/SKILL.md：补阶段差
 - agents/op-closer.md：baselines 合入段标注信号类型
+
+## D18：hook 对 subagent 失效——隔离改纯 worktree 结构、行为层 worktree 对称（2026-07-04）
+
+**触发**：`docs/four_model_review_2026_07_04.md` 审阅 + 官方文档/issue 技术核查。
+
+**核心事实（已核实）**：PreToolUse/PostToolUse hook 对 subagent（Agent 工具 dispatch 的 agent）的工具调用 deny 整体失效——常规运行下就不 work，与 `--dangerously-skip-permissions` 无关。implementer/reviewer/evaluator/closer 全是 subagent（D15 全线 Sub Agent），故 v6 设计里所有"按身份分级的 hook 拦截"在当前 Claude Code 实现下不成立。
+
+| 依据 issue | 结论 |
+|---|---|
+| [#40580](https://github.com/anthropics/claude-code/issues/40580) | subagent 工具调用，PreToolUse exit 2 被忽略，工具照常执行 |
+| [#34692](https://github.com/anthropics/claude-code/issues/34692) | subagent 内 Bash/Edit/Write/Read/Grep 不触发 PreToolUse/PostToolUse |
+| [#26923](https://github.com/anthropics/claude-code/issues/26923) | Task matcher fire 正常但 exit 2 拦不住 dispatch，subagent 照常 launch |
+| [#43772](https://github.com/anthropics/claude-code/issues/43772) | bypassPermissions subagent 完全绕过 hook |
+
+**好消息**：`agent_type` 在 SubagentStop/SubagentStart 可读且 matcher 按 agent_type 过滤（[#30703](https://github.com/anthropics/claude-code/issues/30703)）——可做事后门禁/留痕，但工具执行已完成，只能阻断收口/返回，不能阻止读源码动作本身。
+
+| 决策 | 理由 |
+|---|---|
+| 隔离架构：纯 worktree 结构隔离（唯一硬底线=evaluator worktree 无 src） | hook 对 subagent 失效使"hook 拦 evaluator Read src/"破产；源码物理不在文件系统是唯一不可绕手段。放弃 frontmatter `tools` 配置级限制路线（用户拍板：选最硬的路） |
+| 行为层保护：worktree 对称隔离（implementer worktree 不挂 e2e/）+ git 层（branch protection + pre-commit/post-receive） | implementer 也是 subagent，hook 拦不住；既有 e2e/BUG-* 硬锁改 git 操作层。BUG-* 新增由 evaluator 写或 implementer 产 patch 由 leader 转交 |
+| 威胁模型：bypass 纳入（实际常规场景就失效，bypass 与否结论一致） | 不依赖"agent 不开 bypass"假设 |
+| spike 重定位：worktree 无 src 工程（挂载范围 + CI 构建产物链路） | 原 P0/P1 身份识别 spike 删除——字段在但 deny 对 subagent 无效，无需再验 |
+| 验收轮次：Stage 4 ≤3 轮，到顶 Critical→升级人裁决/Important-Minor→落 issue | 原则10循环上限，原 design 全文无 Stage 4 上限 |
+| prd.md：grill-me 标注由外部 repo 提供 | 清悬空引用，grill-me 不在本仓库 |
+
+**审阅意见处理**（`docs/four_model_review_2026_07_04.md`）：
+- #1（身份识别）：**反向推翻**——审阅称"原生解决→独立环境可收缩"，实际独立环境（worktree 无 src）是唯一出路，方向反了
+- #2/#3/#5/#6/#9：文档矛盾已修
+- 额外小问题：§7.5 模型表合四行；**baselines/specs 双键统一为功能名**（§3 目录树 / §5.1 frontmatter 加 `feature` 字段 / §8.2 baselines_index 格式 + 合入路径临时区按前缀→合入区按功能名 + "跨前缀更新"改"跨功能更新"）；**§10 加防线层↔实现手段映射表**（点破主防线 1/2 层非 Claude hook，配齐 hook ≠ 安全）。注：`e2e/` 按工作前缀分目录保留——e2e 是代码资产按工作单位组织，前缀永不复用，与 op_blueprint 稳定真相异质，非双键问题
+- #8（Stop hook）：SubagentStop 落点 + stop_hook_active 防递归已补；但审阅称"PreToolUse deny 在 bypass 下可拦"——**错误**，bypass 下 deny 同样失效（[#43772](https://github.com/anthropics/claude-code/issues/43772)）
+
+**影响（design.md）**：§0 原则6、§2（行为层锁定改 worktree 对称）、§3（baselines 按功能名统一）、§4（Stage 2 自检 + 验收 3 轮 + 自举例外）、§5.1（frontmatter 加 `feature` 字段）、§7.5（模型表合并）、§8.1（访问隔离单层化：worktree 无 src + 报告回流 + dispatch advisory）、§8.2（双键统一功能名 + 跨功能更新）、§10（结构+git 层、SubagentStop、防线↔实现映射表）、§11（hooks 清单净化、Task advisory、issue 依据指 D18）、§12（spike 换 worktree 无 src、P2 硬要求）
