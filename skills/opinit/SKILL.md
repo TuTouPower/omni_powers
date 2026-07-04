@@ -28,7 +28,12 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 
 据浏览结果整理需问的点，用 **AskUserQuestion 一次问完**（合并多问题到一个 AskUserQuestion 调用）：
 
-1. **旧文档归档**：列出候选（find 结果），问归档哪些（默认全归 docs/archive/，README/CLAUDE/RULES 保留原位）
+1. **旧文档归档**（**强制列全候选，不要漏**——这是步骤二的输入，漏列即漏归档）：
+   - 根目录 md（除 `README.md`/`CLAUDE.md`/`RULES.md`）—— 如 `review.md` 等历史审查/报告
+   - `docs/` 下 md（除 `docs/omni_powers/`）—— 如 `SPEC.md`/`TASKS.md`/`TEST.md`/`continuous_optimization_*.md`/`reviw_*.md` 等历史规格审查
+   - `docs/` 下历史子目录（除 `omni_powers/`、`design/`）—— 如 `docs/superpowers/`/`docs/plans/` 等，**整目录**归档
+   - `docs/design/` 是 UI 真相源（prd 引用），**保留原位，不归档**
+   列出全部候选，问用户归档哪些（默认全归 `docs/archive/`，README/CLAUDE/RULES/design 保留）
 2. **未执行计划提取**：docs/archive/ 有 task/plan/todo 文件？问是否提取为 tasks_list.json 的 task
 3. **其他歧义**：多个冲突 SPEC / 现有三区已存在 / CLAUDE.md 重复范围等
 
@@ -85,7 +90,15 @@ Agent({
   prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §3.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。" })
 ```
 
-完成后**提示用户瘦身心 CLAUDE.md**：CLAUDE.md 是"门牌"，只留项目一句话定位 + dev/build/test 命令 + 指向 `docs/omni_powers/op_blueprint/` 各文档；与 blueprint 重复的段（技术栈/目录树/架构约束/命名/日志）删，改为"详见 architecture.md / conventions.md / ..."。
+完成后**自动瘦身 CLAUDE.md**（dispatch agent 改，不靠用户手动）：
+
+```js
+Agent({
+  name: "claude-md-slimmer", model: "sonnet",
+  prompt: "读项目根 CLAUDE.md + docs/omni_powers/op_blueprint/ 各文档。瘦 CLAUDE.md：只留 (1) 项目一句话定位 (2) dev/build/test 命令 (3) 指向 docs/omni_powers/op_blueprint/ 各文档的导航。删与 blueprint 重复的段（技术栈/目录树/架构约束/命名规范/日志规则/调试规则/适配器步骤），改'详见 architecture.md / conventions.md / domain.md / test.md'。CLAUDE.md 是'门牌'，不重复 blueprint 内容。保留 CLAUDE.md 已有的 omni_powers 启用声明 + 项目特有约束（如 CDP 端口指向 test.md）。直接改 CLAUDE.md。" })
+```
+
+> 瘦身后 git diff 可回顾；不满意 `git checkout CLAUDE.md` 还原。
 
 ## 步骤四：重写导航（index.md + README.md）
 
