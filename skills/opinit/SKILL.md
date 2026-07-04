@@ -34,52 +34,35 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
    - 标注"建议保留"（仅供用户参考，**用户指令覆盖**）：`README.md`（项目入口）/ `CLAUDE.md`（步骤三重构）/ `docs/omni_powers/`（本次生成）。`docs/design/` 默认建议保留（UI 真相源），但**用户说"所有"则归档**，不擅自排除
    - AskUserQuestion 呈现计划（候选 + 建议保留），用户批准或调整。用户已说"所有/全部"时**不要二次确认每一个**
 2. **未执行计划提取**：docs/archive/ 有 task/plan/todo 文件？问是否提取为 tasks_list.json 的 task
-3. **其他歧义**：多个冲突 SPEC / 现有三区已存在 / CLAUDE.md 重复范围等
+3. **其他歧义**（有则问，无则跳过）：
+   - 三区已存在（重跑 opinit）：保留不覆盖（步骤一脚本幂等），只补缺——无需问
+   - 多个冲突 SPEC（如 SPEC.md vs SPEC_旧.md）：问以哪个为准（归档其他）
+   - CLAUDE.md 不存在：步骤三 CLAUDE 重构跳过（无文件可改）——无需问
+   - **AskUserQuestion 上限 4 题**：候选多于 4 时按主题聚类（如"归档"合并所有归档候选为一题多选）
 
 记下答案，后续步骤按答案执行，**不再问**。
 
 ## 步骤一：创建标准目录结构
 
 ```bash
-mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
-mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
-mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
-mkdir -p docs/archive e2e
-# baselines 索引骨架（首次空，验收后填——blueprint-generator 不生成此文件，首次无基准数据）
-cp "$OP_HOME/docs_template/omni_powers/op_blueprint/baselines/baselines_index.md" docs/omni_powers/op_blueprint/baselines/baselines_index.md 2>/dev/null || echo "# baselines 索引（首次空，验收后填）" > docs/omni_powers/op_blueprint/baselines/baselines_index.md
-
-touch docs/omni_powers/op_record/progress.md
-touch docs/omni_powers/op_record/decisions.md
-echo '{"tasks":[]}' > docs/omni_powers/op_execution/tasks_list.json
-cat > docs/omni_powers/op_execution/leader_checkpoint.md << 'EOF'
-# Leader Checkpoint
-
-current_task:
-last_completed:
-next_step:
-关键上下文:
-
-## 已完成 task
-<!-- AUTO：op-checkpoint.sh 追加 "- {TID} "{title}" ✅ {hash}" -->
-
-## tasks_list 状态
-<!-- AUTO：op-checkpoint.sh 更新（完成/待开始/待规划/阻塞/跳过/挂起）-->
-EOF
-cat > docs/omni_powers/op_execution/.test_locks << 'EOF'
-# 锁定的行为层测试文件路径（每行一个），归 op-evaluator 所有
-EOF
+bash "$OP_HOME/scripts/opinit_skeleton.sh"
 ```
+
+> 脚本建三区目录 + baselines_index 模板 + tasks_list + checkpoint + .test_locks。**重跑幂等**：已存在的 tasks_list/checkpoint/.test_locks/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
 
 技术债登记为 issue 加 `tech-debt` 标签，不单独建文件。依赖走 `depends_on` + jq，不单独建图文件。
 
 ## 步骤二：归档旧文档（按步骤零答案）
 
-将步骤零确认归档的文件移入 `docs/archive/`（README/CLAUDE/RULES 保留原位）。**不再次问**——按步骤零答案执行。
+将步骤零用户确认归档的文件移入 `docs/archive/`。**不再次问**——按零答案执行。
 
 ```bash
-# leader 据步骤零用户确认的清单展开文件列表，逐个移
-# for f in <步骤零确认归档的文件>; do mv "$f" docs/archive/; done
+# leader 据步骤零用户确认的清单，逐个移（文件或整子目录都可）
+for f in <步骤零确认归档的文件/目录>; do mv "$f" docs/archive/; done
 ```
+
+- **三区已存在的文件保留**（步骤一脚本幂等，不破坏）——只归档用户确认的旧文档，不动 `docs/omni_powers/`
+- `README.md` / `CLAUDE.md`（步骤三重构）/ `RULES.md` 默认保留原位（除非用户在零里明确说归档）
 
 ## 步骤三：生成 Blueprint（按职责矩阵分工 + specs 不空）
 
@@ -111,35 +94,13 @@ Agent({
 
 ## 步骤五：注册 hooks（到使用方 .claude/settings.json）
 
-> `$OP_HOME` 由用户**全局** settings.json 设（一次性，所有项目共享，subagent 继承）。**opinit 不写项目级 OP_HOME**——只校验全局已设 + 合并 hooks 到项目。
-
 ```bash
-# 1. 校验全局 OP_HOME 已设 + 指向正确（不写项目级）
-[ -n "${OP_HOME:-}" ] || { echo "[FAIL] 全局 settings.json 未设 OP_HOME。请在全局配置（如 ~/.claude/settings.json）env 段加 \"OP_HOME\": \"/path/to/omni_powers\"，重启 Claude Code 后重跑 /opinit" >&2; exit 1; }
-[ -d "$OP_HOME/hooks" ] || { echo "[FAIL] \$OP_HOME/hooks 不存在（OP_HOME=$OP_HOME 指向错误，应为 omni_powers 仓库根）" >&2; exit 1; }
-echo "[OK] 全局 OP_HOME=$OP_HOME（不写项目级，全局共享）"
-
-# 2. 合并 hooks 配置到项目 .claude/settings.json（P1-1：按事件 concat，不覆盖用户已有 hooks）
-# hook command 用 $OP_HOME/hooks/run-hook.cmd（polyglot wrapper，Claude Code 跑时从全局 env 展开 $OP_HOME）
-mkdir -p .claude
-if [ -f .claude/settings.json ]; then
-  cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
-  jq -s '
-    .[0] as $u | .[1] as $t
-    | $u
-    | .hooks = (reduce ($t.hooks // {} | to_entries[]) as $e ($u.hooks // {});
-        .[$e.key] = ((.[$e.key] // []) + $e.value)
-      ))
-  ' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
-  mv .claude/settings.json.tmp .claude/settings.json
-else
-  cp hooks/settings.template.json .claude/settings.json
-fi
-chmod +x "$OP_HOME/hooks/"*.sh "$OP_HOME/hooks/run-hook.cmd" 2>/dev/null
-echo "[OK] hooks 已注册到项目（OP_HOME 走全局 env）"
+bash "$OP_HOME/scripts/opinit_register_hooks.sh"
 ```
 
-> hook 与脚本统一通过 `$OP_HOME`（全局 settings.json 设，subagent 继承）引用：`$OP_HOME/hooks/run-hook.cmd`、`$OP_HOME/scripts/*.sh`。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制。
+> 脚本校验全局 OP_HOME（未设/指向错 die 提示）+ 合并 hooks 到项目 `.claude/settings.json`（按事件 concat，不覆盖用户已有 hooks，不碰 env）。OP_HOME 由用户**全局** settings.json 设，**opinit 不写项目级 OP_HOME**。hook command 用 `$OP_HOME/hooks/run-hook.cmd`（polyglot wrapper，跨平台）。
+
+> hook 与脚本统一通过 `$OP_HOME`（全局 settings.json 设，subagent 继承）引用。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制。
 
 ## 步骤六：提取未执行计划（按步骤零答案）
 
