@@ -22,7 +22,7 @@ bash "$OP_HOME/hooks/run-hook.cmd" pre_tool_use
 | Windows | Git for Windows（提供 `bash.exe` + `cygpath`）+ `jq`（手动装） |
 | macOS / Linux | `bash` + `jq`（macOS：`brew install jq`） |
 
-Windows 装在非默认路径时，改 `run-hook.cmd` 里的 `C:\Program Files\Git\bin\bash.exe`。
+Windows 装在非默认路径时，设环境变量 `CLAUDE_CODE_GIT_BASH_PATH` 指向 `bash.exe`（Claude Code 也会用这个）。`run-hook.cmd` 的 bash.exe 检测顺序：`CLAUDE_CODE_GIT_BASH_PATH` → `C:\Program Files\Git\bin\bash.exe`（默认）→ `where bash`（PATH）。
 
 ## CRLF 防护
 
