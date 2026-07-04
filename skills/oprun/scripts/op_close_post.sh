@@ -4,7 +4,7 @@
 # review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
 set -euo pipefail
 
-PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 TID="${1:?用法: op_close_post.sh <TID> <feature>}"
 FEATURE="${2:?缺少 feature}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"

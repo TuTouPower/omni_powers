@@ -4,7 +4,7 @@
 # spec 叶子共享于 specs/{前缀}.md，per-task 不盖戳（approved spec 受写保护，per-task 碰会被自家 hook 拦）
 set -euo pipefail
 
-PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 TID="${1:?用法: op_close_pre.sh <TID>}"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
