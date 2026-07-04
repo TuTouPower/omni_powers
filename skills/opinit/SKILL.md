@@ -74,24 +74,19 @@ Agent({
   prompt: "读 docs/omni_powers/op_blueprint/ 文档列表，生成两个导航：\n(1) docs/omni_powers/index.md（给 agent）：三态模型 + 各文档定位，SessionStart 注入其摘要\n(2) docs/omni_powers/README.md（给人）：项目用 omni_powers 工作流 + 三区一句话说明 + 指向 index.md + 常用命令（/opintake '/需求/' /oprun /opstatus）" })
 ```
 
-## 步骤五：注册 hooks
+## 步骤五：注册 hooks（到使用方 .claude/settings.json）
 
-先引导用户确认 `$OP_HOME`（插件安装目录 = 本仓库 git clone 位置）并写入使用方 `.claude/settings.json` 的 `env` 段；再合并 hooks 配置：
+> `$OP_HOME` 由用户**全局** settings.json 设（一次性，所有项目共享，subagent 继承）。**opinit 不写项目级 OP_HOME**——只校验全局已设 + 合并 hooks 到项目。
 
 ```bash
-# 1. 引导设 $OP_HOME（opinit 在 $OP_HOME/skills/opinit/，上两级即插件根）
-OP_HOME_SUGGESTED="$(cd "$(dirname "$0")/../.." && pwd)"
-echo "检测到插件目录: $OP_HOME_SUGGESTED（确认或让用户修正）"
-mkdir -p .claude
-if [ -f .claude/settings.json ]; then
-  jq --arg p "$OP_HOME_SUGGESTED" '.env.OP_HOME = $p' .claude/settings.json > .claude/settings.json.tmp \
-    && mv .claude/settings.json.tmp .claude/settings.json
-else
-  printf '{"env":{"OP_HOME":"%s"}}' "$OP_HOME_SUGGESTED" | jq . > .claude/settings.json
-fi
+# 1. 校验全局 OP_HOME 已设 + 指向正确（不写项目级）
+[ -n "${OP_HOME:-}" ] || { echo "[FAIL] 全局 settings.json 未设 OP_HOME。请在全局配置（如 ~/.claude/settings.json）env 段加 \"OP_HOME\": \"/path/to/omni_powers\"，重启 Claude Code 后重跑 /opinit" >&2; exit 1; }
+[ -d "$OP_HOME/hooks" ] || { echo "[FAIL] \$OP_HOME/hooks 不存在（OP_HOME=$OP_HOME 指向错误，应为 omni_powers 仓库根）" >&2; exit 1; }
+echo "[OK] 全局 OP_HOME=$OP_HOME（不写项目级，全局共享）"
 
-# 2. 合并 hooks 配置（P1-1：按事件 concat 数组，不覆盖用户已有 hooks）
-# settings.template.json 的 hook 命令用 $OP_HOME/hooks/*.sh
+# 2. 合并 hooks 配置到项目 .claude/settings.json（P1-1：按事件 concat，不覆盖用户已有 hooks）
+# hook command 用 $OP_HOME/hooks/run-hook.cmd（polyglot wrapper，Claude Code 跑时从全局 env 展开 $OP_HOME）
+mkdir -p .claude
 if [ -f .claude/settings.json ]; then
   cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
   jq -s '
@@ -100,17 +95,16 @@ if [ -f .claude/settings.json ]; then
     | .hooks = (reduce ($t.hooks // {} | to_entries[]) as $e ($u.hooks // {});
         .[$e.key] = ((.[$e.key] // []) + $e.value)
       ))
-    | .env = (($u.env // {}) + ($t.env // {}))
   ' .claude/settings.json hooks/settings.template.json > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json
 else
   cp hooks/settings.template.json .claude/settings.json
 fi
-chmod +x "$OP_HOME/hooks/"*.sh
-echo "[OK] $OP_HOME 写入 env，hooks 已注册"
+chmod +x "$OP_HOME/hooks/"*.sh "$OP_HOME/hooks/run-hook.cmd" 2>/dev/null
+echo "[OK] hooks 已注册到项目（OP_HOME 走全局 env）"
 ```
 
-> hook 与脚本统一通过 `$OP_HOME`（插件安装目录）引用：`$OP_HOME/hooks/*.sh`、`$OP_HOME/scripts/*.sh`。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制（op_install.md 描述的 plugin 模式待 P1 重写为 skill+$OP_HOME）。
+> hook 与脚本统一通过 `$OP_HOME`（全局 settings.json 设，subagent 继承）引用：`$OP_HOME/hooks/run-hook.cmd`、`$OP_HOME/scripts/*.sh`。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制。
 
 ## 步骤六：提取未执行计划
 
