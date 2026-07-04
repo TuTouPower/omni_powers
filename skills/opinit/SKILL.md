@@ -9,6 +9,31 @@ description: >
 
 `/opinit` 在已有项目中初始化 omni_powers 工作流骨架，归档旧文档，注册 hooks。一次性。
 
+> **问询原则**：步骤零先浏览所有文档 + 整理所有问题，AskUserQuestion **一次问完**。后续步骤（二/六等）按零答案执行，**不再问**——除非遇严重阻塞（OP_HOME 未设 / 插件资源缺失 / 关键文件读不到，直接 die 提示，不是问）。
+
+## 步骤零：浏览 + 一次问
+
+跑前全面浏览现状，整理所有需用户决策的点，**一次问完**（不要逐个问）。
+
+```bash
+echo "=== 现有文档 ==="; ls docs/ 2>/dev/null | head -30
+echo "=== 已归档 ==="; ls docs/archive/ 2>/dev/null
+echo "=== .claude 配置 ==="; ls .claude/ 2>/dev/null
+echo "=== 近期 commit ==="; git log --oneline -20 2>/dev/null
+echo "=== OP_HOME ==="; [ -n "${OP_HOME:-}" ] && echo "OP_HOME=$OP_HOME" || echo "未设（步骤五会 die 提示）"
+echo "=== 代码结构 ==="; ls src/ 2>/dev/null | head
+echo "=== 旧 md 候选 ==="; find . -maxdepth 1 -name '*.md' -not -name 'README.md' -not -name 'CLAUDE.md' -not -name 'RULES.md' 2>/dev/null; find docs -maxdepth 1 -name '*.md' 2>/dev/null
+echo "=== 未执行计划候选 ==="; ls docs/archive/ 2>/dev/null | grep -iE 'task|plan|todo' || echo "无"
+```
+
+据浏览结果整理需问的点，用 **AskUserQuestion 一次问完**（合并多问题到一个 AskUserQuestion 调用）：
+
+1. **旧文档归档**：列出候选（find 结果），问归档哪些（默认全归 docs/archive/，README/CLAUDE/RULES 保留原位）
+2. **未执行计划提取**：docs/archive/ 有 task/plan/todo 文件？问是否提取为 tasks_list.json 的 task
+3. **其他歧义**：多个冲突 SPEC / 现有三区已存在 / CLAUDE.md 重复范围等
+
+记下答案，后续步骤按答案执行，**不再问**。
+
 ## 步骤一：创建标准目录结构
 
 ```bash
@@ -41,18 +66,14 @@ EOF
 
 技术债登记为 issue 加 `tech-debt` 标签，不单独建文件。依赖走 `depends_on` + jq，不单独建图文件。
 
-## 步骤二：识别并归档旧文档
+## 步骤二：归档旧文档（按步骤零答案）
 
-将非结构化 md 移入 `docs/archive`。排除 `README.md`、`CLAUDE.md`、`RULES.md`。**P1-8：先列清单，AskUserQuestion 逐文件确认，再移**——项目已有的设计文档/规格不要误移，不确定就保留原位。
+将步骤零确认归档的文件移入 `docs/archive/`（README/CLAUDE/RULES 保留原位）。**不再次问**——按步骤零答案执行。
 
 ```bash
-# 列候选清单（不直接移）
-echo "=== 归档候选（排除 README/CLAUDE/RULES）==="
-find . -maxdepth 1 -name "*.md" -not -name "README.md" -not -name "CLAUDE.md" -not -name "RULES.md" -print
-find docs -maxdepth 1 -name "*.md" -print 2>/dev/null
+# leader 据步骤零用户确认的清单展开文件列表，逐个移
+# for f in <步骤零确认归档的文件>; do mv "$f" docs/archive/; done
 ```
-
-用 AskUserQuestion 让用户确认每个文件是否归档。用户确认后逐个 `mv {file} docs/archive/`，不确认的保留原位。
 
 ## 步骤三：生成 Blueprint（按职责矩阵分工 + specs 不空）
 
@@ -106,13 +127,9 @@ echo "[OK] hooks 已注册到项目（OP_HOME 走全局 env）"
 
 > hook 与脚本统一通过 `$OP_HOME`（全局 settings.json 设，subagent 继承）引用：`$OP_HOME/hooks/run-hook.cmd`、`$OP_HOME/scripts/*.sh`。使用方项目数据走 `$CLAUDE_PROJECT_DIR`（Claude 内置）。废弃 `$CLAUDE_PLUGIN_ROOT` / plugin 机制。
 
-## 步骤六：提取未执行计划
+## 步骤六：提取未执行计划（按步骤零答案）
 
-```bash
-ls docs/archive/ | grep -iE 'task|plan|todo' || echo "无未执行计划文件"
-```
-
-发现疑似未执行计划文件 → **停下来问用户**：是否提取【还没做】的 task 加入 tasks_list.json？用户选 `y` 则派 Agent 提取（严格过滤已完成的），每项调 `bash "$OP_HOME/scripts/op_new_task.sh "标题" "详情"`。
+若步骤零用户**确认提取**，派 Agent 从 `docs/archive/` 的 task/plan/todo 文件提取【还没做】的 task（严格过滤已完成），加入 tasks_list.json，每项调 `bash "$OP_HOME/scripts/op_new_task.sh" "标题" "详情"`。否则跳过。**不再次问**。
 
 ## 步骤七：完成报告
 
