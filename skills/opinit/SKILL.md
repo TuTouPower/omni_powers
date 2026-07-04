@@ -16,14 +16,14 @@ description: >
 跑前全面浏览现状，整理所有需用户决策的点，**一次问完**（不要逐个问）。
 
 ```bash
-echo "=== 现有文档 ==="; ls docs/ 2>/dev/null | head -30
-echo "=== 已归档 ==="; ls docs/archive/ 2>/dev/null
+# 浏览用户项目现有文档（不预设位置——docs/archive 是 opinit 要建的归档目标，不是用户已有的）
+echo "=== 项目根 md ==="; ls *.md 2>/dev/null
+echo "=== docs/ 下所有 md（排除 omni_powers 三区）==="; find docs -name '*.md' -not -path 'docs/omni_powers/*' 2>/dev/null | head -40
 echo "=== .claude 配置 ==="; ls .claude/ 2>/dev/null
 echo "=== 近期 commit ==="; git log --oneline -20 2>/dev/null
 echo "=== OP_HOME ==="; [ -n "${OP_HOME:-}" ] && echo "OP_HOME=$OP_HOME" || echo "未设（步骤五会 die 提示）"
 echo "=== 代码结构 ==="; ls src/ 2>/dev/null | head
-echo "=== 旧 md 候选 ==="; find . -maxdepth 1 -name '*.md' -not -name 'README.md' -not -name 'CLAUDE.md' -not -name 'RULES.md' 2>/dev/null; find docs -maxdepth 1 -name '*.md' 2>/dev/null
-echo "=== 未执行计划候选 ==="; ls docs/archive/ 2>/dev/null | grep -iE 'task|plan|todo' || echo "无"
+echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==="; grep -rilE 'task|plan|todo' docs *.md 2>/dev/null | grep -v 'docs/omni_powers/' | head
 ```
 
 据浏览结果整理需问的点，用 **AskUserQuestion 一次问完**（合并多问题到一个 AskUserQuestion 调用）：
