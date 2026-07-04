@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# Stop hook: 完成门禁
-# - 检查 tasks_list.json 当前 task 状态
-# - 验证 5 分钟内有新鲜测试证据文件
+# SubagentStop hook: implementer 交工门禁（拦 op-implementer 完成）
+# - 检查 stop_hook_active 防递归
+# - 验证 5 分钟内有新鲜测试证据
 # 缺则拒收工
+# 注：PreToolUse deny 对 subagent 失效（D18），但 SubagentStop 是事件门禁，可拦 subagent 完成
 
 set -uo pipefail
+
+input="$(cat)"
+if [ "$(echo "$input" | jq -r '.stop_hook_active // false' 2>/dev/null)" = "true" ]; then
+  exit 0
+fi
 
 checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
 tid="$(awk -F': *' '/^current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"

@@ -52,7 +52,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 - Then 全部可翻译为断言
 - 技术决策无遗漏（拆 task 时发现某 task 产出约束他人而 spec 未写 = 打回补 spec）
 
-人批 → `status: approved` + commit + 写保护（PreToolUse hook 拦截未经变更子流程的改动）。
+人批 → `status: approved` + commit + 写保护（git 层 + 主会话 hook 拦截未经变更子流程的改动；subagent 场景 hook 失效，靠 git 层）。
 
 ## 步骤四：拆 task 写入 tasks_list.json
 
@@ -81,7 +81,7 @@ token 消耗 ≈ 工作集 × 2-3。预算红线 ≈ 名义上限一半：`spec 
 
 ## 步骤五：执行图追加进 spec
 
-在 spec 末尾追加执行图（≤10 行）：task 依赖概览 + 接口 task 位置。闸门 B 可扫（可跳过）。
+在 spec 末尾追加执行图（≤10 行）：task 依赖概览 + 接口 task 位置。Stage 2 自检可扫（可跳过）。
 
 ## 终点：就绪
 

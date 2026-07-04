@@ -6,7 +6,7 @@
 {TID} {title}
 
 ## 未解决的问题
-（从 review_code.md / review_test.md 摘要残留的 CRITICAL/HIGH）
+（从 review.md 摘要残留的 CRITICAL/HIGH）
 
 ## 已尝试轮数
 3 轮

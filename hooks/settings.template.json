@@ -17,8 +17,9 @@
         ]
       }
     ],
-    "Stop": [
+    "SubagentStop": [
       {
+        "matcher": "op-implementer",
         "hooks": [
           { "type": "command", "command": "bash $OP_HOME/hooks/stop.sh" }
         ]

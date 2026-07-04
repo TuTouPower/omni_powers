@@ -60,16 +60,13 @@ case "$rel" in
     ;;
 esac
 
-# --- e2e/** 与 BUG-* 行为层测试锁（design §10：全局路径匹配，不查锁清单）---
+# --- e2e/** 与 BUG-* 行为层测试锁（advisory：仅主会话 leader 场景生效；subagent deny 失效，靠 worktree 对称 + git 层，design §10 / op_decisions.md D18）---
 case "$rel" in
   e2e/*|*BUG-*)
-    # 行为层测试归 evaluator 所有，implementer 永久无写权限
-    # evaluator（OP_AGENT_ROLE=evaluator）放行；其余一律拦
-    # 注：#17 待落地——oprun dispatch evaluator 时主会话需 export OP_AGENT_ROLE=evaluator
-    if [ "${OP_AGENT_ROLE:-}" != "evaluator" ]; then
-      echo "[Hook] BLOCKED: $rel 是行为层测试（e2e/BUG-*），归 op-evaluator 所有。implementer 永久无写权限。解锁走人工（归因记 decisions.md）。" >&2
-      exit 2
-    fi
+    # 行为层归 evaluator；implementer worktree 不挂 e2e/（结构隔离）
+    # 本 hook 仅主会话拦（防 leader 误写 e2e）；evaluator/implementer 是 subagent，deny 不生效
+    echo "[Hook] BLOCKED: $rel 是行为层测试（e2e/BUG-*），归 op-evaluator。主会话门禁；subagent 靠 worktree 结构隔离。" >&2
+    exit 2
     ;;
 esac
 

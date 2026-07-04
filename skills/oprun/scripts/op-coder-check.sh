@@ -3,7 +3,7 @@
 # 用法: op_coder_check.sh <TID>
 # 输出: mode=normal|fail|blocked, round=1|2|3
 # exit 0 = 可继续, exit 1 = 阻塞（不应再派 implementer）
-# v6：review.md 单文件；review ≤ 2 轮（第 3 轮 → blocked，design §7.2 / RULES.md）
+# review.md 单文件；review ≤ 2 轮（第 3 轮 → blocked，design §7.2 / RULES.md）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"

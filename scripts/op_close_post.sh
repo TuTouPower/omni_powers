@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # op_close_post：per-task 收口后机械步骤（校验 review.md PASS + 归档 + 记录 + stage）
 # 用法: op_close_post.sh <TID> <feature>
-# v6：review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
+# review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
 set -euo pipefail
 
 PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"

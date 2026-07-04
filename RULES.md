@@ -108,15 +108,15 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - 全线 Sub Agent，每次 fresh dispatch，上下文隔离
 - 证据由机器产出，无新鲜机器证据的"完成"无效
 - task = commit，粒度沿低耦合缝隙切
-- review ≤2 轮，两轮修不平是结构问题（详见 op-reviewer.md）
+- review ≤2 轮；Stage 4 验收 ≤3 轮（到顶按严重度分流，详见 op-reviewer.md / design §8）
 - issue 不直接改代码，转正式 task 走 change type 流程
 - 中间状态不 commit；大 task 允许 `wip({TID})` 纯代码 sub-commit，不触发收口
 - Sub Agent 之间不直接通信
-- worktree/分支模式选择见 oprun/SKILL.md
+- worktree 对称隔离：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（hook 对 subagent deny 失效，硬锁靠结构，design §8.1/§10，依据 `op_decisions.md` D18）；分支模式见 oprun/SKILL.md
 - 不生成 dag.md
 
 ## 不做
 
 - 不停下问用户（除非可跑 task 跑完仍剩阻塞，或契约边界规则触发 spec 变更——见 design.md §5.2）
-- op-closer 不直接写 `op_blueprint/`（产提案，leader 审批后写入；decisions.md 直接 append 自决决策）。**decisions.md 两写入者**：spec 编写者（设计探索全文，design §5.2）+ closer（执行期自决决策）
+- op-closer 不直接写 `op_blueprint/`（产提案，leader 审批后写入；decisions.md 直接 append 自决决策）。**decisions.md 多写入者**（均 append-only，带来源标记）：spec 编写者（设计探索全文）+ closer（执行期自决决策）+ 红灯归因 + 解锁（BUG-*/锁定文件归因）
 - 其余见"跨 agent 铁律"

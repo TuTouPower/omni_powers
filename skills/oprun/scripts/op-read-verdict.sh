@@ -4,7 +4,7 @@
 # 输出: round + verdict + result
 # 无 review.md → round: 0, result: NONE, exit 0
 # exit 0 = PASS 或 NONE, exit 1 = FAIL
-# v6：review.md 单文件（取代 v5 review_spec/code/test 三文件）
+# review.md 单文件（verdict 从末行读）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"

@@ -22,7 +22,7 @@
 | `conventions.md` | 编码约定、命名、技术栈 |
 | `domain.md` | 领域知识：术语表 + 跨功能全局不变量 |
 | `test.md` | 测试宪章：可写性矩阵、红灯归因、危险模式 |
-| `baselines/baselines_index.md` | 基准文件索引：前缀→AC→文件（结构化硬门 + 视觉 advisory） |
+| `baselines/baselines_index.md` | 基准文件索引：功能名→AC→文件（结构化硬门 + 视觉 advisory，与 specs/ 同键） |
 
 ## op_execution/ — 流动工作区（"现在在干什么"）
 

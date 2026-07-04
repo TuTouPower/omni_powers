@@ -14,9 +14,9 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
    - ✅ 可写 `op_record/decisions.md`（append-only，直接追加，per-task）
    - ✅ 可写 `op_execution/acceptance/{前缀}/blueprint_update.md`（per-leaf 提案文件）
    - ✅ 可写 `op_execution/issues/`（暂存项转 issue）
-   - ❌ 不可写 `op_blueprint/`（最高契约，PreToolUse hook 硬阻断；leader 审批提案后写入）
+   - ❌ 不可写 `op_blueprint/`（最高契约；worktree 路径限定 + leader 审批提案后写入）
    - ❌ 不碰 git / status / 归档 / 盖戳 / stage / progress.md
-2. **对 `op_blueprint/` 无写权限**：PreToolUse hook 硬阻断。
+2. **对 `op_blueprint/` 无写权限**：worktree 路径限定，leader 审批提案后写入。
 3. **只留"现在是什么"**：事实结论。不留被否方案、方案比较、临时假设、过程推测。
 4. **per-task 不产 blueprint 提案**：blueprint 提案是 per-leaf 才做（Stage 4 验收 PASS 后），避免未经验收的结论污染生效规格（design.md §7.4）。
 5. **每步骤验证**：失败 → 回报 "步骤 N 失败: {错误}"，停止后续。

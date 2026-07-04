@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # op_close_pre：per-task 收口前机械步骤（标 status=收口中）
 # 用法: op_close_pre.sh <TID>
-# v6：spec 叶子共享于 specs/{前缀}.md，per-task 不盖戳（approved spec 受写保护，per-task 碰会被自家 hook 拦）
+# spec 叶子共享于 specs/{前缀}.md，per-task 不盖戳（approved spec 受写保护，per-task 碰会被自家 hook 拦）
 set -euo pipefail
 
 PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"

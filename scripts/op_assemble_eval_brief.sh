@@ -6,7 +6,7 @@
 #   - 工作 spec: op_execution/specs/{前缀}.md（AC/INV/边界/可测性契约）
 #   - 生效规格: op_blueprint/specs/{feature}.md（经 spec_index 索引）
 #   - baselines 索引: op_blueprint/baselines/baselines_index.md（首次为空）
-# 不含: implementer 的 report/diff/review、src/**、tasks/**（hook 另拦）
+# 不含: implementer 的 report/diff/review、src/**、tasks/**（evaluator worktree 不挂载）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -26,7 +26,7 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "# Evaluator Brief: $PREFIX"
   echo
   echo "> 机械组装（op_assemble_eval_brief.sh），leader 不参与内容，主会话污染传不过来。"
-  echo "> 你只读本文件 + 启动应用。禁止读 src/**、tasks/**、report/diff/review（hook 拦）。"
+  echo "> 你只读本文件 + 启动应用。src/**、tasks/** 不在你的 worktree（结构隔离）。"
   echo
 
   echo "## 工作 spec（AC/INV/边界/可测性契约/预期失败模式）"

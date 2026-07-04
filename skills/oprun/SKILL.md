@@ -191,11 +191,10 @@ bash skills/oprun/scripts/close_check.sh {TID}
 
 派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 4 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
-**派 evaluator 前 leader 保证访问隔离（三层，design §8.1）**：
+**派 evaluator 前 leader 保证访问隔离（结构单层 + 报告回流，design §8.1；hook 对 subagent 失效，依据 `op_decisions.md` D18）**：
 1. 跑 `scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
-2. hook 拦 evaluator 命中 `src/**` + `op_execution/tasks/**` + `op_record/tasks/**`（Stage 4 已归档）+ `op_record/decisions.md`；Bash 读源码审计拦 cat/git show+src|tasks 路径。**前期**单机 worktree+hook（非 UI 类 AC 完整可验，UI 操作类受限）；**后期**独立验证环境（CI 构建产物 + 一台独立机器自由操作 UI，源码与 task 目录不入 evaluator 文件系统）。
-3. dispatch prompt 固定模板，hook 审计不含 task 路径/report/diff 片段（落地待 P2 验证）。
-4. **dispatch 前 leader 主会话 `export OP_AGENT_ROLE=evaluator`**（#17：hook 据此放行 evaluator 写 e2e/BUG-*；hook 对非 evaluator 全局拦）。dispatch 后 `unset OP_AGENT_ROLE`。env 向 subagent 的传递机制待 P2 验证。
+2. **evaluator worktree 无 src**：evaluator 在独立 worktree，只挂载 spec + 生效规格 + baselines + 构建产物 + `e2e/`——`src/**`、task 目录、`decisions.md` 物理不挂载。implementer 分支跑 CI 产构建产物供 evaluator 操作。
+3. dispatch prompt 固定模板（advisory 留痕，不拦截）。
 
 ```js
 Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
@@ -205,7 +204,7 @@ Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
 
 > prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、AC、可测性契约执行：逐 AC 评估 → PASS 的 AC 固化成 e2e/{前缀}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
 
-验收范围内 FAIL → 修复 task 回流（走 task 循环）重验收。验收 PASS → 进 per-leaf 收尾。
+验收范围内 FAIL → 修复 task 回流（走 task 循环）重验收，**≤3 轮**（到顶 Critical→升级人裁决/转设计 task，Important/Minor→落 issue）。验收 PASS → 进 per-leaf 收尾。
 
 ## per-leaf 收尾（Stage 4 验收 PASS 后，closer 两段节奏之二）
 

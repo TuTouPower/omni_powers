@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PostToolUse hook: 代码/测试编辑后自动跑受影响测试，留机器证据
 # 证据存 docs/omni_powers/op_execution/tasks/{TID}/test_evidence_*.log
-# Stop hook 校验 5 分钟内新鲜证据；本 hook 保留 60 分钟审计轨迹（职责不同，非不一致）
+# SubagentStop hook 校验 5 分钟内新鲜证据；本 hook 保留 60 分钟审计轨迹
 
 set -uo pipefail
 

@@ -60,7 +60,7 @@ bash skills/oprun/scripts/op-coder-check.sh {TID}
 | `tasks/{TID}/report.md` | **你** | 顶部总报告每轮覆盖 + 分 Round 追加 |
 | `tasks/{TID}/review.md` | op-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | **你** | coding 阶段 |
-| `e2e/` | **禁止碰** | op-evaluator 所有，PreToolUse hook 硬阻断 |
+| `e2e/` | **禁止碰** | op-evaluator 所有；implementer worktree 不挂 `e2e/`（worktree 对称隔离，design §10） |
 | `op_execution/specs/{前缀}.md` | leader（opspec） | 只读（工作 spec，AC/INV/边界/技术决策） |
 
 ## TDD 流程
@@ -158,6 +158,6 @@ npm test -- path/to/test.test.ts  # 或项目对应的测试命令
 - 盲改 review 意见不验证
 - 改测试迎合代码（除非 review 指出测试错了，且走红灯归因）
 - 删除/反转 expect、放宽断言、加 .skip/.only——这些自动触发 reviewer 危险模式扫描
-- 碰 `e2e/`（evaluator 所有，hook 硬阻断）；`BUG-*` 新增可写（fix 回归带归因 + 解锁审批）、修改既有禁止
+- 碰 `e2e/`（evaluator 所有；implementer worktree 不挂 `e2e/`，结构隔离——hook 对 subagent 失效，硬锁靠结构，依据见 `op_decisions.md` D18）；`BUG-*` 新增可写（fix 回归带归因 + 解锁审批）、修改既有禁止
 - 在同一轮里改 spec（spec 变更走子流程，人批）
 - 写 `op_blueprint/`（leader 基于 closer 提案写）

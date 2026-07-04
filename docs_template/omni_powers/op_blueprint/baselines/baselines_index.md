@@ -1,18 +1,18 @@
 # baselines 索引
 
-> 基准文件索引：前缀 → AC → 文件 + 更新说明。
-> AC 的文字定义在 spec（`op_execution/specs/{前缀}.md` 的「验收场景」段），本文件**只索引基准快照文件**，不存 spec 内容。
-> 前缀标记完成后此 section 永久冻结（前缀永不复用）。
+> 基准文件索引：功能名 → AC → 文件 + 更新说明。
+> AC 的文字定义在 spec（`op_execution/specs/{前缀}.md` 的「验收场景」段，工作前缀经 frontmatter `feature` 字段映射到功能名），本文件**只索引基准快照文件**，不存 spec 内容。
+> baselines 按功能名存（与 `specs/{feature}.md` 同键，1:1 零桥接）；前缀永不复用（op_execution 层）。
 
-<!-- 每个前缀一个 section，按 AC 列基准文件 -->
+<!-- 每个功能一个 section，按 AC 列基准文件 -->
 
-## {前缀}（{YYYY-MM-DD}）
+## {功能名}（{YYYY-MM-DD}）
 
 | 文件 | 对应 AC | 类型 | 说明 |
 |---|---|---|---|
-| {前缀}/AC-N_desc.dom.html | AC-N | 结构化 | {一句说明} |
-| {前缀}/AC-N_desc.txt | AC-N | 结构化 | {stdout/CLI 原文} |
-| {前缀}/AC-N_desc.png | AC-N | 视觉 | {截图锚点，advisory} |
+| {功能名}/AC-N_desc.dom.html | AC-N | 结构化 | {一句说明} |
+| {功能名}/AC-N_desc.txt | AC-N | 结构化 | {stdout/CLI 原文} |
+| {功能名}/AC-N_desc.png | AC-N | 视觉 | {截图锚点，advisory} |
 
 <!--
 类型语义：
