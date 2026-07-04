@@ -12,9 +12,9 @@ description: >
 ## 步骤一：创建标准目录结构
 
 ```bash
-mkdir -p docs/omni_powers/op_blueprint/specs
-mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues}
-mkdir -p docs/omni_powers/op_record/{specs,tasks}
+mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
+mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
+mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
 mkdir -p docs/archive e2e
 
 touch docs/omni_powers/op_record/progress.md
@@ -66,12 +66,12 @@ Agent({
 
 完成后**提示用户瘦身心 CLAUDE.md**：CLAUDE.md 是"门牌"，只留项目一句话定位 + dev/build/test 命令 + 指向 `docs/omni_powers/op_blueprint/` 各文档；与 blueprint 重复的段（技术栈/目录树/架构约束/命名/日志）删，改为"详见 architecture.md / conventions.md / ..."。
 
-## 步骤四：重写导航 (index.md)
+## 步骤四：重写导航（index.md + README.md）
 
 ```js
 Agent({
   name: "index-generator", model: "haiku",
-  prompt: "读取 docs/omni_powers/op_blueprint/ 下文档列表，在 docs/omni_powers/index.md 生成全局文档导航图（索引）。" })
+  prompt: "读 docs/omni_powers/op_blueprint/ 文档列表，生成两个导航：\n(1) docs/omni_powers/index.md（给 agent）：三态模型 + 各文档定位，SessionStart 注入其摘要\n(2) docs/omni_powers/README.md（给人）：项目用 omni_powers 工作流 + 三区一句话说明 + 指向 index.md + 常用命令（/opintake '/需求/' /oprun /opstatus）" })
 ```
 
 ## 步骤五：注册 hooks
