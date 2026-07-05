@@ -1,7 +1,7 @@
 # 文档导航
 
 > 给 agent 看的目录页（SessionStart hook 注入其摘要）。三态模型 + 各文档定位。
-> 设计理由见 `$OP_HOME/docs/omni_powers_design.md`；运行时操作见 `$OP_HOME/RULES.md`。
+> 设计理由见 omni_powers 插件目录 `$OP_HOME/docs/omni_powers_design.md`；运行时操作见 `$OP_HOME/RULES.md`。`$OP_HOME` 是插件安装目录，不是目标项目根目录。
 
 ## 三态模型
 

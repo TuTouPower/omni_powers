@@ -23,10 +23,10 @@ cat docs/omni_powers/op_execution/leader_checkpoint.md
 ### 2. 查 tasks_list.json（严禁 Read 整文件，用 jq）
 
 ```bash
-bash "$OP_HOME/scripts/op_jq.sh all          # 全部概览
-bash "$OP_HOME/scripts/op_jq.sh pending      # 待开始
-bash "$OP_HOME/scripts/op_jq.sh blocked      # 阻塞
-bash "$OP_HOME/scripts/op_jq.sh skipped      # 跳过
+bash "$OP_HOME/scripts/op_jq.sh" all          # 全部概览
+bash "$OP_HOME/scripts/op_jq.sh" pending      # 待开始
+bash "$OP_HOME/scripts/op_jq.sh" blocked      # 阻塞
+bash "$OP_HOME/scripts/op_jq.sh" skipped      # 跳过
 ```
 
 ### 3. 渲染报告

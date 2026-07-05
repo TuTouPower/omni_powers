@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# opinit_skeleton：建 omni_powers 三区骨架（目录 + baselines_index 模板 + tasks_list + checkpoint + .test_locks）
+# opinit_skeleton：建 omni_powers 三区骨架（目录 + baselines_index 模板 + tasks_list + checkpoint + progress/decisions + .test_locks）
 # 用法: 在使用方项目根跑 bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
-# 重跑幂等：已存在的 tasks_list/checkpoint/.test_locks/baselines_index 保留不覆盖（只补缺）
+# 重跑幂等：已存在的 tasks_list/checkpoint/progress/decisions/.test_locks/baselines_index 保留不覆盖（只补缺）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -22,9 +22,17 @@ if [ ! -f docs/omni_powers/op_blueprint/baselines/baselines_index.md ]; then
     || echo "# baselines 索引（首次空，验收后填）" > docs/omni_powers/op_blueprint/baselines/baselines_index.md
 fi
 
-# progress + decisions（append-only，touch 不破坏已有内容）
-touch docs/omni_powers/op_record/progress.md
-touch docs/omni_powers/op_record/decisions.md
+# progress + decisions（首次复制模板；重跑不覆盖已有内容）
+if [ ! -f docs/omni_powers/op_record/progress.md ]; then
+  cp "$OP_HOME/docs_template/omni_powers/op_record/progress.md" \
+     docs/omni_powers/op_record/progress.md 2>/dev/null \
+    || touch docs/omni_powers/op_record/progress.md
+fi
+if [ ! -f docs/omni_powers/op_record/decisions.md ]; then
+  cp "$OP_HOME/docs_template/omni_powers/op_record/decisions.md" \
+     docs/omni_powers/op_record/decisions.md 2>/dev/null \
+    || touch docs/omni_powers/op_record/decisions.md
+fi
 
 # tasks_list.json（重跑不覆盖——保留已有 task）
 [ -f docs/omni_powers/op_execution/tasks_list.json ] \

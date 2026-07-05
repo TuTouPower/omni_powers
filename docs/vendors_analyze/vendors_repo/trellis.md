@@ -219,6 +219,7 @@ trellis init --claude --cursor --opencode -u your-name
 
 **关键设计决策**：
 - Hook 负责注入所有上下文，子 agent 自主工作不依赖回叫（"behavior controlled by code not prompt"）。
+- 这类注入可借鉴为动态摘要和上下文补齐；不可作为访问控制、写权限隔离或硬安全边界。
 - `<!-- trellis-hook-injected -->` 标记：子 agent 通过检查此标记判断上下文是否已注入，未注入时自行加载（Windows + `--continue` resume 等 hooks 无法触发的场景）。
 - jsonl 种子行（`{"_example": ...}`）不含 `file` 字段 → 自动跳过，emit stderr 警告。
 - 递归保护：implement/check agent 定义中明确禁止再次派发 implement/check。

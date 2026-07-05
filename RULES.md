@@ -64,7 +64,7 @@ leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewe
 1. `git revert <commit_hash>` — 反向提交
 2. `bash $OP_HOME/scripts/op_status.sh {TID} 待开始` — 该 task 回退
 3. `bash $OP_HOME/scripts/op_jq.sh downstream {TID}` 查下游，逐一回退
-4. 已归档的 task：`git mv op_record/tasks/{TID} op_execution/tasks/{TID}` 移回工作区
+4. 已归档的 task：`git mv docs/omni_powers/op_record/tasks/{TID} docs/omni_powers/op_execution/tasks/{TID}` 移回工作区
 
 不连锁回滚下游，只重置状态。
 
@@ -109,11 +109,11 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - 证据由机器产出，无新鲜机器证据的"完成"无效
 - **入口检查环境**：任何 skill/agent 入口先跑 `bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法提示），绝不闷头失败——Windows 无 jq 是常见坑
 - task = commit，粒度沿低耦合缝隙切
-- review ≤2 轮；Stage 4 验收 ≤3 轮（到顶按严重度分流，详见 op-reviewer.md / design §8）
+- review ≤2 轮；Stage 4 验收 ≤3 轮（到顶按严重度分流，详见 `skills/oprun/SKILL.md` 的验收段与 design §4/§8）
 - issue 不直接改代码，转正式 task 走 change type 流程
 - 中间状态不 commit；大 task 允许 `wip({TID})` 纯代码 sub-commit，不触发收口
 - Sub Agent 之间不直接通信
-- worktree 对称隔离：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（hook 对 subagent deny 失效，硬锁靠结构，design §8.1/§10，依据 `op_decisions.md` D18；**实现待 design §12 P2 sparse-checkout 落地，当前普通 worktree 未排除，过渡期 advisory**）；分支模式见 oprun/SKILL.md
+- worktree 对称隔离是**目标设计**：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`。**当前实现状态**：普通 worktree 未用 sparse-checkout 排除目录，过渡期只作纪律约束/advisory，不得把物理隔离当安全前提。硬隔离待 design §12 P2 落地；分支模式见 `skills/oprun/SKILL.md`
 - 不生成 dag.md
 
 ## 不做

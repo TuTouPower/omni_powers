@@ -4,7 +4,7 @@
 # review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
 set -euo pipefail
 
-PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 TID="${1:?用法: op_close_post.sh <TID> <feature>}"
 FEATURE="${2:?缺少 feature}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -51,7 +51,7 @@ if ! grep -qE "^- $TID[[:space:]]*\\|" "$PROGRESS_FILE"; then
     printf -- '- %s | %s | %s | 完成\n' "$TID" "$FEATURE" "$DATE" >> "$PROGRESS_FILE" || die "追加 progress.md 失败"
 fi
 
-bash "$PLUGIN_ROOT/scripts/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
+bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
 
 # P0-4：收口完成，清 current_task（hook 不再校验本 task 证据）
 CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"

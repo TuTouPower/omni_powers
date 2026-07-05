@@ -163,7 +163,7 @@ Bun 编译二进制 + Chromium + Playwright，常驻后台。首次调用 ~3s，
 
 ---
 
-## 六、七个 repo 类型总览
+## 六、十个 repo 类型总览
 
 ### 分类逻辑
 
@@ -176,8 +176,8 @@ Bun 编译二进制 + Chromium + Playwright，常驻后台。首次调用 ~3s，
 | 类型 | 特征 | 实例 |
 |---|---|---|
 | **CLI 格式的开发方法论** | 终端运行 CLI 生成文件/目录结构，Agent 通过生成的 slash commands 执行工作流。不常驻，不注入 SessionStart | OpenSpec、spec-kit |
-| **Skill 格式的开发方法论** | 纯 SKILL.md 文件驱动，靠 SessionStart hook 注入路由/meta-skill。Agent 按 skill 指令执行，无 CLI 脚手架 | superpowers、agent-skills |
-| **轻量级 Skill 包** | 多个独立 SKILL.md 文件，用户按需选择。无 SessionStart 注入，无编排，不拥有流程 | mattpocock_skills |
+| **常驻路由型 Skill 方法论** | 纯 SKILL.md 文件驱动，SessionStart hook 注入路由/meta-skill。Agent 按 skill 指令执行，无 CLI 脚手架 | superpowers、agent-skills |
+| **轻量级按需 Skill 包** | 多个独立 SKILL.md 文件，用户按需选择。无 SessionStart 注入，无编排，不拥有流程 | mattpocock_skills |
 | **重量级大规模插件包** | 含 Agents + Skills + Hooks + Commands + Rules，全栈覆盖。SessionStart 注入记忆/升级/路由。拥有你的开发流程 | ECC、gstack |
 
 ```
@@ -305,6 +305,11 @@ task.py add-subtask / remove-subtask
 | 协议 | MIT | **AGPL** |
 | 规模 | 12 skills / 113 文件 | 15 skills / 3 hooks / Python 运行时 |
 
+### 和 omni_powers 的借鉴边界
+
+- 可借鉴：动态摘要、自动补齐 task/prd/design 上下文，降低 leader prompt 重复。
+- 不可借鉴为硬边界：PreToolUse prompt 注入不能替代访问控制、写权限隔离或路径锁；omni_powers 的安全边界仍需由 worktree/git/脚本门禁承担。
+
 ---
 
 ## 九、planning-with-files
@@ -365,7 +370,7 @@ SessionStart 跑 `inject-plan.sh`，把 task_plan.md 的部分内容注入上下
 - trellis：task.py CLI + 状态机 + parent/child 树
 - planning-with-files：3 个 Markdown 文件 + gated 门禁
 
-三个都**不做 spec 驱动**（和 OpenSpec/spec-kit 无关），三个都**以单 agent 为主**（trellis 有 leader-worker，planning-with-files 可选多 agent）。
+三个都**不以强 spec 驱动为核心**：bmad 有 SPEC/PRD 与架构产物，trellis 有轻 PRD/spec-bootstrap，planning-with-files 基本不管 spec；它们都不是 OpenSpec/spec-kit 那种规约主线。三个都**以单 agent 为主**（trellis 有 leader-worker，planning-with-files 可选多 agent）。
 
 ---
 

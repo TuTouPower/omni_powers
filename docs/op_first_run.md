@@ -11,9 +11,11 @@
 
 ### 环境（Win 宿主，插件在 Win 侧 Claude Code 调用）
 
+- [ ] `echo "$OP_HOME"` 指向 omni_powers 插件目录
+- [ ] `bash "$OP_HOME/scripts/op_check_env.sh"` 通过（统一检查 jq/git/OP_HOME）
 - [ ] `jq --version`（hooks 依赖；无则 `choco install jq` / `scoop install jq`）
 - [ ] Git for Windows（bash + cygpath，hook polyglot wrapper 依赖）
-- [ ] `cua --version`（无则 PowerShell: `irm https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.ps1 | iex`）
+- [ ] `cua --version`（无则按 CUA 官方文档安装；PowerShell 管道脚本需先审阅 URL 内容，确认来源可信后再执行）
 - [ ] `cua do-host-consent` 已做（一次性），`cua do switch host` + `cua do status` 确认 target=host
 - [ ] `cua do screenshot` 能出图（验证权限/显示器就绪）
 - [ ] Playwright 可用（靶子项目内 `npx playwright --version`）
@@ -27,7 +29,7 @@ OP_EVALUATOR_MODEL=opus      # computer use 多模态判断 + 对抗性思维
 OP_CLOSER_MODEL=haiku
 ```
 
-写进使用方 `.claude/settings.json` env 段（opinit 时顺带）。spec 编写在主会话——闸门 A 前 `/model` 切 Opus。
+写进使用方 `.claude/settings.json` env 段或全局 settings env 段；`/opinit` 不自动写模型 env。spec 编写在主会话——闸门 A 前 `/model` 切 Opus。
 
 ### 靶子项目
 
@@ -100,7 +102,7 @@ OP_CLOSER_MODEL=haiku
 | 2 | 状态机与脚本在 Windows 实跑无阻断性 bug | 摩擦点清单里无 P0 项未修 |
 | 3 | evaluator 产出可信：hard-pass gate 无推论式 PASS，固化测试破坏检查全过 | 人工复核 + 抽查二阶判断 |
 | 4 | cua 通道端到端可用（或明确判定不可用 + 降级路径生效） | 阶段 3 勾选项 |
-| 5 | runbook 素材成型 | `docs/op_manual_leader.md` 底稿存在 |
+| 5 | runbook 素材成型 | 首跑完成后生成 `docs/op_manual_leader.md` 底稿 |
 
 ## 3. 中断与回退
 

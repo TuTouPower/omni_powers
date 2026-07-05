@@ -2,17 +2,17 @@
 
 > 分析对象：`vendors/` 下 10 个 Claude Code harness 相关插件/工具集
 > 生成时间：2026-07-02
-> 每个 repo 的详细分析见同目录下 `{repo_name}.md`
+> 每个 repo 的详细分析见 `vendors_repo/{repo_name}.md`
 > 深度讨论补充来源：`deep-discussion-notes.md`
 
 ## 一、横向对比表
 
 | repo | 功能定位 | Star | 工具总数（按类型） | 核心能力 | context 成本 | 成熟度 | 适用场景 |
 |---|---|---|---|---|---|---|---|
-| **everything-claude-code** | Agent Harness 操作系统 | 224.6K | 67 Agents / 277 Skills / 92 Commands / 48 Hooks / 20+ MCP / 16 语言规则 | SessionStart 记忆持久化 + 选择性安装 + Agent 编排 | ~3-4K tokens/session | 极高（230+ 贡献者、997+ 测试、周更） | 想要“全家桶”标准化工作流 + 质量护栏的团队 |
+| **everything-claude-code** | Agent Harness 操作系统 | 224.6K（采集时量级） | 67 Agents / 277 Skills / 92 Commands / 48 Hooks / 20+ MCP / 16 语言规则 | SessionStart 注入状态摘要 + 选择性安装 + Agent 编排 | ~3-4K tokens/session | 极高（230+ 贡献者、997+ 测试、周更） | 想要“全家桶”标准化工作流 + 质量护栏的团队 |
 | **superpowers** | skill+hook 开发流程系统 | 243.4K | 12 Skills / Hooks / 自定义 Agents / CLI | bootstrap 强制注入 + SDD leader-worker 执行引擎 | 注入 using-superpowers 全文 | 中高（v6.1、113 文件、10+ harness） | 想要强纪律（TDD/brainstorm/review）的开发流程 |
 | **mattpocock_skills** | 轻量 skills 集合 | 152.9K | 17 Skills（10 user + 7 model）/ Hooks / 脚本 | 路由+分层，可复用纪律/词汇表 | ~105-280 词（固定） | 中（个人维护、无 SessionStart） | 用户主导、按需引入单点技能（TDD/审查/领域建模） |
-| **gstack** | 重量级全链路研发 harness | 118.7K | 59 Skills / ~80 CLI / 4 Hooks / Chrome 扩展 / MCP | 无头浏览器守护进程 + Router 分派 + 6 层安全栈 | 中（SessionStart 注入 + router） | 高（v1.58、YC CEO 维护、MIT、活跃） | 产品构思→发布监控的端到端个人/小团队研发 |
+| **gstack** | 重量级全链路研发 harness | 118.7K（采集时量级） | 59 Skills / ~80 CLI / 4 Hooks / Chrome 扩展 / MCP | 无头浏览器守护进程 + Router 分派 + 6 层安全栈 | 中（SessionStart 只做 auto-update；router/skill 按需加载） | 高（v1.58、YC CEO 维护、MIT、活跃） | 产品构思→发布监控的端到端个人/小团队研发 |
 | **spec-kit** | 官方 SDD 脚手架 CLI | 117.0K | Python CLI / 10 Commands / 10 脚本 / 4 扩展 / 35+ Agent 适配 | 模板约束 LLM 输出 + Constitution 合规 + Extension hook | 无自动注入（可选扩展） | 高（GitHub 官方、每日多 PR、文档全） | 规格先行（spec→plan→tasks→implement）的标准化 SDD |
 | **agent-skills** | 生产级全生命周期工程技能集 | 68.4K | 24 Skills / 8 Commands / 4 Agents / 3 套 Hooks / 7 参考检查单 | 生命周期技能（Define→Ship）+ 防借口表/红牌/验证门禁 | 注入 using-agent-skills meta | 中（Addy Osmani、20 天 50 commits、MIT） | 想要资深工程师纪律 + 验证门禁的 AI 编码流程 |
 | **OpenSpec** | 规约驱动开发方法论 | 58.2K | CLI / 双轨 Skills+Commands（33 工具适配） | Delta spec（ADDED/MODIFIED/REMOVED）差异管理 | 低（skill 按需加载） | 高（近每日提交、19 docs、MIT、30+ 工具） | brownfield 增量变更、需求可审计追溯 |
@@ -25,8 +25,8 @@
 | 类型 | 特征 | 实例 |
 |---|---|---|
 | **CLI 格式的开发方法论** | 终端 CLI 生成文件/目录结构，Agent 通过生成的 slash commands 执行；不常驻，不强注入 | OpenSpec、spec-kit |
-| **Skill 格式的开发方法论** | 纯 `SKILL.md` 驱动，靠 SessionStart hook 注入路由/meta-skill；流程纪律强 | superpowers、agent-skills |
-| **轻量级 Skill 包** | 多个独立 skill，用户按需选择；无 SessionStart 注入，无编排，不拥有流程 | mattpocock_skills |
+| **常驻路由型 Skill 方法论** | 纯 `SKILL.md` 驱动，SessionStart hook 注入路由/meta-skill；流程纪律强 | superpowers、agent-skills |
+| **按需 Skill 包** | 多个独立 skill，用户按需选择；无 SessionStart 注入，无编排，不拥有流程 | mattpocock_skills |
 | **重量级大规模插件包** | Agents + Skills + Hooks + Commands + Rules 全栈覆盖；SessionStart 注入记忆/升级/路由；拥有开发流程 | everything-claude-code、gstack |
 | **CLI + Skill 方法论** | CLI 安装/生成 + skill 工作流；强调角色、配置、阶段推进 | bmad-method |
 | **Hook 驱动工程框架** | hook 动态注入状态、上下文和阶段 breadcrumb；task 状态机是核心 | trellis |
@@ -43,9 +43,10 @@
 
 ### SessionStart 注入策略
 
-- **重注入**：everything-claude-code（3-4K）、gstack、superpowers（using-superpowers 全文）、agent-skills（using-agent-skills meta）
+- **重注入**：everything-claude-code（3-4K）、superpowers（using-superpowers 全文）、agent-skills（using-agent-skills meta）
 - **动态轻注入**：trellis（500-800，按当前 task/git/spec/workflow 计算）
 - **计划文件注入**：planning-with-files（注入 plan/progress）
+- **SessionStart 只触发后台维护**：gstack（auto-update；router/skill 按需进入上下文）
 - **完全不注入 / 按需加载**：bmad-method、mattpocock_skills、OpenSpec、spec-kit
 
 ### 状态管理机制
@@ -183,7 +184,7 @@ gstack 浏览器能力覆盖：
 | 安全护栏 | gstack | prompt 注入防御 + redact pre-push | hooks 保持最小强约束：锁区、路径、敏感操作、防误删 |
 | 行为纪律 | superpowers、agent-skills | 铁律声明 + 对抗性审查 | 把纪律写进 agent prompt 和 gate，而不是靠 leader 记忆 |
 | 浏览器验证 | gstack | 常驻浏览器 + QA/design-review 闭环 | Web 项目可借鉴；omni_powers 本体暂不需要内置浏览器守护进程 |
-| 子 agent ctx 注入 | trellis | hook 自动补齐任务上下文 | 可用于减少 leader 派发 prompt 冗余，但要防注入过重 |
+| 子 agent ctx 注入 | trellis | hook 自动补齐任务上下文 | 可借鉴动态摘要，减少 leader 派发 prompt 冗余；不可作为访问控制、写权限隔离或安全边界，omni_powers 的隔离仍以 worktree/git/路径纪律为准 |
 | 文件计划恢复 | planning-with-files | plan/findings/progress 三态 | omni_powers 的 `op_blueprint/op_execution/op_record` 已是更结构化版本，应继续沿用 |
 
 ## 七、快速定位
@@ -196,7 +197,7 @@ gstack 浏览器能力覆盖：
 | 想给 AI 加“真正看到页面”的能力 | gstack |
 | 需要跨 35+ Agent 工具的 spec 标准 | spec-kit |
 | 想要角色化方法论和可合并配置 | bmad-method |
-| 想要 hook 自动给子 agent 塞上下文 | trellis |
+| 想要 hook 自动给子 agent 塞上下文 | trellis（可借鉴动态摘要；不可作为访问控制或硬隔离依据） |
 | 想要最小成本跨会话计划恢复 | planning-with-files |
 
 ## 八、补充整理映射
@@ -219,7 +220,7 @@ gstack 浏览器能力覆盖：
 bmad-method、trellis、planning-with-files 的共同点：
 
 1. 都做 task 管理，只是载体不同：memlog/manifest/sprint、`task.py` 状态机、三 Markdown 文件。
-2. 都不以 spec 驱动为核心，和 OpenSpec/spec-kit 的规约线不同。
+2. 都不以 spec 驱动为核心，和 OpenSpec/spec-kit 的规约线不同；其中 bmad 有 SPEC/PRD 与架构产物、trellis 有轻 PRD/spec-bootstrap，但不是强制规约线。
 3. 都以单 agent 为主；trellis 有 leader-worker，planning-with-files 可选多 agent。
 
 ### 更新后的七项目类型总览

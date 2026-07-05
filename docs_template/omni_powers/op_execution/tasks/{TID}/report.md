@@ -1,10 +1,12 @@
 # {TID} 报告
 
 ## 总报告（每轮覆盖，截至最新轮的累积总结）
-- 状态: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-- 覆盖 AC: {AC-1, AC-2}
+- 实现回报状态（非 `tasks_list.status`）: DONE | BLOCKED | NEEDS_CONTEXT
+- 完成内容: {按 AC 汇总}
+- 测试证据: {命令 + PASS/FAIL 概要 + 新鲜关键输出}
+- 假设与限制: {无则写“无”}
+- 自决决策: {边界内决策写这里；closer 提取后 append decisions.md；无则写“无”}
 - 触碰文件: {列表}
-- 测试结果: {PASS/FAIL 概要 + 新鲜输出证据}
 
 ---
 

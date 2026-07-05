@@ -25,8 +25,32 @@ command -v jq >/dev/null 2>&1 || {
 echo "[OK] 全局 OP_HOME=$OP_HOME（不写项目级，全局共享）"
 
 # 2. 合并 hooks 配置到项目 .claude/settings.json（concat 数组，不覆盖用户已有 hooks，不碰 env）
-#    hook command 用 $OP_HOME/hooks/run-hook.cmd（polyglot wrapper，Claude Code 跑时从全局 env 展开 $OP_HOME）
+#    macOS/Linux 用 bash 调 polyglot wrapper；Windows 生成直接 .cmd 绝对路径，确保 CLAUDE_CODE_GIT_BASH_PATH 能生效。
 mkdir -p .claude
+TEMPLATE_FILE="$OP_HOME/hooks/settings.template.json"
+TMP_TEMPLATE=""
+case "$(uname -s 2>/dev/null || true)" in
+  MINGW*|MSYS*|CYGWIN*)
+    if command -v cygpath >/dev/null 2>&1; then
+      WRAPPER_PATH="$(cygpath -w "$OP_HOME/hooks/run-hook.cmd")"
+    else
+      WRAPPER_PATH="$OP_HOME/hooks/run-hook.cmd"
+    fi
+    TMP_TEMPLATE="$(mktemp)"
+    jq --arg wrapper "$WRAPPER_PATH" '
+      walk(
+        if type == "object" and has("command") then
+          .command |= sub("^bash \"\$OP_HOME/hooks/run-hook\.cmd\""; "\"" + $wrapper + "\"")
+        else
+          .
+        end
+      )
+    ' "$OP_HOME/hooks/settings.template.json" > "$TMP_TEMPLATE"
+    TEMPLATE_FILE="$TMP_TEMPLATE"
+    ;;
+esac
+trap '[ -n "${TMP_TEMPLATE:-}" ] && rm -f "$TMP_TEMPLATE"' EXIT
+
 if [ -f .claude/settings.json ]; then
   cp .claude/settings.json ".claude/settings.json.bak.$(date +%s)"
   jq -s '
@@ -34,10 +58,10 @@ if [ -f .claude/settings.json ]; then
     | reduce ($t.hooks // {} | keys[]) as $k ($u;
         .hooks[$k] = (($u.hooks // {})[$k] // []) + ($t.hooks // {})[$k]
       )
-  ' .claude/settings.json "$OP_HOME/hooks/settings.template.json" > .claude/settings.json.tmp
+  ' .claude/settings.json "$TEMPLATE_FILE" > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json
 else
-  cp "$OP_HOME/hooks/settings.template.json" .claude/settings.json
+  cp "$TEMPLATE_FILE" .claude/settings.json
 fi
 chmod +x "$OP_HOME/hooks/"*.sh "$OP_HOME/hooks/run-hook.cmd" 2>/dev/null
 echo "[OK] hooks 已注册到项目 .claude/settings.json（OP_HOME 走全局 env）"

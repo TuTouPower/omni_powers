@@ -34,7 +34,7 @@ opintake 传入（或兜底时本 skill 补齐）：
 | 多 task 总述 | `b_<主题>` | `b_website.md` | 总述（意图 + 子叶子清单），不挂 AC |
 | 叶子 | `<总述前缀><NN>` | `b01_pages.md`、`b02_contact.md` | NN 两位数从 01；前缀永不复用 |
 
-**分配**：opintake Stage 0 分拣时定前缀（跨需求单调递增），写进 spec frontmatter + tasks_list.json 的 `spec` 字段。撞号靠 opintake 入口全局视野（同时只一个 /opintake）。
+**分配**：opintake Stage 0 分拣时定前缀（跨需求单调递增），写进 spec frontmatter + tasks_list.json 的 `spec` 字段。分配前扫描现有 `op_execution/specs/`、`op_record/specs/`、`tasks_list.json`，取未使用前缀；并发 `/opintake` 未加锁时禁止同时运行，需先人工确认无另一个 intake 在写。
 
 ## 产出
 

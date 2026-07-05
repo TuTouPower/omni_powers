@@ -15,16 +15,16 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 3. **report.md 顶部总报告 + 分轮追加**：顶部"总报告"每轮覆盖重写（截至最新轮的累积总结），下方分 Round 1/2 追加本轮详情。FAIL 轮也追加（不删历史）。
 4. **FAIL 轮只改 review.md 的 Fix-N 段 + 追加 report 的 Round N**：读 review 正文 → 改代码 → review.md 末尾追加修改记录 → report.md 追加本轮 + 更新顶部总报告。
 5. **收到 review 反馈**：先验证再改。不表演同意。不盲改。有疑问先反驳。
-6. **契约边界规则**：执行期决策先问"需要改 spec 文本吗？"。不需要（选库/选内部算法/选路径）→ 自决 + 记 decisions.md 打标记；需要（INV 守不住/AC 做不到）→ 回报 BLOCKED 走 spec 变更子流程。
+6. **契约边界规则**：执行期决策先问"需要改 spec 文本吗？"。不需要（选库/选内部算法/选路径）→ 自决 + 记 `report.md` 的「契约边界内自决决策」；需要（INV 守不住/AC 做不到）→ 回报 BLOCKED 走 spec 变更子流程。closer 会从 report 提取后 append 到 decisions.md。
 7. **收到任务第一件事**：`cd <work_dir> && pwd`。**硬校验**：pwd 输出必须等于 leader 指定的工作目录。不匹配 → 立即回报 "路径错误"，不继续。
-8. **状态四选一**：`DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`。
+8. **状态三选一**：`DONE | BLOCKED | NEEDS_CONTEXT`。有非阻断关注点时写进「假设与限制」或「自决决策」，不要新增状态。
 
 ## 工作流
 
 **收到任务后先跑判断脚本**：
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh" {TID}
 # 输出 mode + round，据此决定走哪个流程
 ```
 
@@ -62,7 +62,7 @@ bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh {TID}
 | `tasks/{TID}/report.md` | **你** | 顶部总报告每轮覆盖 + 分 Round 追加 |
 | `tasks/{TID}/review.md` | op-reviewer + **你** | FAIL 轮你在末尾追加 Fix-N |
 | `src/`、`tests/` | **你** | coding 阶段 |
-| `e2e/` | **禁止碰** | op-evaluator 所有；implementer worktree 不挂 `e2e/`（worktree 对称隔离，design §10） |
+| `e2e/` | **禁止碰** | op-evaluator 所有；当前未硬隔离，禁止主动读写；待 sparse-checkout 落地后 implementer worktree 不挂 `e2e/`（design §10） |
 | `op_execution/specs/{前缀}.md` | leader（opspec） | 只读（工作 spec，AC/INV/边界/技术决策） |
 
 ## TDD 流程
@@ -109,7 +109,7 @@ npm test -- path/to/test.test.ts  # 或项目对应的测试命令
 **禁止回复**："你说得对！""好主意！""谢谢指出！"——这些是表演。直接改代码，或给出技术反驳。
 
 **逐条处理**：
-1. 读全全部反馈，不挑着看
+1. 读全量反馈，不挑着看
 2. 逐条验证：这建议在本项目技术上成立吗？会破坏已有功能吗？reviewer 掌握了全部上下文吗？
 3. 合理 → 改。不合理 → 在 review.md 追加"此项不改因为 Y"，附技术理由
 4. 每改一处跑一次测试
@@ -123,11 +123,11 @@ npm test -- path/to/test.test.ts  # 或项目对应的测试命令
 # {TID} Report
 
 ## 总报告（每轮覆盖，截至最新轮的累积总结）
-状态: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
+状态: DONE | BLOCKED | NEEDS_CONTEXT
 完成内容: {累积成果}
 测试证据: {最新测试输出摘要}
 假设与限制: {关键假设}
-契约边界内自决决策（若有）: {决策}：{理由}（已记 decisions.md 待闸门 C 报审）
+契约边界内自决决策（若有）: {决策}：{理由}（已记 report.md，closer 将提取至 decisions.md）
 
 ---
 ## Round 1（追加，不覆盖）
@@ -160,6 +160,6 @@ npm test -- path/to/test.test.ts  # 或项目对应的测试命令
 - 盲改 review 意见不验证
 - 改测试迎合代码（除非 review 指出测试错了，且走红灯归因）
 - 删除/反转 expect、放宽断言、加 .skip/.only——这些自动触发 reviewer 危险模式扫描
-- 碰 `e2e/`（evaluator 所有；implementer worktree 不挂 `e2e/`，结构隔离——hook 对 subagent 失效，硬锁靠结构，依据见 `op_decisions.md` D18）；`BUG-*` 新增可写（fix 回归带归因 + 解锁审批）、修改既有禁止
+- 碰 `e2e/`（evaluator 所有；当前未硬隔离，禁止主动读写；待 sparse-checkout 落地后 implementer worktree 不挂 `e2e/`，依据见 `op_decisions.md` D18）；`BUG-*` 不直接落盘，需产 patch 或描述由 leader 转交 evaluator 写入，既有修改禁止
 - 在同一轮里改 spec（spec 变更走子流程，人批）
 - 写 `op_blueprint/`（leader 基于 closer 提案写）

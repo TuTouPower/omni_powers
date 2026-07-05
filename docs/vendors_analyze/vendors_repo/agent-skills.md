@@ -305,7 +305,7 @@ claude --plugin-dir /path/to/agent-skills
 **底层能力：** Agent tool（并行 subagent spawn）、Read（读变更）、Bash（验证操作）
 
 **关键设计决策：**
-- Personas 不调用 Personas——编排是 slash command 的工作（这是硬规则，Claude Code 平台也强制此约束）
+- Personas 不调用 Personas——编排是 slash command 的工作；这是 agent-skills 的流程规则，不泛化为 omni_powers 的永久平台契约
 - 合并阶段留在主 Agent 上下文中（不在 subagent 中），保证全量上下文可见
 - 与 Agent Teams 区分：subagent 只报告结果；当 subagent 需要互相挑战时用 Agent Teams
 
@@ -549,10 +549,10 @@ main agent → research sub-agent (reads 50 files) → digest → main agent con
 | C. 串行编排器转述 | 一个 Agent 自动调用 /spec → /plan → /build | 丢失人工检查点、累积漂移、数据加倍 |
 | D. 深层 Persona 树 | /ship → pre-ship-coordinator → quality-coordinator → code-reviewer | 每层增加延迟和 token、无决策价值、叶 persona 丢失 context |
 
-### 8.7 Claude Code 平台约束
+### 8.7 Claude Code / agent-skills 编排边界
 
-- Subagent 不能 spawn subagent（平台硬约束，自动阻止反模式 B 和 D）
-- 无嵌套 Teams
+- agent-skills 明确把 persona 互调列为反模式；不要把这一点泛化为 omni_powers 的永久平台契约
+- 深层 persona 树会放大上下文丢失、延迟和失败面，agent-skills 选择用用户/命令层编排规避
 - Plugin agent 不支持 `hooks`/`mcpServers`/`permissionMode`
 - 并行 fan-out 需在单 assistant turn 中发出多个 Agent tool 调用
 
@@ -563,4 +563,4 @@ agent-skills 的编排模式特点是：
 - 单个 slash command 轻量（prompt 仅 10-20 行，委托给 skill）
 - 重度依赖 skill 内的 rationalizations 表格和 red flags 做质量控制
 - 无 worktree 隔离、无 subagent-driven development pattern（对比 Superpowers）
-- 无 DAG 依赖图、无 task 生命周期状态机（对比 omni_powers）
+- 无 task 生命周期状态机；omni_powers 也不是独立 DAG 引擎，只是 `tasks_list.json.depends_on` + jq 拓扑检查
