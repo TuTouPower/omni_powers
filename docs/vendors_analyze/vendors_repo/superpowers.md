@@ -185,7 +185,7 @@ superpowers 最复杂、最能代表其"Subagent 驱动"设计哲学的核心 sk
 3. **Per-task loop：**
    a. 运行 `scripts/task-brief PLAN_FILE N` -> 将 task N 的完整文本写入 `.superpowers/sdd/task-N-brief.md`
    b. 填充 `implementer-prompt.md` 模板，dispatch general-purpose subagent（必须指定 model），传入 brief 路径 + report 路径 + context
-   c. Implementer subagent 工作->自审->写 report 文件->返回 status（DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT）
+   c. Implementer subagent 工作->自审->写 report 文件->返回 status（DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT；superpowers vendor 状态，不适用于 omni_powers 当前 implementer 状态集）
    d. Controller 处理 status：
       - DONE：运行 `scripts/review-package BASE HEAD` -> 生成 diff 文件
       - DONE_WITH_CONCERNS：读 concerns->判断是否阻断
@@ -204,7 +204,7 @@ superpowers 最复杂、最能代表其"Subagent 驱动"设计哲学的核心 sk
 **关键设计约束：**
 - **文件交接而非上下文粘贴：** brief/report/diff 全部走文件，不进 controller context
 - **Progress Ledger：** `.superpowers/sdd/progress.md` 记录每 task 完成状态，防止 compaction 后 controller 丢失状态重复分派
-- **Model 选择策略：** 机械实现用 cheap model；集成/判断用 standard model；架构/设计用 most capable model；每 dispatch 必须显式指定 model
+- **Model 选择策略：** 机械实现用 cheap model；集成/判断用 standard model；架构/设计用 most capable model；每 dispatch 必须显式指定 model（superpowers vendor 行为，不适用于 omni_powers；omni_powers 未配置 `OP_*_MODEL` 时不传 `model`，继承主会话模型）
 - **不允许并行 dispatch：** 同一 task 的 implementer/reviewer 必须串行（避免冲突）
 - **Fix 批量处理：** 最终 review 的 fix 在**一个** fix subagent 中完成（而非每个 finding 一个 fixer）
 

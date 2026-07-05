@@ -115,7 +115,7 @@
 
 ## D14：放弃 op-coder 并发（2026-06-26）
 
-**变更**：只保留 op-op-coder，删除 coder-2/3。所有 task 串行执行。
+**变更**：只保留 op-coder，删除 coder-2/3。所有 task 串行执行。
 
 **理由**：
 - worktree 并发收口时的合并冲突、控制平面竞争、FF 策略选择——复杂度远超收益
@@ -169,7 +169,7 @@
 - SKILL.md 删除环境变量校验、Team 创建、标记扫描、SendMessage 派活
 - 不再需要 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
-**详见**：`docs/agent_team_vs_subagent.md` 第十二节
+**详见**：`docs/archive/agent_team_vs_subagent.md` 第十二节
 
 ## D16：从 per-task worktree 改为单 dev worktree，取消控制平面/代码平面分离（2026-06-27）
 
@@ -195,12 +195,12 @@
 
 ## D17：v5 对齐——closer 提案制、删 dag/tech_debt/using-omni-powers、controller=leader（2026-07-02）
 
-基于 `vendors/omni_powers_harness_v5.md` 重构。以下决策记录依据，正式规则见 RULES.md。
+基于 `vendors/omni_powers_harness_design/omni_powers_harness_v5.md` 重构。以下决策记录依据，正式规则见 RULES.md。
 
 | 决策 | 依据 |
 |---|---|
 | closer 产 blueprint_update 提案，直接追加 decisions.md，对 op_blueprint/ 无写权 | 改最高契约（生效规格）需隔离执行方，防静默改写。decisions.md 是 append-only 历史 closer 直接写。blueprint 提案写 `op_record/tasks/{TID}/blueprint_update.md`（diff 形态，覆盖 op_blueprint 全部文档），leader 审批后写入 |
-| controller = leader 主会话（被 oplead 驱动） | 单设 controller agent 与 leader 职责重叠，多一层间接。状态走 checkpoint |
+| controller = leader 主会话（被 `/oprun` 驱动） | 单设 controller agent 与 leader 职责重叠，多一层间接。状态走 checkpoint |
 | 删 using-omni-powers meta skill | SessionStart hook 已动态注入路由，opstatus 渲染状态，内部 skill 由编排者调用。规则摘要放 CLAUDE.md |
 | 删 oparchive skill，归档由 closer 末 task 顺带 | 归档即"改生效规格"，已由 closer 提案制覆盖，无需独立 skill |
 | 删 dag.md，依赖走 depends_on + jq | DAG 文件是 tasks_list.json 的过期复印件，jq 直接查拓扑即可 |
@@ -214,7 +214,7 @@
 - agents: 5 → 4（删三 reviewer，加 op-reviewer/op-evaluator；op-coder→op-implementer）
 - skills: 6 → 7（删 opstart/opplan/optask/opdebt，加 opintake/oprun/opstatus/opred/optriage）
 - hooks: 新增 pre/post_tool_use、stop、session_start
-- 详见 `docs/vendors/reconstruction-proposal.md`、`docs/vendors/v5-revision-notes.md`
+- 详见 `vendors/omni_powers_harness_design/omni_powers_harness_v5.md`
 
 ---
 
@@ -238,7 +238,7 @@
 
 ## D18：hook 对 subagent 失效——隔离改纯 worktree 结构、行为层 worktree 对称（2026-07-04）
 
-**触发**：`docs/four_model_review_2026_07_04.md` 审阅 + 官方文档/issue 技术核查。
+**触发**：四模型审阅记录（临时审阅材料，未纳入仓库）+ 官方文档/issue 技术核查。
 
 **核心事实（已核实）**：PreToolUse/PostToolUse hook 对 subagent（Agent 工具 dispatch 的 agent）的工具调用 deny 整体失效——常规运行下就不 work，与 `--dangerously-skip-permissions` 无关。implementer/reviewer/evaluator/closer 全是 subagent（D15 全线 Sub Agent），故 v6 设计里所有"按身份分级的 hook 拦截"在当前 Claude Code 实现下不成立。
 
@@ -258,9 +258,9 @@
 | 威胁模型：bypass 纳入（实际常规场景就失效，bypass 与否结论一致） | 不依赖"agent 不开 bypass"假设 |
 | spike 重定位：worktree 无 src 工程（挂载范围 + CI 构建产物链路） | 原 P0/P1 身份识别 spike 删除——字段在但 deny 对 subagent 无效，无需再验 |
 | 验收轮次：Stage 4 ≤3 轮，到顶 Critical→升级人裁决/Important-Minor→落 issue | 原则10循环上限，原 design 全文无 Stage 4 上限 |
-| prd.md：grill-me 标注由外部 repo 提供 | 清悬空引用，grill-me 不在本仓库 |
+| prd.md：早期曾引用外部 grill-me，当前统一改为 opinit blueprint-generator 初始化 + 需求澄清流程维护 | 清悬空引用，避免读者误以为本仓库提供 grill-me |
 
-**审阅意见处理**（`docs/four_model_review_2026_07_04.md`）：
+**审阅意见处理**（四模型审阅记录，临时审阅材料，未纳入仓库）：
 - #1（身份识别）：**反向推翻**——审阅称"原生解决→独立环境可收缩"，实际独立环境（worktree 无 src）是唯一出路，方向反了
 - #2/#3/#5/#6/#9：文档矛盾已修
 - 额外小问题：§7.5 模型表合四行；**baselines/specs 双键统一为功能名**（§3 目录树 / §5.1 frontmatter 加 `feature` 字段 / §8.2 baselines_index 格式 + 合入路径临时区按前缀→合入区按功能名 + "跨前缀更新"改"跨功能更新"）；**§10 加防线层↔实现手段映射表**（点破主防线 1/2 层非 Claude hook，配齐 hook ≠ 安全）。注：`e2e/` 按工作前缀分目录保留——e2e 是代码资产按工作单位组织，前缀永不复用，与 op_blueprint 稳定真相异质，非双键问题

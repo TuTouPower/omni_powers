@@ -17,15 +17,15 @@
 
 | 模板 | 路径 | 用途 |
 |---|---|---|
-| [.gitignore](.gitignore) | 项目根目录 `.gitignore` | 含 `.superpowers/` 等 omni_powers 通用忽略项 |
-| [index.md](index.md) | `docs/index.md` | 文档导航总图（三态模型 + 目录索引） |
-| [op_execution/specs/](op_execution/specs/) | `docs/omni_powers/op_execution/specs/{前缀}.md` | 工作 spec（叶子共享，opspec 生成） |
+| [index.md](index.md) | `docs/omni_powers/index.md` | 文档导航总图（三态模型 + 目录索引） |
 | [op_execution/tasks_list.json](op_execution/tasks_list.json) | `docs/omni_powers/op_execution/tasks_list.json` | task 清单 + 依赖 + status（核心） |
 | [op_execution/leader_checkpoint.md](op_execution/leader_checkpoint.md) | `docs/omni_powers/op_execution/leader_checkpoint.md` | compact 恢复断点（机器读） |
+| [op_execution/acceptance/](op_execution/acceptance/) | `docs/omni_powers/op_execution/acceptance/{前缀}/` | evaluator 验收工作区（运行时生成） |
+| [op_execution/issues/I-{YYYYMMDD}-{NN}.md](op_execution/issues/I-{YYYYMMDD}-{NN}.md) | `docs/omni_powers/op_execution/issues/I-{YYYYMMDD}-{NN}.md` | 泛 issue 模板（范围外发现/暂存项/夜跑/体检） |
 | [op_execution/issues/{TID}_quality.md](op_execution/issues/{TID}_quality.md) | `docs/omni_powers/op_execution/issues/{TID}_quality.md` | 质量阻塞记录（技术债加 `tech-debt` 标签） |
 | [op_record/progress.md](op_record/progress.md) | `docs/omni_powers/op_record/progress.md` | 进度日志 |
-| [op_record/decisions.md](op_record/decisions.md) | `docs/omni_powers/op_record/decisions.md` | 设计探索 + 自决决策（多写入者 append-only） |
-| [op_blueprint/prd.md](op_blueprint/prd.md) | `docs/omni_powers/op_blueprint/prd.md` | 产品需求（grill-me 产出，外部 repo） |
+| [op_record/decisions.md](op_record/decisions.md) | `docs/omni_powers/op_record/decisions.md` | 设计探索 + 自决决策（append-only；closer 汇总执行期自决） |
+| [op_blueprint/prd.md](op_blueprint/prd.md) | `docs/omni_powers/op_blueprint/prd.md` | 产品需求（opinit blueprint-generator 初始化，后续由需求澄清流程维护） |
 | [op_blueprint/architecture.md](op_blueprint/architecture.md) | `docs/omni_powers/op_blueprint/architecture.md` | 系统架构 |
 | [op_blueprint/domain.md](op_blueprint/domain.md) | `docs/omni_powers/op_blueprint/domain.md` | 领域模型 + 跨功能不变量 |
 | [op_blueprint/test.md](op_blueprint/test.md) | `docs/omni_powers/op_blueprint/test.md` | 测试策略 |

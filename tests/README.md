@@ -35,5 +35,9 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 | op-read-verdict.bats | 轮次判定、exit code |
 | close_check.bats | P2-6 TID 精确匹配（不误配 T010） |
 | pre_tool_use.bats | P2-4 路径匹配（含 baselines）、spec 写保护 |
+| op_check_env.bats | 环境检查脚本（jq/git/OP_HOME） |
+| opinit_register_hooks.bats | hooks 注册、OP_HOME 校验、Windows wrapper 改写 |
+| opinit_skeleton.bats | 三区骨架、模板复制、幂等保留 |
+| run-hook.bats | polyglot wrapper、hook name 自动补 `.sh` |
 
 helpers.bash 建临时 git 仓库 + mock 三区结构，每个 @test 独立隔离。

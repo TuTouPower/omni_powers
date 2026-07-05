@@ -3,7 +3,7 @@
 ## 1. 概览
 
 - **一句话定位**：基于文件系统的持久规划 skill，让 AI 编码 agent 的 plan 在 context 清空、会话崩溃后仍然存续，灵感源自 Manus AI 的 context engineering 实践。
-- **设计哲学**：将 agent 的"工作记忆"外化到磁盘上的 Markdown 文件中（`task_plan.md` + `findings.md` + `progress.md`），hook 在每个生命周期事件点自动注入/更新这些文件，使得 agent 即使经历 `/clear` 或崩溃也能恢复完整上下文。核心引用 Manus 的 6 条 Context Engineering 原则（围绕 KV-cache 设计、mask 而非 remove、文件系统即外部记忆等）。
+- **设计哲学**：将 agent 的"工作记忆"外化到磁盘上的 Markdown 文件中（`task_plan.md` + `findings.md` + `progress.md`），hook 在每个生命周期事件点自动注入/更新这些文件，使得 agent 即使经历 `/clear` 或崩溃也能恢复上下文。它没有独立 checkpoint 文件；恢复依赖三文件状态、IDE/Claude Code session 日志和 `session-catchup.py`。核心引用 Manus 的 6 条 Context Engineering 原则（围绕 KV-cache 设计、mask 而非 remove、文件系统即外部记忆等）。
 - **成熟度**：极高。版本号 v3.1.3（2026-06-16），支持 17+ IDE/平台（Claude Code、Cursor、Copilot、Gemini CLI、Codex、Kiro、CodeBuddy、OpenCode、Continue、Pi Agent、OpenClaw、Antigravity、Kilocode、AdaL、Factory、Hermes、Mastra Code），含 1 个沙箱运行时（BoxLite），CHANGELOG 从 v1.0.0（2026-01-07）至今有 50+ 个版本迭代，350+ 测试用例。
 
 ---
@@ -56,7 +56,7 @@
 
 ### 3.2 Hooks
 
-按 IDE 不同，hook 类型也不同。最完整的 Claude Code/Copilot/Cursor 支持：
+按 IDE 不同，hook 类型也不同；下表是多平台能力并集，单个 IDE 未必同时支持所有事件。最完整的 Claude Code/Copilot/Cursor 支持：
 
 | Hook 事件 | 功能 | 核心脚本 |
 |-----------|------|---------|

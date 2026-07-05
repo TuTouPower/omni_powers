@@ -387,7 +387,7 @@ OpenSpec **不在 SessionStart 中注入任何内容**。它不是通过在 sett
 ## 8. 编排模式
 
 ### 单 Agent 模式
-OpenSpec **不定义 Agent 角色**。它不创建 Agent prompt 文件（不像 omni_powers 有 `agents/op-coder.md` 等角色定义）。
+OpenSpec **不定义 Agent 角色**。它不创建 Agent prompt 文件（不像 omni_powers 有 `agents/op-implementer.md` / `agents/op-reviewer.md` 等角色定义）。
 
 工作流由 AI 助手单一 Agent 根据 Skills 文件中的指令自主执行。每个 `/opsx:*` slash command 就是一份"工作说明书"，AI 助手读取并遵循。
 
@@ -412,9 +412,9 @@ proposal ──→ specs ──→ tasks ──→ apply
 ### 对比 omni_powers
 | 维度 | OpenSpec | omni_powers |
 |------|----------|-------------|
-| Agent 角色 | 无（单 Agent 按 Skills 工作） | 多个（leader, coder, reviewer, closer） |
-| 编排方式 | 文件系统 DAG | Sub Agent 调用 |
-| 工作流定义 | YAML schema + DAG | 规则手册 + 操作细则 |
-| 状态追踪 | 文件存在性 + checkbox | tasks_list.json + status 文件 |
-| 代码审查 | 无内置机制 | op-code-reviewer 角色 |
-| TDD | 无内置机制 | op-coder 内 TDD 流程 |
+| Agent 角色 | 无（单 Agent 按 Skills 工作） | 多个（leader, op-implementer, op-reviewer, op-evaluator, op-closer） |
+| 编排方式 | 文件系统 artifact 顺序 | Sub Agent 调用 |
+| 工作流定义 | YAML schema + artifact 依赖 | RULES.md + skills/agents 契约 |
+| 状态追踪 | 文件存在性 + checkbox | `tasks_list.json` + `leader_checkpoint.md` |
+| 代码审查 | 无内置机制 | `op-reviewer` 规格合规 + 测试可信双裁决 |
+| TDD | 无内置机制 | `op-implementer` 内 TDD 流程 |

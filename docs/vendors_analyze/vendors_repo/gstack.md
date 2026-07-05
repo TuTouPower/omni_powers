@@ -2,7 +2,7 @@
 
 ## 1. 概览
 
-**一句话定位：** gstack 是一套 Claude Code 的 "AI 工程团队" 插件 —— 将 23+ 个专项角色 (slash command skill)、一个持久化无头浏览器守护进程、80+ CLI 工具、以及自动化安全/审查/发布流水线，打包成单一 `git clone && ./setup` 安装。
+**一句话定位：** gstack 是一套 Claude Code 的 "AI 工程团队" 插件 —— 将 23+ 个专项角色（以 slash command skill 表达，无独立 custom Agent 定义）、一个持久化无头浏览器守护进程、80+ CLI 工具、以及自动化安全/审查/发布流水线，打包成单一 `git clone && ./setup` 安装。
 
 **设计哲学：**
 - **"Boil the Ocean"：** AI 辅助下边际成本趋零，做完整的事而非捷径。
@@ -43,10 +43,10 @@ cd ~/.claude/skills/gstack && ./setup
 
 ### 2.2 改动的配置文件
 
-- `~/.claude/settings.json` -> SessionStart hook（auto-update）
+- `~/.claude/settings.json` -> SessionStart hook（auto-update；只触发后台更新脚本，不直接注入大段上下文）
 - `~/.claude/settings.json` -> PostToolUse/PreToolUse hooks（plan-tune cathedral）
 - `~/.gstack/config.yaml` -> 项目级配置（skill_prefix, telemetry, auto_upgrade 等）
-- 项目 CLAUDE.md -> 追加 "## Skill routing" 章节（自动注入路由规则）
+- 项目 CLAUDE.md -> 追加 "## Skill routing" 章节（路由规则主要在技能/项目文档加载时进入上下文，不等同于 SessionStart token 开销）
 
 ### 2.3 Symlink 策略
 
@@ -725,8 +725,8 @@ Team mode 下，setup 通过 `bin/gstack-settings-hook` 将以下内容注册到
 
 ### 6.3 上下文消耗量
 
-- SessionStart hook 本身：**0 token**（它是 hook，不在 Claude Code 上下文中运行）
-- Router skill preamble 输出：~60 行 bash stdout 输出 -> 估算 **~2-3K tokens**
+- SessionStart hook 本身：**0 token**（只运行 auto-update 脚本，不把 stdout 注入 Claude Code 上下文）
+- Router skill preamble 输出：~60 行 bash stdout 输出（在 router/skill 被加载或执行时出现，不是 SessionStart 固定开销）-> 估算 **~2-3K tokens**
 - Router skill prose（首次引导 + 路由规则）：~200 行 markdown -> 估算 **~3-4K tokens**
 - 其他加载的 skill（按需）：每个 skill 的 SKILL.md 200-1500 行
 - **总体估计（router + 一个典型 skill）：~8-12K tokens**

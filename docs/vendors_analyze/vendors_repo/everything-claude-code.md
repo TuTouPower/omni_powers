@@ -20,7 +20,7 @@ Everything Claude Code (ECC) 是一个 **Agent Harness Operating System** -- 面
 
 ### 成熟度
 
-- **Star 数**: 211.9K+
+- **Star 数**: 211.9K+（采集时量级）
 - **Fork 数**: 32.5K+
 - **贡献者**: 230+
 - **npm 包**: `ecc-universal` v2.0.0, `ecc-agentshield`

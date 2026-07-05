@@ -1,5 +1,5 @@
 {
-  "_comment": "omni_powers hooks 配置模板。opinit 安装时合并到 ~/.claude/settings.json。hook command 走 polyglot wrapper（run-hook.cmd），跨 Windows/macOS/Linux——参数不带 .sh（避免 Claude Code 2.1.x Windows 自动 bash 检测），wrapper 内部补 .sh。",
+  "_comment": "omni_powers hooks 配置模板。opinit 安装时合并到 ~/.claude/settings.json。hook command 走 polyglot wrapper（run-hook.cmd），macOS/Linux 默认用 bash 调 wrapper；Windows 由 opinit_register_hooks.sh 改写为直接 .cmd 绝对路径。参数不带 .sh，wrapper 内部补 .sh。",
   "hooks": {
     "PreToolUse": [
       {

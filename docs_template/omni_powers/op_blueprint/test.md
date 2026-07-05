@@ -7,9 +7,9 @@
 ## 分层
 | 层 | 工具 | 范围 | 覆盖目标 |
 |---|---|---|---|
-| 单元 | pytest / vitest | 函数/模块 | 80%+ |
-| 集成 | pytest + TEST_DATABASE_URL | API+DB | 核心流程 |
-| E2E | Playwright | 用户流程 | 关键路径 |
+| 单元 | {项目实际命令/工具} | 函数/模块 | {项目目标；默认 80%+} |
+| 集成 | {项目实际命令/工具} | 模块边界/API/存储 | 核心流程 |
+| E2E | {项目实际命令/工具} | 用户流程 | 关键路径 |
 
 ## E2E 通道与 lane
 | lane | 通道 | 判定 | 夜跑失败 |
@@ -21,8 +21,9 @@
 <!-- 若有个人测试总方案（如 TESTING_PLAN.md），在此引用作上游宪章：用例矩阵/CI 分组/边界表不复写 -->
 
 ## 运行
-- API: `cd src/api && .venv/bin/pytest`
-- Web: `cd src/web && npx vitest run`
+- 单元: {从项目实际提取；找不到写 NEEDS CLARIFICATION}
+- 集成: {从项目实际提取；找不到写 NEEDS CLARIFICATION}
+- E2E: {从项目实际提取；找不到写 NEEDS CLARIFICATION}
 
 ## 约定
 - 先测试后实现（TDD）

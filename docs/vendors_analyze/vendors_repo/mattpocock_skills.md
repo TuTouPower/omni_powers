@@ -9,6 +9,7 @@
   3. 代码跑不通（TDD 红绿循环 + 诊断调试 loop 提供紧反馈）
   4. 代码变泥球（`improve-codebase-architecture` 定期扫描深化机会，`codebase-design` 提供 deep module 词汇表）
 - **核心理念**：The Pragmatic Programmer + DDD + 软件设计哲学 -> AI 时代的工程纪律。技能刻意保持小巧，不接管流程，而是增强。与 GSD/BMAD/Spec-Kit 等"全流程拥有"方案对立。
+- **术语边界**：`grill-me` / `grilling`、`CONTEXT.md`、ADR 均是 mattpocock_skills vendor 术语/产物；omni_powers 当前需求入口是 `/opintake`，决策归 `op_record/decisions.md`。
 - **成熟度**：
   - 约 50 个 commits，时间跨度 2026-06-17 至 2026-07-01（约 2 周），高度活跃开发中
   - 使用 changesets 做语义化版本管理，当前 v1.0.1
@@ -39,7 +40,7 @@ npx skills@latest add mattpocock/skills
 
 ### 改了哪些配置
 
-**`.claude-plugin/plugin.json`**：声明所有 promoted skill 路径（engineering/ 和 productivity/），共 17 个。Claude Code 读取此文件加载 skills。
+**`.claude-plugin/plugin.json`**：声明所有 promoted skill 路径（engineering/ 和 productivity/），共 17 个。Claude Code 读取此文件加载 skills。这是 mattpocock_skills 的 vendor 分发机制，不是 omni_powers 当前安装模式。
 
 **不直接修改** `CLAUDE.md` 或 `settings.json`。`/setup-matt-pocock-skills` 会在 repo 的 `CLAUDE.md`（或 `AGENTS.md`）中添加 `## Agent skills` 块，并写入 `docs/agents/issue-tracker.md`、`docs/agents/triage-labels.md`、`docs/agents/domain.md` 三个配置文件。
 

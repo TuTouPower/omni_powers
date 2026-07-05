@@ -10,7 +10,7 @@ description: >
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
 
-`/oprun` 从 checkpoint 续跑就绪的 task。leader 查状态、派 implementer、review、收口，自动推进。
+`/oprun` 从 checkpoint 续跑待开始的 task。leader 查状态、派 implementer、review、收口，自动推进。
 
 协议规则、状态机、review 判定等见 `RULES.md`。入口分拣与 spec 编写见 `opintake`。
 
@@ -22,7 +22,7 @@ description: >
 2. **设了** → `model` 参数传该值（必须是 `haiku`/`sonnet`/`opus` 之一，对应 settings.json 的 `ANTHROPIC_DEFAULT_*_MODEL`）
 3. **没设** → `model` 参数**不传**，Agent 继承主会话当前模型（用户可用 `/model` 随时切换）
 
-下面派发示例的 `model:` 行注明"按规则传"——leader 据上述规则决定传不传、传什么。设计 task（brief 指明"只产方案纸"）临时把 implementer 的模型设为 `opus`，覆盖环境变量。
+下面派发示例的 `model:` 行注明"按规则传"——leader 据上述规则决定传不传、传什么。设计 task（brief 指明"只产方案纸"）也不得临时覆盖模型；需要更强模型时由用户通过 `/model` 或 OP_*_MODEL 配置决定。
 
 ## 步骤一：确认工作目录 + 读状态
 
@@ -34,7 +34,7 @@ git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
 
 问用户：worktree（推荐）/ 主分支 / 当前分支。
 
-- **worktree**：`git worktree add .worktrees/op-dev -b feat/op-dev` → `cd .worktrees/op-dev`
+- **worktree**：`git worktree add .claude/worktrees/op-dev -b feat/op-dev` → `cd .claude/worktrees/op-dev`（单 session 复用；结束时按收尾段清理；若目录/分支已存在，先让用户选择复用或另取名，勿强删）
 - **主分支**：`git checkout {main或master}`
 - **当前分支**：不动分支
 - 记下 `<work_dir>` = 当前 `pwd` + 原分支名
@@ -91,8 +91,8 @@ cat RULES.md
 ### 子步骤 3.2：派 op-implementer
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh {TID}
-# 输出: mode=normal|fail|blocked, round=1|2
+bash "$OP_HOME/skills/oprun/scripts/op-coder-check.sh" {TID}
+# 输出: mode=normal|fail|blocked, round=1|2|3（>=3 即 blocked，exit 1）
 # exit 0=可继续, exit 1=阻塞
 ```
 
@@ -114,7 +114,7 @@ docs/omni_powers/op_execution/tasks/{TID}/brief.md：
 ```
 
 ```bash
-bash "$OP_HOME/scripts/op_status.sh {TID} 进行中
+bash "$OP_HOME/scripts/op_status.sh" {TID} 进行中
 # P0-4：写 current_task，PostToolUse/SubagentStop hook 据此校验新鲜证据
 sed -i "s/^current_task:.*/current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
 ```
@@ -134,8 +134,8 @@ head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md
 ### 子步骤 3.3：派 op-reviewer（双裁决）
 
 ```bash
-bash "$OP_HOME/scripts/op_status.sh {TID} 审阅中
-bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
+bash "$OP_HOME/scripts/op_status.sh" {TID} 审阅中
+bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh" {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
 ```
 
@@ -145,12 +145,12 @@ Agent({ name: "op-reviewer", subagent_type: "op-reviewer",
   prompt: "cd <work_dir> && pwd\nreview {TID}。\n读 tasks/{TID}/brief.md → 工作 spec（op_execution/specs/{spec}.md）。\n读 tasks/{TID}/report.md（顶部总报告 + 分轮）。\n代码变更：git diff\n输出：tasks/{TID}/review.md\n双裁决：①规格合规（覆盖 AC/不偏航/不自由发挥）②测试可信（测的是 AC 还是 mock/断言用户可观察/危险模式/implementer 是否偷跑了 e2e）。\n文件最后一行必须写 verdict: PASS 或 FAIL。重审在末尾追加新 verdict 行。" })
 ```
 
-reviewer 出错重试 max 3。重试仍失败 → review.md 手写 `verdict: FAIL`。
+reviewer spawn/环境出错退避重试 max 3。重试仍失败 → 不写质量 verdict；`bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 spawn`，下游 `跳过`，记录 spawn 错误摘要到 `op_execution/issues/{TID}_spawn.md` 后回 3.1。
 
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh" {TID}
 # exit 0 = PASS, exit 1 = FAIL
 ```
 
@@ -158,14 +158,14 @@ bash "$OP_HOME/skills/oprun/scripts/op-read-verdict.sh {TID}
 |---|---|---|
 | 双裁决 PASS | 任意 | 收口（3.5） |
 | 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
-| 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 quality`，写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
+| 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 quality`，按 optriage issue 元字段格式写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
 
 ### 子步骤 3.5：per-task 收口（轻，closer 提案制两段节奏之一）
 
 双裁决 PASS 后跑收口前机械脚本：
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op_close_pre.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/op_close_pre.sh" {TID}
 ```
 
 派 op-closer 做 per-task 收口（只 append decisions，不产 blueprint 提案）：
@@ -173,7 +173,7 @@ bash "$OP_HOME/skills/oprun/scripts/op_close_pre.sh {TID}
 ```js
 Agent({ name: "op-closer", subagent_type: "op-closer",
   // model: 按顶部"派发模型规则"传——读 OP_CLOSER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。specs 归属：{feature}。\n这是 per-task 收口：只 append 决策到 op_record/decisions.md，暂存项转 issues。不产 blueprint 提案、不碰 op_blueprint、不归档、不盖戳、不 stage。" })
+  prompt: "cd <work_dir> && pwd\n收口 {TID} \"{title}\"。specs 归属：{feature}。时间戳：{ISO 时间}。\n这是 per-task 收口：append 决策到 op_record/decisions.md，并将 review 【暂存】项按 optriage issue 格式全部转 issues（加 tech-debt 标签，不二次筛选）。不产 blueprint 提案、不碰 op_blueprint、不归档、不盖戳、不 stage。" })
 ```
 
 per-task 收口不审批（decisions.md append-only）。直接跑归档脚本：
@@ -195,12 +195,14 @@ bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
 
 派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 4 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
-**派 evaluator 前 leader 保证访问隔离（结构单层 + 报告回流，design §8.1；hook 对 subagent 失效，依据 `op_decisions.md` D18）**：
+**派 evaluator 前 leader 先做访问隔离准备（目标结构隔离 + 报告回流，design §8.1；hook 对 subagent 失效，依据 `op_decisions.md` D18）**：
 1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
-2. **evaluator worktree 无 src**：evaluator 在独立 worktree，只挂载 spec + 生效规格 + baselines + 构建产物 + `e2e/`——`src/**`、task 目录、`decisions.md` 物理不挂载。implementer 分支跑 CI 产构建产物供 evaluator 操作。
+2. 当前过渡期普通 worktree 未排除 `src/**`、task 目录、`decisions.md`；这些隔离要求暂为 advisory，evaluator 禁止主动读取。硬隔离待 sparse-checkout/构建产物链路落地后才可宣称。
 3. dispatch prompt 固定模板（advisory 留痕，不拦截）。
 
 ```js
+eval_brief_path="docs/omni_powers/op_execution/acceptance/{前缀}/eval_brief.md"
+
 Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
   // model: 按顶部"派发模型规则"传——读 OP_EVALUATOR_MODEL，设了传该值，没设不传 model
   prompt: "cd <work_dir> && pwd\n读 {eval_brief_path}，按 brief 执行 spec 级验收 {spec前缀}。" })
@@ -222,7 +224,9 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 
 ## 闸门 C
 
-呈报四样给人审：验收报告 + 自决决策表（契约边界内决策，否了哪条转 rework）+ P0/P1 issue（人定阻不阻断 merge）+ closer 的 per-leaf 收尾提案。
+先跑 `/optriage`（或按 `skills/optriage/SKILL.md` 执行）分级 issues：P0/P1 转正式 task，P2/P3 登记。
+
+呈报四样给人审：验收报告 + 自决决策表（契约边界内决策，否了哪条转 rework）+ P0/P1 issue（P0 默认阻断；若用户显式豁免，记录 decisions）+ closer 的 per-leaf 收尾提案。
 
 人批 → leader 执行实际写入 `op_blueprint/`（specs + baselines 合入）→ merge → 叶子归档（原文入 `op_record/specs/`、acceptance 工作区入 `op_record/acceptance/{前缀}/`，前缀标记完成——永不复用）。
 
@@ -234,7 +238,7 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 ```bash
 git checkout <原分支>
 git merge feat/op-dev --ff-only
-git worktree remove .worktrees/op-dev
+git worktree remove .claude/worktrees/op-dev
 cd <原项目根目录>
 ```
 

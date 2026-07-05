@@ -3,14 +3,14 @@ name: opintake
 description: >
   需求入口：分拣 → spec 编写（含设计探索）→ 闸门 A 批复 → 自动拆 task → tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
   触发：/opintake "<需求>"、新需求、做个功能。
-  终点：状态标为"就绪"，交给 /oprun。
+  终点：tasks_list 就绪，task status=`待开始`，leader_checkpoint 标注 spec 就绪，交给 /oprun。
 ---
 
 # Op Intake Skill
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
 
-`/opintake "<需求>"` 是需求入口。分拣 → spec → 闸门 A → 拆 task → 就绪。
+`/opintake "<需求>"` 是需求入口。分拣 → spec → 闸门 A → 拆 task → task 待开始。
 
 协议规则见 `RULES.md`。spec 模板与设计探索流程见内部 skill `opspec`。
 
@@ -54,7 +54,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 - Then 全部可翻译为断言
 - 技术决策无遗漏（拆 task 时发现某 task 产出约束他人而 spec 未写 = 打回补 spec）
 
-人批 → `status: approved` + commit + 写保护（git 层 + 主会话 hook 拦截未经变更子流程的改动；subagent 场景 hook 失效，靠 git 层）。
+人批 → `status: approved` + 写保护（git 层 + 主会话 hook 拦截未经变更子流程的改动；subagent 场景 hook 失效，靠 git 层）。是否立即 commit 需用户明确授权；闸门 A 批准本身不等于 commit 授权。
 
 ## 步骤四：拆 task 写入 tasks_list.json
 
@@ -85,9 +85,9 @@ token 消耗 ≈ 工作集 × 2-3。预算红线 ≈ 名义上限一半：`spec 
 
 顺序依赖已在步骤四写入 `tasks_list.json`（`depends_on` 字段，机读）+ `leader_checkpoint.md`（人扫）。**不进 spec 本体**——spec 经闸门 A 写保护后追加会冲突。Stage 2 自检扫 `tasks_list.json` 依赖 + 拆 task 自检（跨 task 决策遗漏则回补 spec 再过 A，可跳过）。
 
-## 终点：就绪
+## 终点：task 待开始
 
-`tasks_list.json` 就绪（顺序依赖机读）+ 状态标"就绪"。交接给 `/oprun`。
+`tasks_list.json` 已写入 `status=待开始` 的 task（顺序依赖机读）+ `leader_checkpoint.md` 标注 spec 就绪。交接给 `/oprun`。
 
 ## compact 恢复
 
@@ -103,4 +103,4 @@ token 消耗 ≈ 工作集 × 2-3。预算红线 ≈ 名义上限一半：`spec 
 | `skills/opspec/SKILL.md` | spec 模板与设计探索（内部 skill，被本 skill 调用） |
 | `scripts/op_new_task.sh` | 工作区创建 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |
-| `docs_template/omni_powers/op_execution/specs/` | spec 模板 |
+| `skills/opspec/SKILL.md` | spec 模板来源（`op_execution/specs/{前缀}.md` 由 opspec 生成） |
