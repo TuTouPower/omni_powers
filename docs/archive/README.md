@@ -10,4 +10,4 @@
 > - `agent_protocol_old.md` — 早期多 agent 协议（已被 v6 四 agent + leader 取代）
 > - `agent_team_vs_subagent.md` — agent team vs subagent 决策记录（已裁定全线 subagent）
 > - `op_findings.md` — 早期实验发现（部分结论可能已过时）
-> - `omni_powers_lite_design.md` — lite 独立设计文档（2026-07-07 并入 `docs/omni_powers_design.md` §13-§15）
+> - `omni_powers_lite_design.md` — lite 独立设计文档（2026-07-07 并入 `docs/omni_powers_design.md` §13）

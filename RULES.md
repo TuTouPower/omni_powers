@@ -118,7 +118,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 
 ## profile 分叉（heavy / lite 两模式）
 
-项目 `docs/omni_powers/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_design.md` §13-§15。
+项目 `docs/omni_powers/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_design.md` §13。
 
 **heavy**（现状默认）：本文件通篇规则原样生效。
 
