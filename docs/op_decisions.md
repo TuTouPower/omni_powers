@@ -299,3 +299,33 @@
 **接受现状不改**：heavy leader 无上下文水位机制（靠 checkpoint+compact 容错，lite 因亲验证据才需硬约束）；钓鱼审计基建 P3 前收敛判据暂缓。
 
 **影响**：`docs/omni_powers_design.md`（全文重写为合并版）、`docs/archive/omni_powers_lite_design.md`（归档+冻结标注）、`CLAUDE.md`/`RULES.md`/`docs/archive/README.md`（引用更新）。待实现项随 §12 P2/P3 排期，见合并版 §15。
+
+## D21：四模型审阅处置（合并版 design.md 审阅轮）（2026-07-07）
+
+**触发**：合并版 `docs/omni_powers_design.md`（D20 产物）经 self / opus / sonnet / haiku 四模型只读审阅，报告存 `docs/review/`。
+
+**采纳（多家一致或明显正确）**：
+
+| 处置 | 来源 | 落点 |
+|---|---|---|
+| §0.2 当前能力快照表（单一状态真相源），正文各节状态声明收进表 | self H1 / haiku H1 / sonnet 暗含 | §0.2 新增；§8.1/§10 状态声明改引用 |
+| lite 水位检查升级为流程门（连续 2 次超阈值暂停） | self M3 / opus M1 / sonnet H2 | §14.1 改写 |
+| decisions.md append 幂等标识 + op_close_post 前置检查 | self M4 / opus M2 / sonnet H5 | §7.4 加协议段 |
+| spec 变更子流程补定义（delta 路径/发起者/审批归属/task 处置） | self M1 / sonnet M2 | §5.2 新增四步 |
+| lite→heavy 迁移显式声明（非切 profile） | self M2 / sonnet M4 | §13 末段新增 |
+| §10 正文/映射表去重、§15 决策史回链 op_decisions.md | 四家全提 | §10 重写 / §15 精简 |
+| §10.1 CI 最小接口三接口节 | sonnet 建议 1 | §10.1 新增 |
+| worktree spike 补备选方案（独立浅 clone）+ 平台验证 | sonnet H4 | §12 P0 改写 |
+| 小修集：BUG-* 目录位置（§3）、§7.2 明确「呈报用户四选一」、钓鱼审计开头标 P3、token 排序标待实测、AC=验收场景注释（§5.1）、closer 铁律合并单条（§7.4）、原则 7 拆 3 小点、快速导航表、OP_SCRIPT_ROOT 前置探活（opus M3）、§13.4 砍 op_close_pre 因果链一句话（haiku M5）、§1.2 style 测试规则见 §2 交叉锚（haiku L4） | 各家 LOW/MEDIUM | 逐处 |
+
+**用户裁决三项**：
+- 决定 1（§8.3 方向）：**A 敲定 leader 唯一入口**（commit trailer + 解锁脚本配对；入口先于硬锁上线）。三家审阅收敛到同一方案，再拖无信息增量。
+- 决定 2（P2 CI 三合一是否拆里程碑）：**B 保持三合一整体交付**。sonnet H3 主张拆独立灰度，用户裁定不拆——共用 CI 配置框架、P2 内顺序交付。
+- 决定 3（过渡期 evaluator 审计脚本加不加）：**B 不加**。opus 建议 2 主张加扫 src/tasks 引用痕迹脚本，用户裁定不加——一次性护栏（P2 落地后即废），过渡期风险已由 §0.1/§0.2 诚实声明覆盖，不为短命护栏付实现 + 维护成本（原则 12 护栏按需付费）。
+
+**驳回**：
+- sonnet M6（无差异脚本加同步注释）：`build_lite.sh` 漂移校验 + `--sync` 修复机制已存在，注释是冗余层。
+- haiku M2（lite 状态机图缺阻塞分支）：图内已有「2轮FAIL → 阻塞（下游跳过）」行，与 heavy 同构，事实不准。
+- sonnet M5（定期体检补实现概要）：P3 项，提前设计调度/工具选择是过度；CI 最小接口节（§10.1）已覆盖其依赖面。
+
+**影响**：`docs/omni_powers_design.md`（§0 加导航表 + §0.2 快照表、原则 7 拆分、§1.2/§3/§5.1/§5.2/§6.3/§7.2/§7.4/§7.5/§8.1/§8.3/§10/§10.1/§11/§12/§13/§13.3/§14.1/§15 多处修订）；`docs/op_decisions.md`（本 D21）。待实现项随 §12 排期，状态见 §0.2 快照表。
