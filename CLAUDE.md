@@ -2,7 +2,7 @@
 
 Claude Code 多 Agent 协作工作流系统。leader 编排（被 oprun 驱动）、op-implementer 开发、op-reviewer 双裁决审查、op-evaluator 验收、op-closer 两段节奏收口。规格是唯一契约，全线 Sub Agent。
 
-支持两模式：**heavy**（全量，hook 强制 + worktree 隔离 + blueprint）与 **lite**（零侵入，不加 hook / 不改用户配置与已有文档）。设计见 `docs/omni_powers_design.md`（heavy+lite 一份，lite 部分在 §13）。
+支持两模式：**heavy**（全量，hook 强制 + worktree 隔离 + blueprint）与 **lite**（零侵入，不加 hook / 不改用户配置与已有文档）。设计见 `docs/omni_powers_design.md`（heavy+lite 一份，lite 部分在 §5）。
 
 ## 快速开始
 
@@ -94,7 +94,7 @@ heavy / lite 共用 `install.sh`（见「快速开始」）。不再使用手动
 |---|---|
 | 运行时操作手册 + 状态机 | `RULES.md` |
 | 设计档案（为什么这么设计，heavy+lite 合并版） | `docs/omni_powers_design.md` |
-| lite 差异与两版共存架构 | `docs/omni_powers_design.md` §13 |
+| lite 差异与两版共存架构 | `docs/omni_powers_design.md` §5 |
 | 决策记录 | `docs/op_decisions.md` |
 | 实验发现（归档） | `docs/archive/op_findings.md` |
 | 文档模板 | `docs_template/omni_powers/README.md` |
