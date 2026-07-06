@@ -433,7 +433,7 @@ stock model 默认对 LLM 产出宽容——能发现 bug 但会说服自己"不
    - 放水则写**偏差指令**——"AC-N 你只测了提交成功，边界的密码错误转向路径没测。补测后重新判定。"——而非"你上次偏了 12%"。指令型比评分型更有用。
    - 每 5 条偏差指令 → 选 2 条最典型改写为 few-shot 校准样例进 evaluator prompt。旧样例可淘汰。
    - **收敛标准（钓鱼审计，独立于上游质量）**：leader 定期钓鱼——在**独立验证环境副本**里植一个已知 bug（或悄悄关掉某条 AC 的功能开关），看 evaluator 抓不抓得到。**不进 git、不改源分支**（否则破坏 reviewer PASS 证据 + append-only 历史）。测的是判别力本身，不随 implementer 质量起伏（上游越烂 evaluator 越容易找到独有 bug，不能拿它当收敛判据）。连续 3 次钓鱼全中 → 降频抽查（每 5 spec 一次）——**经验阈值，待运营校准**。漏钓 → 每次全查并补 few-shot 校准。
-   - 钓鱼审计依赖「独立验证环境副本」基建（独立构建链路 + 副本管理脚本，**副本创建/同步/销毁脚本见 §4.2 P3，不直接改源分支**），P3 与独立验证环境增强一并交付。
+   - 钓鱼审计依赖「独立验证环境副本」基建（独立构建链路 + 副本管理脚本，**副本创建/同步/销毁脚本见 §4.2 P3，不直接改源分支**）；**植 bug 骨架 `scripts/op_phishing_audit.sh`**（comment-assert / flip-cond / drop-check，JS/C 系语法；Python 等需手改）。P3 与独立验证环境增强一并交付。
 
 #### 验收基准快照
 
@@ -599,7 +599,7 @@ blocks_merge: true | false              # P0 默认 true；P1 默认 false；用
    - **CI 代（P2）**：implementer 分支 push 触发 CI 跑测试 + 只读跑 e2e 全集回传结果（§3.1），reviewer/leader 以 CI 结果为准——证据链脱离被监督者控制。接口定义见下 §3.3.1。
 4. **spec 写保护**（git 原生为主）：approved/in_progress 受 git pre-commit 拦 spec 路径变更（走 §2.2 变更子流程）；主会话额外 PreToolUse 拦截；SessionStart 注入前 git diff --quiet 校验，防"好心更新规格"漂移。
 5. **警告+留痕**（advisory 兜底，仅主会话生效）：结构层测试编辑按行敏感度——import/setup/调用行静默；expect/assert 行强制说明理由。危险模式：删除/反转 expect、toBe→toContain/正则/>=、timeout/阈值增大、.skip/.only、删测试文件或 it 块、test 文件加 eslint-disable。价值在曝光不在阻止；subagent 场景靠 reviewer 双裁决兜。
-6. **定期体检**（每周/CI 异步，独立 CI 任务，**P3 交付，当前不可用**）：skip/only 计数、timeout 增幅、恒假断言、纯存在性断言 E2E；触碰 INV 模块抽样跑变异测试（杀不死变异体的测试判假重写）。产出落 issues（§3.2）。调度/工具选择随 P3 定。
+6. **定期体检**（每周/CI 异步，独立 CI 任务，**P3 交付，当前不可用**）：skip/only 计数、timeout 增幅、恒假断言、纯存在性断言 E2E；触碰 INV 模块抽样跑变异测试（杀不死变异体的测试判假重写；**骨架 `scripts/op_mutation_check.sh` 做 == ↔ != 变异自检，专业变异测试用 mutmut/stryker**）。产出落 issues（§3.2）。调度/工具选择随 P3 定。
 
 **防线层 ↔ 实现手段映射**（⚠️ 主防线 1/2/3-CI 代**不在**下方 hook 清单里——配齐 hook ≠ 安全）：
 
