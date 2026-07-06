@@ -281,3 +281,21 @@
 | TESTING_PLAN 作上游宪章引用，不复写进插件 | 用例矩阵（TP-*）/边界表/CI 矩阵属个人测试资产，插件模板 test.md 留引用位；避免两处维护漂移 |
 
 **影响**：`skills/opspec/SKILL.md`（模板加通道字段 + 通道判定节）、`agents/op-evaluator.md`（执行后端节 + 步骤 1/2 接通道）、`skills/oprun/scripts/op_assemble_eval_brief.sh`（brief 加执行后端段 + cua 探测）、`docs_template/omni_powers/op_blueprint/test.md`（lane 表）。design.md §8 未动——通道选择是 §8.2「操作层」的实现细节，design 不下沉到工具名。
+
+## D20：设计文档合并 + 六项裁决（证据 CI 化/e2e 只读信号/严格串行/闸门 A 扩容/lite P0 检查）（2026-07-07）
+
+**触发**：用户要求整体设计审查，识别出 5 个结构性问题 + 5 个次级问题，逐项裁决后合并 heavy/lite 两份设计文档。
+
+| 决策 | 理由 |
+|---|---|
+| `omni_powers_lite_design.md` 并入 `omni_powers_design.md`（§13-§15），原文移 `docs/archive/` | 两模式一份设计，差异收敛在环境集成层；统一 install.sh + 按项目 init 分轻重的架构定型后，分文档只剩同步成本 |
+| per-task 证据 CI 化（P2）：implementer 分支 push 触发 CI 跑测试，结果为准 | D18 后 PostToolUse 对 subagent 不触发，implementer 自跑自贴的证据可伪造，SubagentStop 只验存在不验真伪——"机器证据"必须在被监督者控制之外。与 evaluator 构建产物链路共用同一套 CI（原则 7 改写） |
+| implementer 分支 CI 只读跑 e2e 全集回传结果（P2） | worktree 对称隔离使 implementer 盲跑集成，断裂积累到 Stage 4 才暴露是最贵反馈环；只读信号不给写权，不破坏隔离（§2） |
+| task 严格串行，任务卡去「可并行」字段 | 多 implementer 并行 = 多 worktree 同时 append decisions.md 等共享文件，append-only 多写者是 git 合并最差场景；当前无真实并行需求，不为不存在的场景设计合并协议（原则 9） |
+| 闸门 A 预算 5-10 分钟 → 15-30 分钟/叶子（用户选 A，不做审查减法） | spec 是全系统唯一质量单点（三方对着它干活），含可测性契约后 5-10 分钟只会橡皮图章；这半小时是全流程杠杆最高的人工投入（原则 11） |
+| lite 补 P0 阻断检查（oplrun 叶子归档前扫 open P0，停下问用户） | lite 无闸门 C，P0 会随自动归档静默放行——heavy 的 blocks_merge 安全语义丢失；补一行检查恢复同语义（§14.2） |
+| 纯文档修正一批 | §0.1 安全增量诚实声明（P2 前 heavy≈lite，买的是流程资产非安全）；原则 11 措辞改「正常路径」（消解与异常人裁的矛盾）；lite op_blueprint 占位加单行 README（防"目录空=无约定"误推断）；spec 前缀 26 后转双字母字典序；§8.3 登记 e2e 合法写入与 git 硬锁交互为 P2 开放问题；§8.1 钓鱼审计标注基建依赖 P3 |
+
+**接受现状不改**：heavy leader 无上下文水位机制（靠 checkpoint+compact 容错，lite 因亲验证据才需硬约束）；钓鱼审计基建 P3 前收敛判据暂缓。
+
+**影响**：`docs/omni_powers_design.md`（全文重写为合并版）、`docs/archive/omni_powers_lite_design.md`（归档+冻结标注）、`CLAUDE.md`/`RULES.md`/`docs/archive/README.md`（引用更新）。待实现项随 §12 P2/P3 排期，见合并版 §15。

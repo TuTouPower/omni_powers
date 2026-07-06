@@ -1,5 +1,7 @@
 # Omni Powers Lite: 零侵入轻量版设计方案
 
+> ⚠️ **已归档（2026-07-07）**：本文档已并入 `docs/omni_powers_design.md`（heavy + lite 合并版，见其 §13-§15）。此处仅作历史快照保留，不反映当前设计——现行内容以合并版为准。
+
 > **定位**：本项目同时支持 **heavy**（现状全量）与 **lite**（零侵入）两种模式。
 > lite 与 heavy 的唯一区别是**不侵入宿主环境**——不加 hook、不改 Claude Code 配置、不改用户已有文件。
 > **Agent 协作是本质**：leader / op-implementer / op-reviewer / op-evaluator 四角色**职责模型两版共享**（agent 定义需 profile 化后方可共用，见 §8；lite 减 op-closer）。
