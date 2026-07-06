@@ -28,9 +28,11 @@
 
 ### 0.1 安全增量的诚实声明
 
-heavy 的防篡改能力依赖三层硬隔离（implementer 无 e2e / evaluator 无 src / CI 证据链）落地。**三层未全部硬落地前，heavy 相对 lite 的防篡改增量接近零**——hook 对 subagent 失效（原则 7），结构隔离与 CI 是仅有的不可绕手段。此期间跑 heavy 真实多买到的是**流程资产**（blueprint/baselines/生效规格沉淀、closer 审计链、闸门 C 报审）+ 主会话 advisory hook + git 层部分保护，**不是防篡改安全**。防篡改层面此期间 heavy≈lite，两版同靠 reviewer 双裁决 + Stage 4 独立验收兜底。
+heavy 的防篡改能力依赖三层硬隔离：①**implementer 无 e2e**（已落地，`op_worktree_setup.sh dev`，sparse-checkout 排除 `e2e/`）②**evaluator 无 src**（已落地，`op_worktree_setup.sh eval`，排除 `src/**`+task 目录+`decisions.md`，需 git 2.25+）③**per-task 机器证据 CI 化**（P2 未落地，过渡期 implementer 自跑自贴，可伪造）。
 
-三层隔离的交付状态见 §0.2 能力矩阵与 §4.2 分阶段路径。全部硬落地（§4.2 P2 完成）后，heavy 才在防篡改层面真正拉开与 lite 的差距。
+**前两层已落地后，heavy 在结构隔离层面已拉开与 lite 的差距**——evaluator 物理读不到 src（防抄实现）、implementer 物理读不到 e2e（防偷改行为层）。第三层 CI 证据链未落地前，per-task 测试证据仍可伪造（implementer 自跑自贴），可信度靠 reviewer 双裁决 + Stage 4 独立验收兜底。git < 2.25 或不开 worktree 模式时，前两层退化为 advisory（脚本 WARN）。
+
+交付状态见 §0.2 能力矩阵与 §4.2 分阶段路径。
 
 ### 0.2 能力矩阵（防线实现状态单一真相源）
 
@@ -38,8 +40,8 @@ heavy 的防篡改能力依赖三层硬隔离（implementer 无 e2e / evaluator 
 
 | 防线/能力 | 实现手段 | 交付阶段 | 未落地失效后果 |
 |---|---|---|---|
-| implementer e2e 对称隔离 | worktree 不挂 `e2e/`（sparse-checkout） | P2 | implementer 可偷改行为层测试 |
-| evaluator 无 src 隔离 | worktree 无 `src/**`+task 目录+decisions.md | P2 | evaluator 抄实现，测试与实现一起错 |
+| implementer e2e 对称隔离 | worktree 不挂 `e2e/`（`op_worktree_setup.sh dev`） | **已落地**（git 2.25+） | implementer 可偷改行为层测试 |
+| evaluator 无 src 隔离 | worktree 无 `src/**`+task 目录+decisions.md（`op_worktree_setup.sh eval`） | **已落地**（git 2.25+） | evaluator 抄实现，测试与实现一起错 |
 | per-task 机器证据 | CI 跑测试，结果为准（过渡期 implementer 自跑自贴 + SubagentStop 验存在） | P2 | 假绿证据进 report |
 | e2e 集成信号 | CI 只读跑 e2e 全集回传 | P2 | 集成断裂延迟到 Stage 4 最贵反馈环 |
 | e2e/BUG-* git 硬锁 | git 层保护 + leader 唯一提交入口（§2.5） | P2（入口先于硬锁） | 行为层测试被篡改 |
@@ -411,7 +413,7 @@ stock model 默认对 LLM 产出宽容——能发现 bug 但会说服自己"不
 
 > **前提**：Claude Code 的 subagent（Agent 工具派发的 evaluator/implementer/reviewer/closer）不触发 PreToolUse/PostToolUse，hook 的 deny 对其工具调用整体失效——常规运行下就不 work，bypass 与否结论一致。结论：隔离硬底线必须是**结构隔离**（源码物理不在 evaluator 文件系统），不靠 hook 拦截，也不靠 frontmatter `tools` 配置级限制。
 
-1. **结构隔离层（硬底线）**：⚠️ **完整隔离形态依赖 P2 CI 构建产物链路（§4.2）。P2 前 evaluator 退化为：leader 人工构建 + 交付可执行文件给 evaluator，或降级为人工验收**（与 §0.1 一致）。目标形态下 evaluator 在独立 worktree 工作，文件系统只挂载 spec + 生效规格（开工前基线）+ baselines 索引 + 应用启动方式 + 构建产物（Electron 可执行文件 / web dist / 扩展 .zip / 服务二进制）+ `e2e/`。源码 `src/**`、task 目录（`op_execution/tasks/**` + `op_record/tasks/**`）、`op_record/decisions.md` 物理不挂载——结构上不可能读，纪律禁止次要。implementer 分支跑 CI 构建产出打包好的应用供 evaluator 操作（CI 三合一之一，§3.3）。（实现状态见 §0.2 能力矩阵）
+1. **结构隔离层（硬底线）**：evaluator 在独立 worktree 工作（`op_worktree_setup.sh eval`），文件系统通过 sparse-checkout 只挂载 spec + 生效规格（开工前基线）+ baselines 索引 + 应用启动方式 + 构建产物 + `e2e/`。源码 `src/**`、task 目录（`op_execution/tasks/**` + `op_record/tasks/**`）、`op_record/decisions.md` **物理排除（已落地，需 git 2.25+）**。⚠️ **构建产物链路（CI 三接口 ③）仍 P2**——src 排除已防抄实现，但 evaluator 操作的应用包未落地 CI 自动构建前，由 leader 人工构建后交付到 op-eval worktree。 + 应用启动方式 + 构建产物（Electron 可执行文件 / web dist / 扩展 .zip / 服务二进制）+ `e2e/`。源码 `src/**`、task 目录（`op_execution/tasks/**` + `op_record/tasks/**`）、`op_record/decisions.md` 物理不挂载——结构上不可能读，纪律禁止次要。implementer 分支跑 CI 构建产出打包好的应用供 evaluator 操作（CI 三合一之一，§3.3）。（实现状态见 §0.2 能力矩阵）
    - **非 UI 类（API/DB/CLI/进程）**：构建产物 + 结构化信号（stdout/API 响应/DB 查询/进程日志）直接完整可验。
    - **UI 类**：evaluator 操作构建产物启动的应用（computer use / 独立机器点击），自由探 UI 边界；视觉信号作锚点由 evaluator 多模态对照。
 2. **报告回流层（脚本机械组装，保留——不依赖 hook）**：brief 由 `skills/oprun/scripts/op_assemble_eval_brief.sh {前缀}` 生成，内容源全固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 应用启动方式），leader 不参与内容生成、只 dispatch。evaluator 作为独立 subagent 只读 brief 文件，leader 主会话上下文（满是 task 交接污染）物理上传不过去——脚本取代纪律性白名单。per-task 阶段不写 op_blueprint，故验收时生效规格天然是开工前版本，隔离防线不被自家归档流程打穿。

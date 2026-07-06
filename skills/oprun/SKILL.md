@@ -34,7 +34,7 @@ git branch -r | grep -E 'origin/(main|master)$' || git branch -r | head -1
 
 问用户：worktree（推荐）/ 主分支 / 当前分支。
 
-- **worktree**：`git worktree add .claude/worktrees/op-dev -b feat/op-dev` → `cd .claude/worktrees/op-dev`（单 session 复用；结束时按收尾段清理；若目录/分支已存在，先让用户选择复用或另取名，勿强删）
+- **worktree**：`bash "$OP_HOME/scripts/op_worktree_setup.sh" dev .claude/worktrees/op-dev feat/op-dev` → `cd .claude/worktrees/op-dev`（sparse-checkout 自动排除 `e2e/`，行为层隔离；单 session 复用；结束时按收尾段清理；若目录/分支已存在，先让用户选择复用或另取名，勿强删）
 - **主分支**：`git checkout {main或master}`
 - **当前分支**：不动分支
 - 记下 `<work_dir>` = 当前 `pwd` + 原分支名
@@ -201,10 +201,16 @@ bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
 
 派 op-evaluator 做 spec 级真机验收。**evaluator 仅在 Stage 4 介入一次**：评估 → 固化 → 破坏检查 → 对抗探索。
 
-**派 evaluator 前 leader 先做访问隔离准备（目标结构隔离 + 报告回流，design §8.1；hook 对 subagent 失效，依据 `op_decisions.md` D18）**：
+**派 evaluator 前 leader 先做访问隔离准备（结构隔离 + 报告回流，design §2.5；hook 对 subagent 失效，靠结构隔离非 hook）**：
 1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {前缀}` 机械组装 evaluator brief——固定路径 cat（工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
-2. 当前过渡期普通 worktree 未排除 `src/**`、task 目录、`decisions.md`；这些隔离要求暂为 advisory，evaluator 禁止主动读取。硬隔离待 sparse-checkout/构建产物链路落地后才可宣称。
-3. dispatch prompt 固定模板（advisory 留痕，不拦截）。
+2. **创建 evaluator 隔离 worktree**（sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防抄实现）：
+
+   ```bash
+   bash "$OP_HOME/scripts/op_worktree_setup.sh" eval .claude/worktrees/op-eval feat/op-eval
+   ```
+
+   evaluator 在 `.claude/worktrees/op-eval` 工作——源码/task 目录/decisions 物理不在文件系统（结构隔离硬底线，绕过 hook 对 subagent 失效）。需 git 2.25+；脚本失败（旧 git）则退化为 advisory + WARN。
+3. dispatch prompt 固定模板（advisory 留痕，不拦截），`cd` 指向 `.claude/worktrees/op-eval`。
 
 ```js
 eval_brief_path="docs/omni_powers/op_execution/acceptance/{前缀}/eval_brief.md"
@@ -244,7 +250,8 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 ```bash
 git checkout <原分支>
 git merge feat/op-dev --ff-only
-git worktree remove .claude/worktrees/op-dev
+bash "$OP_HOME/scripts/op_worktree_teardown.sh" .claude/worktrees/op-dev feat/op-dev
+bash "$OP_HOME/scripts/op_worktree_teardown.sh" .claude/worktrees/op-eval feat/op-eval 2>/dev/null || true  # 若 Stage 4 已创建
 cd <原项目根目录>
 ```
 
@@ -275,3 +282,5 @@ cd <原项目根目录>
 | `skills/oprun/scripts/close_check.sh` | 收口验收 |
 | `skills/oprun/scripts/op_checkpoint.sh` | checkpoint 写入 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |
+| `scripts/op_worktree_setup.sh` | 隔离 worktree 创建（dev 排除 e2e / eval 排除 src+tasks+decisions） |
+| `scripts/op_worktree_teardown.sh` | worktree + 分支清理 |
