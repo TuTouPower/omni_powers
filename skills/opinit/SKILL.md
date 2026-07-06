@@ -1,8 +1,9 @@
 ---
 name: opinit
 description: >
-  一次性安装：生成 omni_powers 三区骨架 + hooks 注册。在一个已有项目中初始化工作流目录与规范文档。
+  一次性初始化（heavy）：生成 omni_powers 三区骨架 + 写 profile=heavy + hooks 注册。在一个已有项目中初始化工作流目录与规范文档。
   触发：/opinit。
+  前置：已跑仓库 install.sh --set-ophome（唯一安装脚本，heavy/lite 共用）。
 ---
 
 # Op Init Skill
@@ -50,7 +51,7 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
 ```
 
-> 脚本建三区目录 + baselines_index 模板 + tasks_list + checkpoint + progress/decisions 初始说明 + .test_locks。**重跑幂等**：已存在的 tasks_list/checkpoint/progress/decisions/.test_locks/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
+> 脚本建三区目录 + **profile=heavy**（已有 `profile=lite` 则 die 防混跑；旧项目无 profile 补写）+ baselines_index 模板 + tasks_list + checkpoint + progress/decisions 初始说明 + .test_locks。**重跑幂等**：已存在的 tasks_list/checkpoint/progress/decisions/.test_locks/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
 
 技术债登记为 issue 加 `tech-debt` 标签，不单独建文件。依赖走 `depends_on` + jq，不单独建图文件。
 

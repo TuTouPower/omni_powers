@@ -18,7 +18,7 @@ if [ ! -f "$REVIEW_FILE" ]; then
     exit 0
 fi
 
-round=$(grep -c '^verdict:' "$REVIEW_FILE" 2>/dev/null || echo 0)
+round=$(grep -c '^verdict:' "$REVIEW_FILE" || true)   # 无匹配时 grep -c 自身输出 0，不可再 echo 0（会得 "0\n0"）
 verdict=$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$REVIEW_FILE" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || echo "NONE")
 
 echo "round: $round"

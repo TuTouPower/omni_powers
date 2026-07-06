@@ -31,8 +31,8 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 |---|---|
 | op_close_post.bats | P0-1 缺 feature die、verdict 校验、归档、P0-4 清 current_task |
 | op_status.bats | P1-5 阻塞强校验 blocked_by、状态流转 |
-| op-checkpoint.bats | P1-7 幂等 + TID 锚定 |
-| op-read-verdict.bats | 轮次判定、exit code |
+| op_checkpoint.bats | P1-7 幂等 + TID 锚定 |
+| op_read_verdict.bats | 轮次判定、exit code |
 | close_check.bats | P2-6 TID 精确匹配（不误配 T010） |
 | pre_tool_use.bats | P2-4 路径匹配（含 baselines）、spec 写保护 |
 | op_check_env.bats | 环境检查脚本（jq/git/OP_HOME） |

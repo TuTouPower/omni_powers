@@ -43,3 +43,17 @@ teardown() {
   [ "$(cat docs/omni_powers/op_execution/tasks_list.json)" = '{"tasks":[{"id":"T01"}]}' ]
   [ "$(cat docs/omni_powers/op_execution/leader_checkpoint.md)" = "user checkpoint content" ]
 }
+
+@test "opinit_skeleton: 首跑写 profile=heavy" {
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
+  [ "$status" -eq 0 ]
+  [ "$(cat docs/omni_powers/profile)" = "heavy" ]
+}
+
+@test "opinit_skeleton: profile=lite 时 die 防混跑" {
+  mkdir -p docs/omni_powers
+  echo "lite" > docs/omni_powers/profile
+  run bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"profile=lite"* ]]
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# op-checkpoint：每 task 闭环后自动更新 leader_checkpoint.md 的机械部分
-# 用法: op-checkpoint.sh <TID>
+# op_checkpoint：每 task 闭环后自动更新 leader_checkpoint.md 的机械部分
+# 用法: op_checkpoint.sh <TID>
 # commit 后跑。自动取最新 commit hash + 从 tasks_list.json 取 title。
 # 跑完后 leader 手动编辑"关键上下文"段，然后跑 close_check.sh 验收。
 set -euo pipefail
@@ -9,7 +9,7 @@ set -euo pipefail
 trap 'rm -f /tmp/op_checkpoint_status_$$.md /tmp/op_checkpoint_$$.md' EXIT INT TERM
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TID="${1:?用法: op-checkpoint.sh <TID>}"
+TID="${1:?用法: op_checkpoint.sh <TID>}"
 
 CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
 TASKS_LIST="$ROOT/docs/omni_powers/op_execution/tasks_list.json"

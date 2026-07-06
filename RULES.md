@@ -116,6 +116,26 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - worktree 对称隔离是**目标设计**：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`。**当前实现状态**：普通 worktree 未用 sparse-checkout 排除目录，过渡期只作纪律约束/advisory，不得把物理隔离当安全前提。硬隔离待 design §12 P2 落地；分支模式见 `skills/oprun/SKILL.md`
 - 不生成 dag.md
 
+## profile 分叉（heavy / lite 两模式）
+
+项目 `docs/omni_powers/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_lite_design.md`。
+
+**heavy**（现状默认）：本文件通篇规则原样生效。
+
+**lite**（零侵入版，入口 `/oplintake` `/oplrun`）差异声明：
+
+| 维度 | lite 分叉 |
+|---|---|
+| 脚本寻址 | 无 `$OP_HOME`——`${OP_SCRIPT_ROOT:-$OP_HOME}` fallback，lite 由 leader dispatch 注入 skill 自带目录 |
+| 状态机 | **无「收口中」态**；`完成` = review PASS + leader 收口 commit + close_check 通过（非 closer 返回后） |
+| 收口 | **无 op-closer**，leader 机械收口（`op_close_post.sh` 直接标完成，无「收口中」中间态） |
+| 闸门 | 无闸门 C（Stage 4 PASS 后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |
+| decisions 来源 | 闭集加入 `leader-close`（leader 代 closer append 时标记） |
+| spec 写保护 | 降级为约定 + git diff 可回溯（无 hook 强制拦截） |
+| evaluator | 裸评退化：无 worktree 隔离、无 baseline 对照、无跨迭代回归，只首次裸评 |
+| 证据校验 | 无 hook——leader 每 task 亲自跑测试 + 读 diff（每 3 task 查上下文水位） |
+| compact 恢复 | 读本文件 + 读 `profile` + `bash "$SCRIPTS/op_jq.sh" all` + 读 `leader_checkpoint.md`（`$SCRIPTS` = oplrun skill 安装目录下的 `scripts/` 子目录，如 `~/.claude/skills/oplrun/scripts`） |
+
 ## 不做
 
 - 不停下问用户（除非可跑 task 跑完仍剩阻塞，或契约边界规则触发 spec 变更——见 design.md §5.2）

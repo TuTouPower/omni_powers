@@ -18,7 +18,7 @@ if [ ! -f "$REVIEW_FILE" ] || ! grep -q '^verdict:' "$REVIEW_FILE" 2>/dev/null; 
 fi
 
 # 已有 review 轮次 = verdict 行数
-max_round=$(grep -c '^verdict:' "$REVIEW_FILE" 2>/dev/null || echo 0)
+max_round=$(grep -c '^verdict:' "$REVIEW_FILE" || true)   # 无匹配时 grep -c 自身输出 0，不可再 echo 0（会得 "0\n0"）
 next_round=$((max_round + 1))
 
 # review ≤ 2 轮：第 3 轮 blocked

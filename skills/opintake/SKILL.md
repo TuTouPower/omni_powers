@@ -9,6 +9,8 @@ description: >
 # Op Intake Skill
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+>
+> **profile 互斥**：`[ -f docs/omni_powers/profile ] && ! grep -qx heavy docs/omni_powers/profile` 命中 → **停**，提示 lite 项目用 `/oplintake`，不混跑。（无 profile 文件 = 旧 heavy 项目，放行）
 
 `/opintake "<需求>"` 是需求入口。分拣 → spec → 闸门 A → 拆 task → task 待开始。
 

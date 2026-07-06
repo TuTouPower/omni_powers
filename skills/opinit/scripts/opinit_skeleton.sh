@@ -9,11 +9,27 @@ cd "$ROOT"
 
 OP_HOME="${OP_HOME:?全局 settings.json 未设 OP_HOME（opinit 步骤五校验，此处假设已设）}"
 
+die() { echo "[FAIL] $*" >&2; exit 1; }
+
+# ── profile 互斥保护（lite_design §6 判定表）──
+PROFILE_FILE="docs/omni_powers/profile"
+if [ -f "$PROFILE_FILE" ]; then
+    cur="$(head -1 "$PROFILE_FILE" | tr -d '[:space:]')"
+    case "$cur" in
+        heavy) echo "[INFO] profile=heavy 已存在，补缺模式" ;;
+        lite) die "本项目 profile=lite，不可用 heavy 入口混跑。请用 /oplintake、/oplrun 或显式处理后重来" ;;
+        *) die "profile 值异常: '$cur'（期望 heavy）" ;;
+    esac
+fi
+
 # 三区目录
 mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
 mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
 mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
 mkdir -p docs/archive e2e
+
+# ── profile（无则写 heavy）──
+[ -f "$PROFILE_FILE" ] || echo "heavy" > "$PROFILE_FILE"
 
 # baselines 索引骨架（首次空，验收后填——blueprint-generator 不生成此文件，首次无基准数据）
 if [ ! -f docs/omni_powers/op_blueprint/baselines/baselines_index.md ]; then
@@ -49,10 +65,10 @@ next_step:
 关键上下文:
 
 ## 已完成 task
-<!-- AUTO：op-checkpoint.sh 追加 "- {TID} "{title}" ✅ {hash}" -->
+<!-- AUTO：op_checkpoint.sh 追加 "- {TID} "{title}" ✅ {hash}" -->
 
 ## tasks_list 状态
-<!-- AUTO：op-checkpoint.sh 更新（完成/待开始/待规划/阻塞/跳过/挂起）-->
+<!-- AUTO：op_checkpoint.sh 更新（完成/待开始/待规划/阻塞/跳过/挂起）-->
 EOF
 fi
 

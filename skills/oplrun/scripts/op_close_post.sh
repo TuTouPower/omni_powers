@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# op_close_post：per-task 收口后机械步骤（校验 review.md PASS + 归档 + 记录 + stage）
+# op_close_post（lite）：per-task 收口机械步骤（校验 review PASS + 归档 + progress + 标完成 + stage）
 # 用法: op_close_post.sh <TID> <feature>
-# review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
+# lite 无「收口中」态、无 op_close_pre——review PASS 后直接 close_post。
+# 无 OP_HOME 依赖：兄弟脚本 op_status.sh 走 ${BASH_SOURCE} 自探测同目录。
 set -euo pipefail
 
-OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TID="${1:?用法: op_close_post.sh <TID> <feature>}"
 FEATURE="${2:?缺少 feature}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -51,10 +52,9 @@ if ! grep -qE "^- $TID[[:space:]]*\\|" "$PROGRESS_FILE"; then
     printf -- '- %s | %s | %s | 完成\n' "$TID" "$FEATURE" "$DATE" >> "$PROGRESS_FILE" || die "追加 progress.md 失败"
 fi
 
-bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
+bash "$SCRIPT_DIR/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
 
-# P0-4：收口完成，清 current_task（hook 不再校验本 task 证据）
-# 用临时文件代 sed -i（BSD/GNU 通吃），失败 WARN 不静默
+# 清 current_task。用临时文件代 sed -i（BSD/GNU 通吃），失败 WARN 不静默
 CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
 if [ -f "$CHECKPOINT" ]; then
     tmp="$(mktemp)"
@@ -66,7 +66,7 @@ if [ -f "$CHECKPOINT" ]; then
     fi
 fi
 
-# stage 边界收窄（#25）：只 add 本 task 归档 + progress + tasks_list，不 blanket add op_blueprint/op_execution
+# stage 边界收窄：只 add 本 task 归档 + progress + tasks_list
 git add \
     "docs/omni_powers/op_record/tasks/$TID" \
     "docs/omni_powers/op_record/progress.md" \

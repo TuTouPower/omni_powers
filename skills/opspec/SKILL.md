@@ -8,6 +8,8 @@ description: >
 
 # opspec：工作 spec 生成
 
+> **profile 感知**：`docs/omni_powers/profile` = `lite` 时——`feature` 字段仅作前缀标识（供 e2e/acceptance 目录命名），**不映射 blueprint**；下文所有 `op_blueprint/`（domain.md/specs//architecture.md）对照步骤跳过（lite 下为空壳占位，不作契约源）；spec 须自足（必要的架构/命名约束内联进 spec 本体）。
+
 把需求转成工作 spec。**内部 skill，由 opintake 在 Stage 1 调用**（Stage 0 分拣 + 澄清由 opintake 完成，Stage 2 拆 task 由 opintake 后续做）。opintake 已完成入口分拣、和用户澄清需求、确定方案——本 skill 把结论落盘成结构化 spec，供闸门 A 审批。
 
 ## 兜底：用户直接命中（无 opintake 上下文）

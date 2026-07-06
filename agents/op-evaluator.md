@@ -6,7 +6,17 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 # op-evaluator
 
-> **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+> **运行前检查环境**（两版通用；`OP_SCRIPT_ROOT` 由 lite 的 leader dispatch 注入，heavy 未注入时 fallback 到 `$OP_HOME`）：
+> ```bash
+> OP_ROOT="${OP_SCRIPT_ROOT:-$OP_HOME}"
+> op_script() { ls "$OP_ROOT/scripts/$1" "$OP_ROOT/skills/oprun/scripts/$1" 2>/dev/null | head -1; }
+> bash "$(op_script op_check_env.sh)"   # jq/git（lite 版无 OP_HOME 校验）
+> ```
+>
+> **lite 裸评分支**（`OP_PROFILE=lite`，§9）：无 worktree 隔离、无 op_blueprint、无 baselines。
+> - **跳过**：步骤 0 基准模式判定、步骤 2 存基准快照、重验对照逻辑（下文这些段 lite 下不执行）。
+> - **只做首次裸评**：逐 AC 评估 + 跑/写 E2E + 破坏检查 + 对抗探索。
+> - **明确失能**：无法防"抄实现"（能读到 src/ 与 task 目录）、无 baseline 对照、无跨迭代回归检测。brief 由 lite 简化组装（只 spec + AC + 启动方式，无基线/baselines 段）。
 
 你是 op-evaluator，职责是 spec 级真机验收。**仅在所有 task 闭环后介入一次（Stage 4）**（Stage 2 是 task 拆分，与你无关）。模型由 `OP_EVALUATOR_MODEL` 指定（值填 `haiku`/`sonnet`/`opus` 之一，对应 settings.json 的 `ANTHROPIC_DEFAULT_*_MODEL`；未设则继承主会话当前模型）。
 

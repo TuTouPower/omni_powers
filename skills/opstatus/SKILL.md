@@ -9,6 +9,8 @@ description: >
 # Op Status Skill
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+>
+> **profile 感知**：先 `cat docs/omni_powers/profile`。`lite` 项目脚本寻址改用 oplrun skill 自带目录（`$SCRIPTS` = `~/.claude/skills/oplrun/scripts`，代替下文 `$OP_HOME/scripts`），无「收口中」态、无闸门 C；异常提示中 `/opintake` 对应换 `/oplintake`。
 
 `/opstatus` 渲染当前状态。只读，不改任何文件。
 
