@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# git commit-msg hook（heavy 专属，lite 不注册）
+# 作用：e2e/** 提交必须含合法 Op-E2e-Unlock trailer
+#   - trailer = HMAC-SHA256(secret, 本次 staged 的 e2e 文件清单) —— 绑内容防重放/复用
+#   - secret 存 ~/.claude/omni_powers/e2e_secret（mode 600，不进项目仓库）
+#   - leader 用 scripts/op_trailer_unlock.sh 生成 trailer 加进 commit message
+# 安全属性（design §2.5）：
+#   ✓ trailer 绑 e2e 文件清单 hash（抄了只能用于同清单，换文件需重生成）
+#   ✓ pre-commit/commit-msg 校验靠 HMAC 重算，不依赖 agent 可篡改的状态文件
+#   ⚠️ secret 存 ~/.claude/——agent 理论可 Bash 读（强隔离需 OS keyring，P3 增强，当前纪律禁止 + mode 600）
+# 注：本 hook 在 git 层，绕过 Claude hook 对 subagent 失效问题
+
+set -uo pipefail
+
+msg_file="${1:?usage: commit-msg <msg-file>}"
+msg="$(cat "$msg_file" 2>/dev/null)"
+
+against="$(git rev-parse --verify HEAD >/dev/null 2>&1 && echo HEAD || echo "$(git hash-object -t tree /dev/null)")"
+
+# 是否含 e2e staged 改动
+has_e2e=0
+e2e_paths=""
+while IFS= read -r path; do
+    case "$path" in
+        e2e/*) has_e2e=1; e2e_paths="${e2e_paths}${path}"$'\n' ;;
+    esac
+done < <(git diff-index --cached --name-only "$against")
+
+# 非 e2e 提交放行
+[ "$has_e2e" -eq 1 ] || exit 0
+
+# 提取 trailer
+trailer="$(printf '%s\n' "$msg" | grep -oE '^Op-E2e-Unlock: [0-9a-f]+' | awk '{print $2}' | head -1)"
+if [ -z "$trailer" ]; then
+    echo "[git commit-msg] BLOCKED: 本次提交含 e2e/** 但缺 Op-E2e-Unlock trailer。" >&2
+    echo "  leader 用 op_trailer_unlock.sh 生成 trailer 加到 commit message 末尾。" >&2
+    exit 1
+fi
+
+# 校验 trailer：HMAC(secret, 排序后的 e2e 文件清单)
+secret_file="$HOME/.claude/omni_powers/e2e_secret"
+if [ ! -f "$secret_file" ]; then
+    echo "[git commit-msg] FATAL: 无 secret 文件 $secret_file。leader 首次跑 op_trailer_unlock.sh 会生成。" >&2
+    exit 1
+fi
+secret="$(cat "$secret_file")"
+
+# 排序去重的 e2e 路径作为 HMAC 输入（与 op_trailer_unlock.sh 一致）
+hmac_data="$(printf '%s' "$e2e_paths" | grep -c . >/dev/null; printf '%s' "$e2e_paths" | sort | tr '\n' ':')"
+
+# 兼容 openssl 新旧语法
+expected="$(printf '%s' "$hmac_data" | openssl dgst -sha256 -hmac "$secret" 2>/dev/null | awk '{print $NF}')"
+if [ -z "$expected" ]; then
+    # fallback：openssl 3.x mac 语法
+    expected="$(printf '%s' "$hmac_data" | openssl mac -digest sha256 -macopt key:"$secret" HMAC 2>/dev/null)"
+fi
+if [ -z "$expected" ]; then
+    echo "[git commit-msg] FATAL: openssl HMAC 计算失败。需 openssl 1.1+。" >&2
+    exit 1
+fi
+
+if [ "$trailer" != "$expected" ]; then
+    echo "[git commit-msg] BLOCKED: trailer 不合法或已失效。" >&2
+    echo "  trailer 绑本次 e2e 文件清单，staged 文件变了中国需重跑 op_trailer_unlock.sh。" >&2
+    exit 1
+fi
+
+exit 0

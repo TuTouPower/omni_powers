@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# git pre-commit hook（heavy 专属，lite 不注册）
+# 作用：spec 写保护——approved/in_progress 状态的生效规格不允许直接 commit
+#       （走 §5.2 spec 变更子流程：人批 → leader 解锁脚本临时解保护 → commit → 恢复）
+# 注：e2e/** 不在此拦（leader 合法提交也要过 pre-commit），e2e 校验在 commit-msg（trailer）
+# 注：本 hook 在 git 层，绕过 Claude hook 对 subagent 失效问题（design §0.2 / op_decisions D18）
+
+set -uo pipefail
+
+against="$(git rev-parse --verify HEAD >/dev/null 2>&1 && echo HEAD || echo "$(git hash-object -t tree /dev/null)")"
+
+blocked=0
+while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    case "$path" in
+        docs/omni_powers/op_blueprint/specs/*.md|docs/omni_powers/op_blueprint/baselines/*|docs/omni_powers/op_blueprint/*.md)
+            status="$(awk -F': *' '/^status:/{print $2; exit}' "$path" 2>/dev/null | tr -d '[:space:]')"
+            case "$status" in
+                approved|in_progress)
+                    echo "[git pre-commit] BLOCKED: $path 状态=$status，受写保护。" >&2
+                    echo "  改生效规格走 spec 变更子流程（design §5.2）：leader 解锁脚本临时解保护 → commit → 恢复。" >&2
+                    blocked=1
+                    ;;
+            esac
+            ;;
+    esac
+done < <(git diff-index --cached --name-only "$against")
+
+[ "$blocked" -eq 0 ] || exit 1
+exit 0

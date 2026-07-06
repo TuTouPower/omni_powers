@@ -65,3 +65,25 @@ else
 fi
 chmod +x "$OP_HOME/hooks/"*.sh "$OP_HOME/hooks/run-hook.cmd" 2>/dev/null
 echo "[OK] hooks 已注册到项目 .claude/settings.json（OP_HOME 走全局 env）"
+
+# 3. 注册 git 层 hooks（heavy 专属：pre-commit spec 写保护 + commit-msg e2e trailer 校验）
+#    绕过 Claude hook 对 subagent 失效问题（design §0.2 / op_decisions D18）。
+#    复制到 .git/hooks/（不覆盖用户已有非 omni_powers hook），+x。
+#    更新 omni_powers git hook 后需重跑 /opinit 同步。
+if git_dir="$(git rev-parse --git-dir 2>/dev/null)"; then
+    hooks_dir="$git_dir/hooks"
+    mkdir -p "$hooks_dir"
+    for gh in "$OP_HOME/hooks/git/"*; do
+        [ -f "$gh" ] || continue
+        name="$(basename "$gh")"
+        if [ -e "$hooks_dir/$name" ] && ! grep -q "omni_powers" "$hooks_dir/$name" 2>/dev/null; then
+            echo "[WARN] .git/hooks/$name 已存在且非 omni_powers 生成，跳过（不覆盖用户已有）" >&2
+            continue
+        fi
+        cp "$gh" "$hooks_dir/$name"
+        chmod +x "$hooks_dir/$name"
+        echo "[OK] git hook 已注册: $name（spec 写保护 / e2e trailer 校验，绕过 subagent deny 失效）"
+    done
+else
+    echo "[WARN] 非 git 仓库，跳过 git hooks 注册（pre-commit/commit-msg）" >&2
+fi
