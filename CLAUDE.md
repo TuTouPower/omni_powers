@@ -2,7 +2,7 @@
 
 Claude Code 多 Agent 协作工作流系统。leader 编排（被 oprun 驱动）、op-implementer 开发、op-reviewer 双裁决审查、op-evaluator 验收、op-closer 两段节奏收口。规格是唯一契约，全线 Sub Agent。
 
-支持两模式：**heavy**（全量，hook 强制 + worktree 隔离 + blueprint）与 **lite**（零侵入，不加 hook / 不改用户配置与已有文档）。设计见 `docs/omni_powers_design.md`（heavy+lite 一份，lite 部分在 §5）。
+支持两模式：**heavy**（全量，task 分支 + merge gate + worktree 隔离 + blueprint，hook 仅主会话 advisory）与 **lite**（零侵入，不加 hook / 无分支拓扑 / 不改用户配置与已有文档）。设计见 `docs/omni_powers_design.md`（heavy+lite 一份，lite 部分在 §5）。
 
 ## 快速开始
 
@@ -33,7 +33,7 @@ bash install.sh --set-ophome   # 全量装 skill+agent 进 ~/.claude/ + 写 OP_H
 /oplrun                     # task 循环（implementer → leader 自验 → reviewer 双裁决 → leader 收口）→ Stage 4 裸评
 ```
 
-lite 与 heavy 区别：不加 hook（leader 亲自跑测试代替机器校验）、无 closer（leader 收口）、无 blueprint 提炼、evaluator 裸评、脚本自包含。
+lite 与 heavy 区别：不加 hook（leader 亲自跑测试代替机器校验）、无 task 分支与 merge gate（主分支直改）、无 closer（leader 收口）、无 blueprint 提炼、evaluator 裸评、脚本自包含。
 
 模型可由环境变量自定义：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 三档之一（对应 `settings.json` 的 `ANTHROPIC_DEFAULT_*_MODEL`）。未设则不传 model 参数，继承主会话当前模型。**spec 编写（含设计探索）归 leader 主会话**，不走 dispatch，闸门 A 前 `/model` 切 Opus。
 
