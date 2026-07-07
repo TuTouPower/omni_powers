@@ -329,3 +329,86 @@
 - sonnet M5（定期体检补实现概要）：P3 项，提前设计调度/工具选择是过度；CI 最小接口节（§10.1）已覆盖其依赖面。
 
 **影响**：`docs/omni_powers_design.md`（§0 加导航表 + §0.2 快照表、原则 7 拆分、§1.2/§3/§5.1/§5.2/§6.3/§7.2/§7.4/§7.5/§8.1/§8.3/§10/§10.1/§11/§12/§13/§13.3/§14.1/§15 多处修订）；`docs/op_decisions.md`（本 D21）。待实现项随 §12 排期，状态见 §0.2 快照表。
+
+## D22：spec 强制——不需要 spec 的需求不进 omni_powers（2026-07-08）
+
+**触发**：用户拍板定位——omni_powers 服务需要 spec 的需求，不需要 spec 的别用这个 skill。
+
+**决策**：spec 是 omni_powers 的硬性入场条件。需求命中三判据任一（跨范围 / 改契约 / 高代价，design §2.1）才进 omni_powers 走 spec 流程；三条全不中（改样式、加索引、改变量名、三行 fix）→ **不进 omni_powers**，用普通开发流程直接做。
+
+**理由**：
+- omni_powers 的全部价值（三方对同一份 spec 干活切断同源污染、reviewer 双裁决、Stage 4 验收、merge gate 防篡改）都建立在 spec 之上
+- 无 spec 则这些机制全是空转开销——为三行 fix 走 intake / run / review / evaluator 是杠杆错位
+- spec 是系统唯一质量单点（原则 1），没有 spec 就没有契约，多 agent 协作失去存在依据
+
+**与现状的关系（待澄清）**：design §2.1 现写"轻量直做门禁：执行主体为 leader 主会话"——即三判据全不中时仍在 heavy 框架内由 leader 直接做（贴测试输出 + commit）。本决策进一步收紧为"连 heavy 都不必进场"。两者张力（轻量直做保留为 heavy 内嵌路径 vs 完全剥离出 omni_powers）留待后续裁决，本条先记定位意图。
+
+## D23：feature 字段是锚点非硬映射——合入靠读 spec 全集判断（2026-07-08）
+
+**触发**：用户纠正 design §2.2 `feature` 字段注释（"对应 op_blueprint/specs/{功能名}.md，closer 合入 baseline 时按此映射"）造成的误导——该措辞让人误以为合入是"工作 spec → 单一生效规格文档"的硬映射。
+
+**决策**：`feature` 字段是**功能名锚点**（提示本次工作主要归属哪个功能），不构成"工作 spec 必须合入到唯一一份 op_blueprint/specs/{功能名}.md"的硬映射。closer 合入时**阅读 op_blueprint/ 全部文档**（specs/*、architecture、domain、conventions、test、baselines/*），判断本次实现内容应归入哪个或哪些文档——可能进一个功能 spec、可能横跨多个功能 spec、可能改 architecture/domain/conventions、可能因被上游覆盖而从某 spec 删除。
+
+**理由**：
+- 一次工作 spec 的实现不总落在单一功能边界内——跨功能更新（§2.6 baselines 跨功能更新已有此语义）、非功能维度改动（架构/约定/领域模型）都常见；硬映射会漏掉这些
+- blueprint_update.md 本就是"diff 覆盖 op_blueprint 全部文档"形态（§2.6 per-leaf closer 提案），closer 的判断职责已设计在内，feature 字段只是它判断时的锚点之一
+- 生效规格是按功能切分的稳定真相，但合入路径不该被一个 frontmatter 字段机械锁定
+
+**分清两件事**：
+- **specs 合入**（生效规格文本）：closer 读全集判断，非 feature 硬映射（本决策）
+- **baselines 合入**（基准快照文件）：仍按功能名落 `op_blueprint/baselines/{功能名}/`（§2.6）——baselines 是按功能组织的代码资产，feature 字段在此是落点键，这与本决策不冲突
+
+**影响（待改，本条仅记决策）**：design §2.2 `feature` 字段注释需改为"功能名锚点，合入靠 closer 读 op_blueprint 全集判断归属，非单一文档硬映射"；§2.6 per-leaf closer 提案段表述与此一致（已写"diff 覆盖全部文档"），无需改。
+
+## D24：取消 P2——删 partial clone / blob 过滤 / 读取硬隔离 / 构建产物链路 / CI 三接口（2026-07-08）
+
+**触发**：用户问清"读取硬隔离待 P2 blob 过滤 partial clone"与"构建产物链路（CI 三接口 ③）仍 P2"两段含义后，拍板取消整个 P2 计划。
+
+**决策**：从 design 与全部运行时文件删除以下 P2 交付物——
+- **evaluator 读取硬隔离**（blob 过滤 partial clone，`git clone --filter=blob:none`）：原计划让被排除路径的 blob 物理不在本地 object store，git 底层命令也取不到。
+- **构建产物链路**（CI 三接口 ③，`OP_BUILD_CMD`）：CI 自动构建可运行应用包供 evaluator 操作。
+- **CI 三接口契约**（§3.3.1 整节）：①跑测试 ②只读跑 e2e ③构建产物——整段删除，连带 `scripts/op_ci_local.sh` + `hooks/git/post-receive`（仅触发该脚本）一并删。
+- per-task 机器证据 CI 化、e2e 集成信号 CI 回传、循环上限门禁化等 P2 能力矩阵条目。
+
+**理由**：
+- partial clone 是"同一仓库的浅克隆技术、按路径过滤 blob"，实现复杂且 evaluator 隔离靠 sparse-checkout（advisory 防无意耦合）+ merge gate（写入硬底线）已够用——读取侧硬隔离是过度工程
+- 构建产物链路绑死 CI 基建，leader 人工构建后交付 op-eval worktree 即可，不值得为自动化预付一套 CI
+- CI 三接口是 P2 整体交付，③ 删则契约不完整，①② 无 design 锚点——一并删，需要时另起独立 CI helper 不绑 design
+- 删后 evaluator 隔离防线不变（sparse-checkout advisory + merge gate 硬底线），可信度靠 reviewer 双裁决 + evaluator 独立验收 + merge gate 兜底，与 P1 现状一致
+
+**影响**：design §0 原则 7、§0.1（删读取硬底线段，三层→两层）、§0.2 能力矩阵（删 5 行 P2 条目）、§2.5（结构隔离层去 partial clone 句、删 Bash 读源码审计段）、§3.1（删 e2e 只读信号回传段）、§3.3（机器证据去 CI 代）、§3.3.1（整节删）、§3.4 工作台表格、§4.2（旧 P2 删，旧 P3 并入新 P2）；运行时：op-evaluator.md / oprun SKILL / RULES.md 去引用；删 `scripts/op_ci_local.sh` + `hooks/git/post-receive`。
+
+## D25：删钓鱼审计 + 刻薄化调教循环（2026-07-08）
+
+**触发**：用户拍板删 design 中全部钓鱼审计（phishing audit）相关——P3 交付的"独立验证环境副本 + 植 bug 脚本"，定期植已知 bug 测 evaluator 判别力。
+
+**决策**：删除——
+- `scripts/op_phishing_audit.sh`（植 bug 骨架）整文件
+- design §2.5 防放水机制第 4 层（刻薄化调教循环/钓鱼审计）、§4.2 P3 钓鱼审计基建段
+- 能力矩阵 evaluator baseline 对照评行去"+ 钓鱼审计"
+- §0.2 防线映射、各处"刻薄化调教"字样
+
+**理由**：
+- 钓鱼审计是"测 evaluator 判别力本身"的持续运营成本，需独立验证环境副本基建——未验证假设前不预付（原则 12 护栏按需付费）
+- evaluator 放水靠前三层（hard-pass gate + 预期失败模式 + 破坏检查）已拦低级假测试，深层耦合缺陷无低成本收敛判据
+- 删后防放水机制三层（design §2.5），baseline 对照评保留（P2 随验收上线即建）
+
+**影响**：design §2.5（防放水第 4 层删、能力边界句去钓鱼审计）、§2.6 二阶判断、§4.2 P2 段、§0.2 能力矩阵；运行时：op-evaluator.md（删钓鱼审计/刻薄化）；删 `scripts/op_phishing_audit.sh`。
+
+## D26：删自举期例外 + spec 字段清理 + 用词规范（2026-07-08）
+
+**触发**：用户逐项审 design 残留机制，拍板删自举期例外、确认 risk_probe/技术探针已删、统一用词（水位→级别、①②③→顿号）。
+
+**决策**：
+- **删自举期例外**：原"P2 首 task 造 evaluator 浏览器基建时，evaluator 还不存在，走人工/降级验收"。理由——evaluator 是 Claude subagent（prompt 文件），Playwright MCP 已就绪，从首 task 起就能标准验收，无鸡生蛋问题。
+- **risk_probe / 技术探针**：tasks_list.json 字段 + opspec 信号③ 引用——确认已删（早前轮），本轮扫净残留。
+- **用词规范**：全文"水位"→"级别"或删冗余；"①②③"圈号→顿号/分号连接（模板代码块内编号除外）。
+
+**理由**：
+- 自举期例外是为不存在的循环依赖打的补丁——evaluator 不是要造的软件，是 prompt
+- risk_probe 字段无人消费，是死字段
+- "水位"是隐喻负担，"级别"直白；圈号数字在 markdown 渲染外（纯文本流、grep）不可读
+
+**影响**：design §2.5（自举期例外句删）、§4.2 P2（op-evaluator 浏览器基建作为自举第一 task 段删）、§0.1/§0.2/§2.5（水位→级别）、全文圈号替换；运行时：tasks_list.json 模板（删 risk_probe）、opintake/oplintake/opspec SKILL、op-evaluator/op-reviewer/oprun/oplrun SKILL、RULES.md、hooks/README（①②③→顿号）。
+
+

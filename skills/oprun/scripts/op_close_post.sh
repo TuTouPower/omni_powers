@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # op_close_post：per-task 收口后机械步骤（校验 review.md PASS + 归档 + 记录 + stage）
-# 用法: op_close_post.sh <TID> <feature>
-# review.md 单文件；per-task 不产 blueprint_update（per-leaf 收尾才产，见 design §7.4）
+# 用法: op_close_post.sh <TID> <feature>（feature 由 leader 从 closer 提案读，非 spec 字段；用于写 progress 给人看）
+# review.md 单文件；closer per-task 一段式已在验收后产 blueprint_update（见 design §2.4）
 set -euo pipefail
 
 OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
@@ -28,8 +28,8 @@ else
     die "task 工作区不存在: $TASK_DIR"
 fi
 
-# 校验三件齐全且非空
-for f in brief.md report.md review.md; do
+# 校验二件齐全且非空
+for f in report.md review.md; do
     [ -s "$ACTIVE_DIR/$f" ] || die "task 文件缺或空: $ACTIVE_DIR/$f"
 done
 

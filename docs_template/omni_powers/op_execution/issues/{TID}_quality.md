@@ -4,7 +4,7 @@
 
 issue_id: {TID}_quality
 source: reviewer FAIL（{TID}）
-spec: {前缀}
+spec: {TID}
 task: {TID}
 severity: P0 | P1
 status: open

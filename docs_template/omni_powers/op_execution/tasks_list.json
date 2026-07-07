@@ -4,24 +4,18 @@
       "id": "T01",
       "title": "{语义级标题，一句 commit message 能说清}",
       "status": "待开始",
-      "spec": "{前缀}",
+      "spec": "{TID}",
       "type": "实现",
-      "covers_ac": ["AC-1"],
-      "touches_inv": [],
       "depends_on": null,
-      "risk_probe": false,
       "workset": ["src/..."]
     },
     {
       "id": "T02",
       "title": "{title}",
       "status": "待开始",
-      "spec": "{前缀}",
+      "spec": "{TID}",
       "type": "实现",
-      "covers_ac": ["AC-2"],
-      "touches_inv": ["INV-1"],
       "depends_on": ["T01"],
-      "risk_probe": false,
       "workset": ["src/..."]
     },
     {
@@ -29,12 +23,9 @@
       "title": "{title}",
       "status": "阻塞",
       "blocked_by": "resource",
-      "spec": "{前缀}",
+      "spec": "{TID}",
       "type": "实现",
-      "covers_ac": ["AC-3"],
-      "touches_inv": [],
       "depends_on": ["T01"],
-      "risk_probe": false,
       "workset": ["src/..."]
     }
   ]

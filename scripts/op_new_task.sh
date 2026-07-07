@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# op_new_task：建 task 工作区目录并拷三模板（brief/report/review）
+# op_new_task：建 task 工作区目录并拷二模板（report/review）
 # 用法: op_new_task.sh <TID>
-# spec 不在 task 目录——叶子共享于 docs/omni_powers/op_execution/specs/{前缀}.md
+# spec 不在 task 目录——每 task 一份于 docs/omni_powers/op_execution/specs/{TID}_{slug}.md（task:spec 1:1）
 # 注：tasks_list.json 的录入归 opintake 拆 task 时（写完整字段）；未拆的待办进 issues/ 不进 tasks_list
 set -euo pipefail
 
@@ -18,9 +18,9 @@ die() { echo "[FAIL] $*" >&2; exit 1; }
 
 mkdir -p "$TASK_DIR"
 
-for f in brief.md report.md review.md; do
+for f in report.md review.md; do
     [ -f "$TEMPLATE_DIR/$f" ] || die "模板缺失: $TEMPLATE_DIR/$f"
     cp "$TEMPLATE_DIR/$f" "$TASK_DIR/$f"
 done
 
-echo "[OK] $TID 工作区已创建: $TASK_DIR（brief/report/review 三文件）"
+echo "[OK] $TID 工作区已创建: $TASK_DIR（report/review 二文件）"

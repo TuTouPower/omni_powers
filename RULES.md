@@ -30,8 +30,8 @@ leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewe
 | `待开始` | spec 就位，未开发 | null |
 | `进行中` | implementer 开发或修复轮中 | null |
 | `审阅中` | review 进行中 | null |
-| `收口中` | 双裁决 PASS 后，closer 执行中 | null |
-| `完成` | closer 返回 + leader 审批 + close_check 通过 | null |
+| `收口中` | 双裁决 PASS + merge gate PASS 后，leader 跑 `op_close_pre.sh` 标此态，closer per-task 收口进行中（heavy 独有） | null |
+| `完成` | review PASS + merge gate PASS + closer append decisions.md 且 commit + leader 跑 `op_close_post.sh`（归档 + 标完成） | null |
 | `阻塞` | 2 轮 FAIL 或环境阻塞 | `resource`/`quality`/`spawn`（必有值） |
 | `跳过` | 因下游阻塞顺延 | null |
 | `挂起` | 用户明确推迟，需用户同意才做 | null |
@@ -109,16 +109,19 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - 证据由机器产出，无新鲜机器证据的"完成"无效
 - **入口检查环境**：任何 skill/agent 入口先跑 `bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法提示），绝不闷头失败——Windows 无 jq 是常见坑
 - task = commit，粒度沿低耦合缝隙切
-- review ≤2 轮；Stage 4 验收 ≤3 轮（到顶按严重度分流，详见 `skills/oprun/SKILL.md` 的验收段与 design §4/§8）
+- **决策记录策略（design §2.2）**：执行期决策 agent 自决，不阻塞等人。判据=是否需要进 spec——小决策（选库/算法/路径，不进 spec）直接做，**不记 decisions.md**；需进 spec 的→leader 改 task spec + 记 decisions.md（spec-delta）+ 事后报告（闸门 C）。closer 只收红灯归因（red-attribution），spec-delta 归 leader 子流程写。
+- review ≤2 轮；per-task 验收 ≤3 轮（到顶分流详见 `skills/oprun/SKILL.md` 验收段与 design §2.4/§2.5）
 - issue 不直接改代码，转正式 task 走 change type 流程
 - 中间状态不 commit；大 task 允许 `wip({TID})` 纯代码 sub-commit，不触发收口
 - Sub Agent 之间不直接通信
-- worktree 对称隔离是**目标设计**：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`。**当前实现状态**：普通 worktree 未用 sparse-checkout 排除目录，过渡期只作纪律约束/advisory，不得把物理隔离当安全前提。硬隔离待 design §12 P2 落地；分支模式见 `skills/oprun/SKILL.md`
+- **worktree sparse-checkout 隔离已落地（advisory）**：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（git 2.25+，design §0.2 能力矩阵）。**能力边界（design §0.1）**：sparse-checkout 只控制工作目录物化、不是访问控制——worktree 共享主 repo object store，`git show`/`git log -p` 可绕过；它防的是"正常读文件流程无意抄实现/顺手改 e2e"，不防有意规避。**真正的硬底线**：写入侧是 merge gate（design §3.4，受保护路径零 diff，P1 生效）。旧 git（<2.25）sparse-checkout 退化为纪律 + WARN，merge gate 不受影响
 - 不生成 dag.md
 
 ## profile 分叉（heavy / lite 两模式）
 
 项目 `docs/omni_powers/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_design.md` §5。
+
+> **安全声明（design §0.1）**：两版同靠 reviewer 双裁决 + evaluator 验收兜底；heavy 多 merge gate 写入硬底线（design §3.4），lite 无。lite 是 degraded mode，不是 heavy 同等安全版。
 
 **heavy**（现状默认）：本文件通篇规则原样生效。
 
@@ -127,17 +130,17 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 | 维度 | lite 分叉 |
 |---|---|
 | 脚本寻址 | 无 `$OP_HOME`——`${OP_SCRIPT_ROOT:-$OP_HOME}` fallback，lite 由 leader dispatch 注入 skill 自带目录 |
-| 状态机 | **无「收口中」态**；`完成` = review PASS + leader 收口 commit + close_check 通过（非 closer 返回后） |
-| 收口 | **无 op-closer**，leader 机械收口（`op_close_post.sh` 直接标完成，无「收口中」中间态） |
-| 闸门 | 无闸门 C（Stage 4 PASS 后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |
+| 状态机 | **无「收口中」态**；`完成` = review PASS + leader commit + per-task 裸评 PASS + P0 检查过 + 归档 |
+| 收口 | **无 op-closer**，leader 机械执行：review PASS → `git add workset` + commit → per-task 裸评 → P0 检查 → 归档（`op_close_post.sh`），无「收口中」中间态、无 per-task append decisions |
+| 闸门 | 无闸门 C（per-task 裸评 PASS + P0 检查后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |
 | decisions 来源 | 闭集加入 `leader-close`（leader 代 closer append 时标记） |
 | spec 写保护 | 降级为约定 + git diff 可回溯（无 hook 强制拦截） |
-| evaluator | 裸评退化：无 worktree 隔离、无 baseline 对照、无跨迭代回归，只首次裸评 |
-| 证据校验 | 无 hook——leader 每 task 亲自跑测试 + 读 diff（每 3 task 查上下文水位） |
+| evaluator | 裸评退化（per-task）：无 worktree 隔离、无 baseline 对照、无跨迭代回归，每 task 裸评一次 |
+| 证据校验 | 无 hook——leader 每 task 亲自跑测试 + 读 diff |
 | compact 恢复 | 读本文件 + 读 `profile` + `bash "$SCRIPTS/op_jq.sh" all` + 读 `leader_checkpoint.md`（`$SCRIPTS` = oplrun skill 安装目录下的 `scripts/` 子目录，如 `~/.claude/skills/oplrun/scripts`） |
 
 ## 不做
 
-- 不停下问用户（除非可跑 task 跑完仍剩阻塞，或契约边界规则触发 spec 变更——见 design.md §5.2）
-- op-closer 不直接写 `op_blueprint/`（产提案，leader 审批后写入；decisions.md 直接 append 自决决策）。**decisions.md 多写入者**（均 append-only，带来源标记）：spec 编写者（设计探索全文）+ closer（执行期自决决策）+ 红灯归因 + 解锁（BUG-*/锁定文件归因）
+- 不停下问用户（除非可跑 task 跑完仍剩阻塞，或契约边界规则触发 spec 变更——见 design.md §2.2）
+- op-closer per-task 权限红线（design §2.4，一段式）：仅写 `decisions.md` + 转暂存 issue 到 `issues/` + 写 `acceptance/{TID}/blueprint_update.md` 提案；**不跑脚本、不碰 git、不改 status、不 stage、不碰 spec、不碰 op_blueprint**（提案由 leader 闸门 C 审批后写入）。**decisions.md 多写入者**（均 append-only，带来源标记，design §2.4 append 协议）：红灯归因（red-attribution）/ 解锁（BUG-*·锁定文件归因）/ leader 降级 delta / spec-delta / closer 收口 / lite leader-close
 - 其余见"跨 agent 铁律"

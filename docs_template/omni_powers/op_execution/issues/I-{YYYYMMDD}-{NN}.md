@@ -4,7 +4,7 @@
 id: I-{YYYYMMDD}-{NN}
 title: {标题}
 source: {reviewer 暂存 / reviewer 范围外 / evaluator 范围外 / 系统层夜跑 / 定期体检}
-spec: {spec前缀}
+spec: {TID}
 severity: P0 | P1 | P2 | P3
 tags: [tech-debt]
 status: open

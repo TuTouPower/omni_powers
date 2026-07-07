@@ -9,7 +9,6 @@
 
 | 模板 | 用途 | 谁写 |
 |---|---|---|
-| [op_execution/tasks/{TID}/brief.md](op_execution/tasks/{TID}/brief.md) | 任务卡 + 指向 spec 路径 + 定向包 | leader |
 | [op_execution/tasks/{TID}/report.md](op_execution/tasks/{TID}/report.md) | 顶部总报告（每轮覆盖）+ 分 Round 追加 | op-implementer |
 | [op_execution/tasks/{TID}/review.md](op_execution/tasks/{TID}/review.md) | 双裁决审查，FAIL 轮 implementer 追加 Fix-N | op-reviewer + op-implementer |
 
@@ -20,14 +19,14 @@
 | [index.md](index.md) | `docs/omni_powers/index.md` | 文档导航总图（三态模型 + 目录索引） |
 | [op_execution/tasks_list.json](op_execution/tasks_list.json) | `docs/omni_powers/op_execution/tasks_list.json` | task 清单 + 依赖 + status（核心） |
 | [op_execution/leader_checkpoint.md](op_execution/leader_checkpoint.md) | `docs/omni_powers/op_execution/leader_checkpoint.md` | compact 恢复断点（机器读） |
-| [op_execution/acceptance/](op_execution/acceptance/) | `docs/omni_powers/op_execution/acceptance/{前缀}/` | evaluator 验收工作区（运行时生成） |
+| [op_execution/acceptance/](op_execution/acceptance/) | `docs/omni_powers/op_execution/acceptance/{TID}/` | evaluator 验收工作区（运行时生成） |
 | [op_execution/issues/I-{YYYYMMDD}-{NN}.md](op_execution/issues/I-{YYYYMMDD}-{NN}.md) | `docs/omni_powers/op_execution/issues/I-{YYYYMMDD}-{NN}.md` | 泛 issue 模板（范围外发现/暂存项/夜跑/体检） |
 | [op_execution/issues/{TID}_quality.md](op_execution/issues/{TID}_quality.md) | `docs/omni_powers/op_execution/issues/{TID}_quality.md` | 质量阻塞记录（技术债加 `tech-debt` 标签） |
 | [op_record/progress.md](op_record/progress.md) | `docs/omni_powers/op_record/progress.md` | 进度日志 |
-| [op_record/decisions.md](op_record/decisions.md) | `docs/omni_powers/op_record/decisions.md` | 设计探索 + 自决决策（append-only；closer 汇总执行期自决） |
+| [op_record/decisions.md](op_record/decisions.md) | `docs/omni_powers/op_record/decisions.md` | 设计探索 + spec-delta（leader 变更子流程）+ 红灯归因（closer 提取），append-only |
 | [op_blueprint/prd.md](op_blueprint/prd.md) | `docs/omni_powers/op_blueprint/prd.md` | 产品需求（opinit blueprint-generator 初始化，后续由需求澄清流程维护） |
 | [op_blueprint/architecture.md](op_blueprint/architecture.md) | `docs/omni_powers/op_blueprint/architecture.md` | 系统架构 |
-| [op_blueprint/domain.md](op_blueprint/domain.md) | `docs/omni_powers/op_blueprint/domain.md` | 领域模型 + 跨功能不变量 |
+| [op_blueprint/domain.md](op_blueprint/domain.md) | `docs/omni_powers/op_blueprint/domain.md` | 领域模型 + 跨功能不变量|
 | [op_blueprint/test.md](op_blueprint/test.md) | `docs/omni_powers/op_blueprint/test.md` | 测试策略 |
 | [op_blueprint/conventions.md](op_blueprint/conventions.md) | `docs/omni_powers/op_blueprint/conventions.md` | 编码约定 |
 | [op_blueprint/spec_index.md](op_blueprint/spec_index.md) | `docs/omni_powers/op_blueprint/spec_index.md` | specs/ 目录索引（功能清单） |

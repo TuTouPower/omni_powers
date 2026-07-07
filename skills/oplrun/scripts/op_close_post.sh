@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # op_close_post（lite）：per-task 收口机械步骤（校验 review PASS + 归档 + progress + 标完成 + stage）
-# 用法: op_close_post.sh <TID> <feature>
+# 用法: op_close_post.sh <TID> <feature>（feature 由 leader 判断——lite 无 closer，leader 据 task 内容定；用于写 progress 给人看）
 # lite 无「收口中」态、无 op_close_pre——review PASS 后直接 close_post。
 # 无 OP_HOME 依赖：兄弟脚本 op_status.sh 走 ${BASH_SOURCE} 自探测同目录。
 set -euo pipefail
@@ -29,8 +29,8 @@ else
     die "task 工作区不存在: $TASK_DIR"
 fi
 
-# 校验三件齐全且非空
-for f in brief.md report.md review.md; do
+# 校验二件齐全且非空
+for f in report.md review.md; do
     [ -s "$ACTIVE_DIR/$f" ] || die "task 文件缺或空: $ACTIVE_DIR/$f"
 done
 

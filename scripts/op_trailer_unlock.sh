@@ -2,9 +2,9 @@
 # op_trailer_unlock.sh: leader 生成 e2e 提交的解锁 trailer
 #
 # 用法（leader 提交 e2e 时）：
-#   git add e2e/{前缀}/...
+#   git add e2e/{TID}/...
 #   trailer=$(bash "$OP_HOME/scripts/op_trailer_unlock.sh")   # 输出 trailer 行
-#   git commit -m "固化 {前缀} AC-N 基准" -m "$trailer"
+#   git commit -m "固化 {TID} AC-N 基准" -m "$trailer"
 #
 # trailer = HMAC-SHA256(secret, 排序后的 staged e2e 文件清单)
 # secret 首次自动生成到 ~/.claude/omni_powers/e2e_secret（mode 600，不进项目仓库）。

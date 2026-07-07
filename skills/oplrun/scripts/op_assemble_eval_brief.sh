@@ -1,25 +1,26 @@
 #!/usr/bin/env bash
 # op_assemble_eval_brief（lite）：组装 evaluator brief（裸评版）。
-# 用法: op_assemble_eval_brief.sh <前缀>
-# 产出: docs/omni_powers/op_execution/acceptance/{前缀}/eval_brief.md
-# lite 差异（§9 裸评退化）：只 cat 工作 spec + AC + 启动方式，跳过生效规格/baselines 段。
+# 用法: op_assemble_eval_brief.sh <TID>
+# 产出: docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md
+# lite 差异（§5.7 裸评退化）：只 cat 工作 spec + AC + 启动方式，跳过生效规格/baselines 段。
 #   无 op_blueprint 真相源、无 baselines——首次裸评，无对照基准。
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-PREFIX="${1:?用法: op_assemble_eval_brief.sh <前缀>}"
-ACCEPT_DIR="$ROOT/docs/omni_powers/op_execution/acceptance/$PREFIX"
-WORK_SPEC="$ROOT/docs/omni_powers/op_execution/specs/$PREFIX.md"
+TID="${1:?用法: op_assemble_eval_brief.sh <TID>}"
+ACCEPT_DIR="$ROOT/docs/omni_powers/op_execution/acceptance/$TID"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
-[ -f "$WORK_SPEC" ] || die "工作 spec 不存在: $WORK_SPEC"
+# spec 文件名 {TID}_{slug}.md，glob 取唯一匹配
+WORK_SPEC=$(ls "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md 2>/dev/null | head -1 || true)
+[ -n "$WORK_SPEC" ] || die "工作 spec 不存在: specs/${TID}_*.md"
 mkdir -p "$ACCEPT_DIR"
 
 BRIEF="$ACCEPT_DIR/eval_brief.md"
 
 {
-  echo "# Evaluator Brief (lite 裸评): $PREFIX"
+  echo "# Evaluator Brief (lite 裸评): $TID"
   echo
   echo "> 机械组装（op_assemble_eval_brief.sh lite 版），leader 不参与内容。"
   echo "> **lite 裸评退化**：无 worktree 隔离、无生效规格基线、无 baselines 对照。"

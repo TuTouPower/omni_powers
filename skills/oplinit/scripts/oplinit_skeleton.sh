@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # oplinit_skeleton（lite）：建 omni_powers 三区骨架 + 写 profile=lite。
 # 用法: 在使用方项目根跑 bash <skill>/scripts/oplinit_skeleton.sh
-# 零侵入：只建 docs/omni_powers/ 自己的子目录 + 项目根 e2e/，不碰宿主已有文件。
+# 零侵入：只建 docs/omni_powers/ 自己的子目录（含 e2e/），不碰宿主已有文件。
 # 重跑幂等：已存在文件保留不覆盖，只补缺。
 # 自包含：模板内联生成，不依赖 OP_HOME / docs_template。
 set -euo pipefail
@@ -26,11 +26,11 @@ elif [ -d docs/omni_powers/op_execution ] && [ -f docs/omni_powers/op_execution/
     die "检测到 docs/omni_powers/ 已存在但无 profile 文件——疑似 heavy 项目残留。请确认后手动写 docs/omni_powers/profile"
 fi
 
-# ── 三区目录 + 项目根 e2e/ ──
+# ── 三区目录 + lite 验收 E2E（docs/omni_powers/e2e/，零侵入，design §5.3）──
 mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
 mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
 mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
-mkdir -p e2e
+mkdir -p docs/omni_powers/e2e   # lite 验收 E2E 默认落点（不进用户测试 runner 自动发现；用户显式同意才改用顶层 e2e/）
 
 # ── profile ──
 [ -f "$PROFILE_FILE" ] || echo "lite" > "$PROFILE_FILE"

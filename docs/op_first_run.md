@@ -48,7 +48,7 @@ OP_CLOSER_MODEL=haiku
    ▼
 阶段 2  CUA spike（流程外）──── 验证 cua-driver 驱动 Electron 壳层可行性
    ▼
-阶段 3  第二 spec（含 cua 域 AC）─ 验证完整 evaluator 验收 + cua lane
+阶段 3  第二 spec（含 cua 域验收标准）─ 验证完整 evaluator 验收 + cua lane
 ```
 
 ### 阶段 1：首 spec，纯 CDP 域
@@ -60,11 +60,11 @@ OP_CLOSER_MODEL=haiku
 | 步骤 | 主会话做什么 | 人工确认什么 |
 |---|---|---|
 | `/opinit` | 生成三区骨架 + hooks 注册 + `$OP_HOME` env | 目录/hook 落对位置；Windows 路径无异常 |
-| `/opintake "<需求>"` | 分拣 → spec（可测性契约含**通道字段**）→ 拆 task | — |
-| **闸门 A** | 呈报 spec | INV 覆盖沉默失败区、Then 可断言、**每条 AC 通道判定对不对**、预期失败模式每 AC ≥1 条。批 → approved + commit |
-| `/oprun` task 循环 | brief → implementer → reviewer 双裁决 → closer 收口 → commit | 每次 dispatch 前看 brief；verdict 后看 review.md；commit 前看 diff |
-| **Stage 4 验收** | 组装 eval brief → 派 evaluator（CDP 通道跑 Playwright） | **自举例外**（design §12）：你对照 spec 手工复核 evaluator 每条 AC 结论 + 抽 1-2 条做二阶判断（只测了成功路径吗？）——这是首批校准素材 |
-| **闸门 C** | 呈报四样：验收报告 + AC 追溯矩阵 + 自决决策表 + P0/P1 issue | 批 closer 收尾提案 → 写入 op_blueprint + baselines 合入 + 叶子归档 |
+| `/opintake "<需求>"` | spec 编写（可测性契约含**通道字段**，task:spec 1:1）→ 拆 task | — |
+| **闸门 A** | 呈报 spec | 不变量覆盖沉默失败区、Then 可断言、**每条验收标准通道判定对不对**、预期失败模式每条验收标准 ≥1 条。批 → approved + commit |
+| `/oprun` task 循环 | dispatch 指针（TID+spec）→ implementer → reviewer 双裁决 → closer 收口 → commit | 每次 dispatch 前看 spec/tasks_list；verdict 后看 review.md；commit 前看 diff |
+| **per-task 验收**（Stage 3 循环内） | 组装 eval brief → 派 evaluator（CDP 通道跑 Playwright） | 你对照 spec 手工复核 evaluator 每条验收标准结论 + 抽 1-2 条做二阶判断（只测了成功路径吗？）——首批校准素材 |
+| **闸门 C** | 呈报四样：验收报告 + 验收标准追溯矩阵 + spec 变更决策表 + P0/P1 issue | 批 closer 收尾提案 → 写入 op_blueprint + baselines 合入 + task 归档 |
 
 **边跑边记**（本阶段核心产出之二）：
 - Windows 摩擦点：`sed -i`/路径拼接/jq 在 Git Bash 下的异常，逐条记
@@ -79,17 +79,17 @@ OP_CLOSER_MODEL=haiku
 - [ ] 抓一个结构化副作用（`cua do shell` 查日志/文件）佐证操作生效
 - [ ] （可选）扩展工具栏图标点击（TP-EXT-016 最小版），为第二轮扩展项目探路
 
-失败路径也有价值：某能力不行（托盘/IME/DPI，见 TESTING_PLAN 附 A 风险表）→ 记入 issues，对应 cua 域 AC 在 spec 期就判定为「人工验收步骤清单」而非自动化。
+失败路径也有价值：某能力不行（托盘/IME/DPI，见 TESTING_PLAN 附 A 风险表）→ 记入 issues，对应 cua 域验收标准 在 spec 期就判定为「人工验收步骤清单」而非自动化。
 
-### 阶段 3：第二 spec，含 cua 域 AC
+### 阶段 3：第二 spec，含 cua 域验收标准
 
-**选题**：带 1-2 条原生壳层 AC 的小 feat（如菜单项触发某行为），CDP 域 AC 为主、cua 域 AC 点缀。
+**选题**：带 1-2 条原生壳层验收标准 的小 feat（如菜单项触发某行为），CDP 域验收标准 为主、cua 域验收标准 点缀。
 
 验证目标（阶段 1 已验证的不重复看）：
 - [ ] spec 通道判定：CDP/cua 混合正确标注，闸门 A 能审出错标
 - [ ] eval brief「执行后端」段：cua 探测输出正确（可用 → version+target）
 - [ ] evaluator cua 通道：Look→Act→Verify 真操作，结构化副作用作硬证据，截图作锚点
-- [ ] 降级规则：可故意 `cua do switch` 到错误 target 一次，验证 evaluator 判 `INSUFFICIENT_EVIDENCE` 而非跳过（钓鱼审计最小版）
+- [ ] 降级规则：可故意 `cua do switch` 到错误 target 一次，验证 evaluator 判 `INSUFFICIENT_EVIDENCE` 而非跳过（判别力最小验证）
 - [ ] cua 域固化物：`// channel: cua` 标注 + 独立 lane，破坏检查一次性验证
 
 ---
@@ -98,7 +98,7 @@ OP_CLOSER_MODEL=haiku
 
 | # | 标准 | 验证方式 |
 |---|---|---|
-| 1 | 全流程走通：opinit → 闸门 A → task 循环 → Stage 4 → 闸门 C → 归档，无死锁 | 叶子归档进 op_record/，前缀标完成 |
+| 1 | 全流程走通：opinit → 闸门 A → task 循环（含 per-task 验收）→ 闸门 C → 归档，无死锁 | task 归档进 op_record/，TID 标完成 |
 | 2 | 状态机与脚本在 Windows 实跑无阻断性 bug | 摩擦点清单里无 P0 项未修 |
 | 3 | evaluator 产出可信：hard-pass gate 无推论式 PASS，固化测试破坏检查全过 | 人工复核 + 抽查二阶判断 |
 | 4 | cua 通道端到端可用（或明确判定不可用 + 降级路径生效） | 阶段 3 勾选项 |

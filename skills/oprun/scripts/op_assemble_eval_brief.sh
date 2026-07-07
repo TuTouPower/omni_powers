@@ -1,29 +1,30 @@
 #!/usr/bin/env bash
 # op_assemble_eval_brief：机械组装 evaluator brief（leader 不参与内容，防主会话污染）
-# 用法: op_assemble_eval_brief.sh <前缀>
-# 产出: docs/omni_powers/op_execution/acceptance/{前缀}/eval_brief.md
+# 用法: op_assemble_eval_brief.sh <TID>
+# 产出: docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md
 # 内容源（固定路径 cat，per-task 不写 op_blueprint 故生效规格天然是开工前基线）:
-#   - 工作 spec: op_execution/specs/{前缀}.md（AC/INV/边界/可测性契约）
+#   - 工作 spec: op_execution/specs/{TID}_{slug}.md（AC/INV/边界/可测性契约）
 #   - 生效规格: op_blueprint/specs/{feature}.md（经 spec_index 索引）
 #   - baselines 索引: op_blueprint/baselines/baselines_index.md（首次为空）
 # 不含: implementer 的 report/diff/review、src/**、tasks/**（evaluator worktree 不挂载）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-PREFIX="${1:?用法: op_assemble_eval_brief.sh <前缀>}"
-ACCEPT_DIR="$ROOT/docs/omni_powers/op_execution/acceptance/$PREFIX"
-WORK_SPEC="$ROOT/docs/omni_powers/op_execution/specs/$PREFIX.md"
+TID="${1:?用法: op_assemble_eval_brief.sh <TID>}"
+ACCEPT_DIR="$ROOT/docs/omni_powers/op_execution/acceptance/$TID"
 BLUEPRINT_DIR="$ROOT/docs/omni_powers/op_blueprint"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
-[ -f "$WORK_SPEC" ] || die "工作 spec 不存在: $WORK_SPEC"
+# spec 文件名 {TID}_{slug}.md，glob 取唯一匹配
+WORK_SPEC=$(ls "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md 2>/dev/null | head -1 || true)
+[ -n "$WORK_SPEC" ] || die "工作 spec 不存在: specs/${TID}_*.md"
 mkdir -p "$ACCEPT_DIR"
 
 BRIEF="$ACCEPT_DIR/eval_brief.md"
 
 {
-  echo "# Evaluator Brief: $PREFIX"
+  echo "# Evaluator Brief: $TID"
   echo
   echo "> 机械组装（op_assemble_eval_brief.sh），leader 不参与内容，主会话污染传不过来。"
   echo "> 你只读本文件 + 启动应用。src/**、tasks/** 不在你的 worktree（结构隔离）。"
@@ -37,7 +38,7 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "## 生效规格（开工前基线）"
   echo
   if [ -f "$BLUEPRINT_DIR/spec_index.md" ]; then
-    echo "（spec_index.md 索引；按前缀定位对应 specs/{feature}.md）"
+    echo "（spec_index.md 索引；按 TID 定位对应 specs/{feature}.md）"
     cat "$BLUEPRINT_DIR/spec_index.md"
   else
     echo "（spec_index.md 缺失，无历史生效规格——首次验收）"

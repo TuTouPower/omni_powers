@@ -5,7 +5,7 @@
 # exit 0 = 无 open P0，可归档
 # exit 1 = 有 open P0，oplrun 停下呈报用户三选一（转修复 task / 显式豁免记 decisions / 中止归档）
 #
-# 用法：oplrun Stage 4 PASS 后、归档叶子前调本脚本。
+# 用法：oplrun per-task 裸评 PASS 后、归档 task 前调本脚本。
 
 set -uo pipefail
 

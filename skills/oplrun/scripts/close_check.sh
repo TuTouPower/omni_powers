@@ -3,9 +3,9 @@
 # 用法: close_check.sh <TID>
 # 检查项（per-task 收口）:
 #   1. leader_checkpoint.md 含本 task                → 必须通过
-#   2. 归档目录三件齐全（brief/report/review）       → 必须通过
+#   2. 归档目录二件齐全（report/review）       → 必须通过
 #   3. git status 非本 task 残留                     → 仅提醒，不拦
-# 注意: per-task 不产 blueprint_update（per-leaf 收尾才产，design §7.4）；不查 spec.md（叶子共享）
+# 注意: lite 无 closer，leader 直接归档（无 blueprint_update，lite 无 blueprint 真相源）；不查 spec.md（task:spec 1:1 各自独立）
 
 set -uo pipefail
 
@@ -26,14 +26,14 @@ else
     fail=1
 fi
 
-# 2. 归档目录三件齐全且非空
+# 2. 归档目录二件齐全且非空
 arch="docs/omni_powers/op_record/tasks/${TID}"
 missing=()
-for f in brief.md report.md review.md; do
+for f in report.md review.md; do
     [ -s "$arch/$f" ] || missing+=("$f")
 done
 if [ ${#missing[@]} -eq 0 ]; then
-    echo "[PASS] 归档三件齐全且非空: $arch"
+    echo "[PASS] 归档二件齐全且非空: $arch"
 else
     echo "[FAIL] 归档缺或空: ${missing[*]}"
     fail=1

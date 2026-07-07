@@ -75,7 +75,7 @@ for f in <步骤零确认归档的文件/目录>; do mv "$f" docs/archive/; done
 Agent({
   name: "blueprint-generator",
   // model: 不传则继承主会话；如需固定模型由用户配置 OP_*_MODEL
-  prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §3.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。\n**测试/构建/启动命令必须从项目实际提取**（CLAUDE.md / README / 旧 test.md / package.json scripts / scripts/ / Makefile 各处都可能），找不到标 NEEDS CLARIFICATION 问用户，**绝勿臆造**。" })
+  prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §1.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。\n**测试/构建/启动命令必须从项目实际提取**（CLAUDE.md / README / 旧 test.md / package.json scripts / scripts/ / Makefile 各处都可能），找不到标 NEEDS CLARIFICATION 问用户，**绝勿臆造**。" })
 ```
 
 完成后**重构 CLAUDE.md**（dispatch agent 改——对齐"重构所有文档"指令，不只是去重，是重新组织）：
@@ -110,14 +110,14 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 
 ## 步骤六：提取未执行计划 → issues/（不进 tasks_list）
 
-> **规则**：没拆 task + 没技术方案的"未执行计划" → **issues**（backlog 收件箱），**不进 tasks_list**。tasks_list 是"排好序、随时可领用执行"的队列，塞残缺 task（无 AC/工作集/依赖）会卡 oprun。拆 task + 写技术方案是 `/opintake` 的活，opinit 只捞进 issue 等消化。
+> **规则**：没拆 task + 没技术方案的"未执行计划" → **issues**（backlog 收件箱），**不进 tasks_list**。tasks_list 是"排好序、随时可领用执行"的队列，塞残缺 task（无验收标准/工作集/依赖）会卡 oprun。拆 task + 写技术方案是 `/opintake` 的活，opinit 只捞进 issue 等消化。
 >
 > 一句话：issue = "有这事，还没决定怎么做"；task = "决定好了，照着干"。opinit 不负责拆。
 
 若步骤零用户**确认提取**，分两步（leader + agent）：
 1. **leader 扫候选**：`grep -rilE '待办|未做|todo|待完成|TODO' docs/archive/ 2>/dev/null | head -10`
 2. **派 Agent 读候选文件**，提炼【还没做】的项（严格过滤已完成 + 暂缓项），返回清单（title / source 行号 / 一句话 / severity 建议）
-3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §9 格式：`id: I-YYYYMMDD-NN` + `title` + `source: 提取自归档前 XXX.md` + `status: open` + `severity`/`tags`）
+3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §3.2 frontmatter 格式：`id: I-YYYYMMDD-NN` + `title` + `source` + `spec` + `severity`/`tags` + `status: open` + `blocks_merge`）
 
 否则跳过。**不再次问**。
 

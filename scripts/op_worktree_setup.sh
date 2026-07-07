@@ -3,7 +3,7 @@
 #
 # 用法:
 #   op_worktree_setup.sh dev  <path> <branch>   # implementer/reviewer/closer，排除 e2e/
-#   op_worktree_setup.sh eval <path> <branch>   # evaluator Stage 4，排除 src/、tasks/、decisions.md（防抄实现）
+#   op_worktree_setup.sh eval <path> <branch>   # evaluator per-task 验收（Stage 3 循环内），排除 src/、tasks/、decisions.md（防抄实现）
 #
 # 依赖: git 2.25+（sparse-checkout）。
 # 设计: design §2.5 evaluator 访问隔离层 + §0.2 能力矩阵「implementer e2e 对称隔离 / evaluator 无 src」

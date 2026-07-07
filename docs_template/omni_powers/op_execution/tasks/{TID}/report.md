@@ -2,10 +2,10 @@
 
 ## 总报告（每轮覆盖，截至最新轮的累积总结）
 - 实现回报状态（非 `tasks_list.status`）: DONE | BLOCKED | NEEDS_CONTEXT
-- 完成内容: {按 AC 汇总}
+- 完成内容: {按验收标准汇总}
 - 测试证据: {命令 + PASS/FAIL 概要 + 新鲜关键输出}
 - 假设与限制: {无则写“无”}
-- 自决决策: {边界内决策写这里；closer 提取后 append decisions.md；无则写“无”}
+- 需进 spec 的决策（若有）: {已上报 leader 走变更子流程，decisions.md 记 spec-delta；小决策选库/算法/路径不写这里；无则写"无"}
 - 触碰文件: {列表}
 
 ---

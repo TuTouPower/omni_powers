@@ -11,7 +11,7 @@ description: >
 
 ## 触发
 
-- leader 收尾时调用（每叶子收尾 triage 一次，oprun 驱动）
+- leader 收尾时调用（每 task 收尾 triage 一次，oprun 驱动）
 - 用户显式 `/optriage`、分诊、处理 issue
 
 ## 输入
@@ -23,16 +23,22 @@ description: >
 
 issue 文件命名两种（用途不同，非不一致）：`I-{YYYYMMDD}-{NN}.md`（泛 issue——evaluator/reviewer/系统层范围外发现）+ `{TID}_quality.md`（绑 review 2 轮 FAIL 的 task，RULES.md 阻塞项 `blocked_by=quality`）。
 
-## issue 文件格式
+## issue 文件格式（design §3.2 frontmatter）
 
 ```markdown
-# I-20260702-01: {标题}
-来源: {review两轮到顶残留 / reviewer范围外 / evaluator范围外 / 系统层夜跑 / 定期体检}
-所属 spec: {spec前缀}
-严重度: P0阻断上线 / P1下个spec前必修 / P2排期 / P3可容忍
-标签: tech-debt, {其他}
-状态: open → triaged → 转 task → closed
-描述: {内容}
+---
+id: I-20260702-01
+title: {标题}
+source: {review两轮到顶残留 / reviewer范围外 / evaluator范围外 / 系统层夜跑 / 定期体检}
+spec: {TID}
+severity: P0 | P1 | P2 | P3     # P0阻断上线 / P1下个spec前必修 / P2排期 / P3可容忍
+tags: [tech-debt]               # 可选，与 P0-P3 正交
+status: open | triaged | converted | closed
+converted_to: T05               # 转 task 后填对应 TID
+blocks_merge: true | false      # P0 默认 true；P1 默认 false；用户显式豁免需记 decisions
+---
+
+{内容描述}
 ```
 
 ## 步骤
@@ -67,10 +73,10 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
    - 性能 → `perf`
 3. 分配属性：
    - `title`: `修issue: {简要描述}`
-   - `status`: `待开始`（已有 spec/AC/工作集，可直接 `/oprun`）或 `待规划`（只有问题描述，需先 `/opintake` 补 spec）
+   - `status`: `待开始`（已有 spec/工作集，可直接 `/oprun`）或 `待规划`（只有问题描述，需先 `/opintake` 补 spec）
    - `spec`: issue 的所属 spec
    - `depends_on`: 推导
-   - `covers_ac` / `touches_inv`: 从 issue 描述推导
+   - `workset`: 从 issue 描述推导
 4. 用 jq 追加到 `tasks_list.json`
 5. issue 文件状态改 `triaged → 转 task`，记录转到的 TID
 
@@ -118,7 +124,7 @@ P0/P1 在闸门 C 呈报给用户：P0 默认阻断，P1 默认进入下个 spec
 ## 与其他 skill 的关系
 
 - **leader**：收尾时调本 skill 做分诊。分诊需全局视野，留在此 skill 不并入 closer（信息流相反）。
-- **opintake**：`待规划` issue task 先走 `/opintake` 补 spec/AC/工作集。
+- **opintake**：`待规划` issue task 先走 `/opintake` 补 spec/验收标准/工作集。
 - **oprun**：`待开始` issue task 由 `/oprun` 直接调度执行。
 
 ## 注意

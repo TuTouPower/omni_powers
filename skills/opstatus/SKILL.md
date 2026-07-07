@@ -36,7 +36,7 @@ bash "$OP_HOME/scripts/op_jq.sh" skipped      # 跳过
 输出格式：
 
 ```
-== 当前 spec == {spec 前缀与名称}
+== 当前 spec == {TID} {名称}
 == 上次断点 == {checkpoint 摘要}
 == task 进度 ==
   T01 ✅完成  {title}
