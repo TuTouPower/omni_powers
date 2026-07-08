@@ -24,6 +24,13 @@
           { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" stop" }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" stop" }
+        ]
+      }
     ]
   }
 }
