@@ -53,7 +53,7 @@ implementer 改测试前必须在 `report.md` 的归因段（或 `review.md` 的
 
 1. implementer 在 `report.md` 归因段写明归因 + 依据（对 decisions.md 无写权——design §2.4，归因经 closer per-task 收口提取 append）
 2. leader 审批
-3. leader 解锁（`scripts/test_lock.sh remove <file>`）
+3. leader 解锁（**test_lock.sh 已删 Q3——锁定靠 pre_tool_use `e2e/*` 硬编码 hook，无细粒度锁**；解锁 = leader 直接改实现/测试，记 decisions.md）
 4. 改测试，leader 记 `decisions.md`（来源标记 red-attribution）
 5. 重新锁定
 

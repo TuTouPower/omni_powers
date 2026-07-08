@@ -74,6 +74,9 @@ remove_global() {
         del "$CLAUDE_HOME/agents/$a.md"
     done
 
+    # 共享 scripts 目录（D5 install 装的，A6 反向清理）
+    del "$CLAUDE_HOME/scripts/omni_powers"
+
     local settings="$CLAUDE_HOME/settings.json"
     if [ -f "$settings" ] && command -v jq >/dev/null 2>&1; then
         if jq -e '.env.OP_HOME' "$settings" >/dev/null 2>&1; then

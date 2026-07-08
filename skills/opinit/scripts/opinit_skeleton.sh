@@ -72,10 +72,4 @@ next_step:
 EOF
 fi
 
-# .test_locks（重跑不覆盖）
-[ -f docs/omni_powers/op_execution/.test_locks ] \
-  || cat > docs/omni_powers/op_execution/.test_locks << 'EOF'
-# 锁定的行为层测试文件路径（每行一个），归 op-evaluator 所有
-EOF
-
 echo "[OK] 三区骨架已建（已存在文件保留不覆盖，只补缺）"
