@@ -53,7 +53,7 @@ case "$rel" in
     fi
     # blueprint 写保护：subagent 拦，主会话放行
     # 不再依赖 OP_LEADER_WRITE 环境变量（主会话 env 难热加载，leader 卡死）
-    # 主会话（无 agent_type）= leader = 人控，写 blueprint 是合法操作（基于 closer 提案 / 闸门 C 审批）
+    # 主会话（无 agent_type）= leader = 人控，写 blueprint 是合法操作（基于 closer 提案 / leader 自审，A18）
     # subagent（有 agent_type）写 op_blueprint 靠 worktree 结构隔离（D18，hook 对 subagent 失效，此拦截留痕）
     agent_type="$(echo "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
     if [ -n "$agent_type" ]; then

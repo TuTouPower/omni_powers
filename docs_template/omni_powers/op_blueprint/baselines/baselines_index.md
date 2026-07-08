@@ -18,5 +18,5 @@
 类型语义：
 - 结构化信号（stdout/API 响应体/DB 查询/进程日志；**DOM/a11y 降 advisory，D7**）→ 进机械硬门，夜跑回归判定以此为准
 - 视觉锚点（截图）→ advisory，重验时 evaluator 多模态对照，不机械阻断
-新增/更新/删除走 closer per-task 提案 + leader 闸门 C 审批。
+新增/更新/删除走 closer per-task 提案 + leader 自审（A18）。
 -->

@@ -31,8 +31,8 @@ $REPO/skills/oplintake/scripts/op_check_env.sh
 # 改造版：lite 文件|必须存在的关键差异标记（grep 断言 lite 化未丢失）
 MUTATED_MARK="
 op_check_env.sh|lite 环境检查通过
-op_status.sh|lite 无「收口中」态
-op_close_post.sh|lite 无「收口中」
+op_status.sh|lite 无 closing 态
+op_close_post.sh|lite 无 closing
 op_assemble_eval_brief.sh|lite 裸评
 op_jq.sh|op_jq（lite）
 "

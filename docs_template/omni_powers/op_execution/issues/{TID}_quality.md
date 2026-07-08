@@ -1,6 +1,6 @@
 # {TID} 质量阻塞
 
-> review 满 2 轮仍 FAIL 时写（第 2 轮 FAIL → 阻塞，下游跳过）。
+> review 满 2 轮仍 FAIL 时写（第 2 轮 FAIL → blocked，下游保持 ready 调度器不选中，A16）。
 
 issue_id: {TID}_quality
 source: reviewer FAIL（{TID}）
