@@ -143,7 +143,7 @@ bash "$SCRIPTS/op_read_verdict.sh" {TID}   # exit 0=PASS, 1=FAIL
 |---|---|---|
 | PASS | 任意 | 收口 3.5 |
 | FAIL | 第1轮 | 回 3.2 fail 模式 |
-| FAIL | 第2轮 | `op_status {TID} 阻塞 quality`，写 issues/{TID}_quality.md，下游跳过，回 3.1 |
+| FAIL | 第2轮 | `op_status {TID} blocked quality`，写 issues/{TID}_quality.md，回 3.1（下游保持 ready，调度器依 depends_on 不选中，A16） |
 
 ### 3.5 leader 收口（代 closer，lite 无「收口中」态）
 
@@ -229,9 +229,9 @@ bash "$SCRIPTS/op_jq.sh" blocked
 == profile == lite
 == 上次断点 == {checkpoint 摘要}
 == task 进度 ==
-  T01 ✅完成  {title}
-  T02 🔄进行中 {title}
-  T03 ⏳待开始 (依赖 T02) {title}
+  T0001 ✅完成  {title}
+  T0002 🔄进行中 {title}
+  T0003 ⏳待开始 (依赖 T0002) {title}
   T04 🚫阻塞 (quality) {title}
 == 下一步 == {下一个可跑 task 或阻塞原因}
 ```
