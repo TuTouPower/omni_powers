@@ -51,7 +51,7 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
 ```
 
-> 脚本建三区目录 + **profile=heavy**（已有 `profile=lite` 则 die 防混跑；旧项目无 profile 补写）+ baselines_index 模板 + tasks_list + checkpoint + progress/decisions 初始说明 + .test_locks。**重跑幂等**：已存在的 tasks_list/checkpoint/progress/decisions/.test_locks/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
+> 脚本建三区目录 + **profile=heavy**（已有 `profile=lite` 则 die 防混跑；旧项目无 profile 补写）+ baselines_index 模板 + tasks_list + checkpoint + progress/decisions 初始说明。**重跑幂等**：已存在的 tasks_list/checkpoint/progress/decisions/baselines_index 保留不覆盖（只补缺）——opinit 在已有 omni_powers 项目重跑不破坏数据。
 
 技术债登记为 issue 加 `tech-debt` 标签，不单独建文件。依赖走 `depends_on` + jq，不单独建图文件。
 

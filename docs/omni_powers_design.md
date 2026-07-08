@@ -609,7 +609,7 @@ blocks_merge: true | false              # P0 默认 true；P1 默认 false；用
 | 5 警告留痕 | 主会话 PreToolUse[Edit/Write] 行级敏感度 | ✅ hook（仅主会话，subagent 失效） |
 | 6 定期体检 | 独立 CI 任务 | ❌ 非 hook（CI） |
 
-### 3.4 git 拓扑与主分支回流协议（merge gate——写入硬底线所在）
+### 3.4 git 拓扑与主分支回流协议（merge gate——写入硬底线所在；**P1 交付，op_merge_gate.sh 当前未落地，见 §0.2**）
 
 **为什么这节是安全模型的生效点**：pre-commit 拦不住 subagent（hook 失效，§2.5 前提）、implementer 在自己分支上 git 层保护全部无效、sparse-checkout 只防无意耦合（§0.1）。链条推到底：**唯一在被监督者控制之外的检查点是 leader 把分支合回主分支的时刻**。证据须在被监督者控制之外，故把这个时刻升为一等机制，而非工程细节。
 
