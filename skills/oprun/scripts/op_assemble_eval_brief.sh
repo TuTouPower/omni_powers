@@ -30,9 +30,10 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "> 你只读本文件 + 启动应用。src/**、tasks/** 不在你的 worktree（结构隔离）。"
   echo
 
-  echo "## 工作 spec（AC/INV/边界/可测性契约/预期失败模式）"
+  echo "## 工作 spec（AC/INV/边界/可测性契约/预期失败模式——剥设计探索结论，防 evaluator 被过程带偏，design §2.5/G2）"
   echo
-  cat "$WORK_SPEC"
+  # 剥"## 设计探索结论"段（到下个 ## 级标题），保留结论性段（探索过程存 decisions.md，不入 brief）
+  awk '/^## 设计探索结论/{skip=1; next} /^## /{skip=0} !skip' "$WORK_SPEC"
   echo
 
   echo "## 生效规格（开工前基线）"

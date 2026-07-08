@@ -42,7 +42,7 @@
 | `decisions.md` | 决策记录（spec 编写者设计探索 + closer 执行期自决，append-only） |
 | `progress.md` | 每 task 完成一行（commit 区间 + review 结论 + 验收标准覆盖） |
 | `specs/` | 已归档工作 spec（按 TID，TID 永不复用） |
-| `tasks/` | 已归档 task 的 brief/report/review |
+| `tasks/` | 已归档 task 的 report/review（无 brief，design §1.1） |
 | `acceptance/{TID}/` | 已归档 task 验收工作区（blueprint_update.md + baselines 快照） |
 
 ## 引用

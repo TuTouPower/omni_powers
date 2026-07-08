@@ -35,7 +35,7 @@
 
 ## 命名约定
 
-- task 目录：`{TID}` 如 `T05`
+- task 目录：`{TID}` 如 `T0001`（四位，单调递增永不复用）
 - 文件名：snake_case（`report.md` 非 `report-code.md`）
 - 归档路径：`docs/omni_powers/op_record/tasks/{TID}/`（注意是 `op_record/`）
 - **归档无独立模板**：闭环时 `git mv` 把 `op_execution/tasks/{TID}/` 整个移到 `op_record/tasks/{TID}/`，文件结构沿用 tasks 工作区模板原样。故 template 下不放 `op_record/tasks/` 模板。
