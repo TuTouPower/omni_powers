@@ -1,6 +1,6 @@
 # omni_powers 脚本测试
 
-bats 覆盖关键 shell 脚本，锁住 P0/P1 修复，防回归。
+bats 覆盖关键 shell 脚本，锁住 P0/P1 修复 + 第二轮审阅同步，防回归。
 
 ## 安装 bats
 
@@ -21,23 +21,30 @@ bats tests/scripts/op_close_post.bats  # 单文件
 
 ```bash
 export PATH="$HOME/.npm-global/bin:$PATH"
-# 或直接全路径
 ~/.npm-global/bin/bats tests/scripts/
 ```
 
-## 测试范围（对应审阅 P0/P1 修复）
+## 测试范围（对应 design §0.2 能力矩阵已落地防线）
 
 | 测试文件 | 覆盖 |
 |---|---|
-| op_close_post.bats | P0-1 缺 feature die、verdict 校验、归档、P0-4 清 current_task |
-| op_status.bats | P1-5 阻塞强校验 blocked_by、状态流转 |
-| op_checkpoint.bats | P1-7 幂等 + TID 锚定 |
+| op_close_post.bats | 校验 review+eval verdict PASS（D6）+ 归档 task/spec/acceptance（§1.2 三态）+ 标 done + 清 current_task |
+| op_status.bats | blocked 强校验 blocked_by、状态流转（ASCII：blocked/done） |
+| op_checkpoint.bats | 幂等 + TID 锚定（不误配 T010） |
 | op_read_verdict.bats | 轮次判定、exit code |
-| close_check.bats | P2-6 TID 精确匹配（不误配 T010） |
-| pre_tool_use.bats | P2-4 路径匹配（含 baselines）、spec 写保护 |
-| op_check_env.bats | 环境检查脚本（jq/git/OP_HOME） |
-| opinit_register_hooks.bats | hooks 注册、OP_HOME 校验、Windows wrapper 改写 |
+| close_check.bats | TID 精确匹配 |
+| pre_tool_use.bats | 路径匹配（含 baselines）、spec 写保护 |
+| op_check_env.bats | 环境检查（jq/git/OP_HOME） |
+| opinit_register_hooks.bats | hooks 注册（PreToolUse/PostToolUse/SubagentStop/Stop）、OP_HOME 校验、Windows wrapper |
 | opinit_skeleton.bats | 三区骨架、模板复制、幂等保留 |
 | run-hook.bats | polyglot wrapper、hook name 自动补 `.sh` |
+| op_trailer_unlock.bats | e2e trailer HMAC 生成 + commit-msg/pre-commit 端到端（含 staged 变 trailer 失效） |
+| op_worktree_setup.bats | sparse-checkout 隔离（dev 无 e2e / eval 无 src+tasks+decisions，含 specs/acceptance 挂载断言） |
+| op_closer_gate.bats | closer 越界机械校验（白名单通过 + 越界只报不撤销，Q5） |
+| op_mutation_check.bats | 变异测试骨架（== ↔ != 自检） |
 
-helpers.bash 建临时 git 仓库 + mock 三区结构，每个 @test 独立隔离。
+helpers.bash 建临时 git 仓库 + mock 三区结构（ASCII fixture + eval:skip），每个 @test 独立隔离。
+
+## 未覆盖（随实现落地）
+
+merge gate（op_merge_gate.sh，P1 未落地）、系统层夜跑（P2+/P3 未落地）—— 实现后补 bats。
