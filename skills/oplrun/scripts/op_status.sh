@@ -49,7 +49,11 @@ fi
 
 LOCK_FILE="$TASKS_FILE.lock"
 exec 3>"$LOCK_FILE"
-flock 3 || die "获取文件锁失败"
+if command -v flock >/dev/null 2>&1; then
+    flock 3 || die "获取文件锁失败"
+else
+    echo "[WARN] flock 不可用（macOS/Git Bash），无锁写——串行执行并发风险低（Q8）" >&2
+fi
 
 if $batch; then
     tids_json=$(echo "$tids" | jq -R 'split(",")')
