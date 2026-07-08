@@ -64,11 +64,12 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 {
   "id": "T0003",
   "title": "<语义级标题，一句 commit message 能说清>",
-  "status": "待开始",
-  "spec": "T0001",
-  "type": "实现",
+  "status": "ready",
+  "spec": "specs/{TID}_{slug}.md",
   "depends_on": ["T0001"],
-  "workset": ["src/store/session.ts"]
+  "workset": ["src/store/session.ts"],
+  "eval": "required",
+  "eval_reason": null
 }
 ```
 

@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # op_closer_gate：closer 越界写入机械校验（design §2.6）
 # 用法: op_closer_gate.sh <TID>
-# 校验本次 closer 触碰路径 ⊆ { op_record/decisions.md, op_execution/issues/, op_execution/acceptance/{TID}/ }
-# 越界 → git checkout 撤销 + 告警，提案不进 leader 自审（A18）
-# 一个 git status --porcelain 对照脚本的成本——closer 是四角色权限最大约束最少的，唯一机械拦截点
+# Q5：只报不撤销——越界即告警 + exit 1，不自动 git checkout（防误删 closer 前已存在的 leader 合法改动）
+# 越界改动保留，交 leader 决策（采纳/revert）
 set -uo pipefail
 
 TID="${1:?用法: op_closer_gate.sh <TID>}"
@@ -17,7 +16,7 @@ ALLOWED=(
   "docs/omni_powers/op_execution/acceptance/${TID}/"
 )
 
-# 扫工作区改动（未 commit 的 closer 产出）
+# 扫工作区改动（closer 产出）——只报告，不撤销
 mapfile -t CHANGED < <(git status --porcelain | awk '{print $2}')
 
 violation=0
@@ -31,14 +30,12 @@ for f in "${CHANGED[@]:-}"; do
   done
   if [ "$ok" -eq 0 ]; then
     echo "[FAIL] closer 越界写入: $f（允许：decisions.md / issues/ / acceptance/${TID}/）" >&2
-    git checkout -- "$f" 2>/dev/null && echo "[REVERT] 已撤销 $f" >&2
     violation=1
   fi
 done
 
 if [ "$violation" -eq 1 ]; then
-  echo "[FAIL] closer 越界，提案不进 leader 自审（design §2.6 / A18）" >&2
+  echo "[FAIL] closer 越界，提案不进 leader 自审（design §2.6 / A18）。越界改动保留，交 leader 决策" >&2
   exit 1
 fi
 echo "[OK] closer 触碰路径均在白名单内（TID=$TID）"
-chmod +x "$0" 2>/dev/null || true

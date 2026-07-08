@@ -18,23 +18,25 @@ leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewe
 ## 状态机
 
 ```
-待规划 → 待开始 → 进行中 → 审阅中 → 收口中 → 完成
+pending → ready → in_progress → reviewing → closing → done
   ↓             ↑        ↓ (FAIL，max 2 轮)
-挂起 ───────────┘        └────────┘
-                        第 2 轮仍 FAIL → 阻塞(blocked_by=quality)
+suspended ───────────┘        └────────┘
+                        第 2 轮仍 FAIL → blocked(blocked_by=quality)
+
+obsolete（方案调整废弃，不参与流转，spec 移 op_record/specs/obsolete/）
 ```
 
 | status | 含义 | blocked_by |
 |---|---|---|
-| `待规划` | 刚从需求解析出，只有一句话，无 spec | null |
-| `待开始` | spec 就位，未开发 | null |
-| `进行中` | implementer 开发或修复轮中 | null |
-| `审阅中` | review 进行中 | null |
-| `收口中` | 双裁决 PASS + merge gate PASS 后，leader 跑 `op_close_pre.sh` 标此态，closer per-task 收口进行中（heavy 独有） | null |
-| `完成` | review PASS + merge gate PASS + closer append decisions.md 且 commit + leader 跑 `op_close_post.sh`（归档 + 标完成） | null |
-| `阻塞` | 2 轮 FAIL 或环境阻塞 | `resource`/`quality`/`spawn`（必有值） |
-| `跳过` | 因下游阻塞顺延 | null |
-| `挂起` | 用户明确推迟，需用户同意才做 | null |
+| `pending` | 刚从需求解析出，只有一句话，无 spec | null |
+| `ready` | spec 就位，未开发 | null |
+| `in_progress` | implementer 开发或修复轮中 | null |
+| `reviewing` | review 进行中 | null |
+| `closing` | 双裁决 PASS + merge gate PASS 后，leader 跑 `op_close_pre.sh` 标此态，closer per-task 收口进行中（heavy 独有） | null |
+| `done` | review PASS + merge gate PASS + closer append decisions.md 且 commit + leader 跑 `op_close_post.sh`（归档 + 标完成）；**evaluator 验收 PASS 是前置** | null |
+| `blocked` | 2 轮 FAIL 或环境阻塞 | `resource`/`quality`/`spawn`（必有值） |
+| `obsolete` | 方案调整废弃、未开始；spec 移 `op_record/specs/obsolete/`；TID 不复用 | null |
+| `suspended` | 用户明确推迟，需用户同意才做 | null |
 
 状态修改：`bash $OP_HOME/scripts/op_status.sh <TID> <status> [blocked_by]`。
 
@@ -46,11 +48,11 @@ leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewe
 | 2 轮 FAIL | `quality` | 写 issues/{TID}_quality.md，跳过 |
 | spawn 失败 | `spawn` | 退避重试 2 次，仍败则标阻塞 |
 
-### 下游传播
+### 下游传播（A16：不设 skipped 态，调度器派生）
 
-- task 阻塞后，其直接/间接下游 status 改 `跳过`。
+- task 阻塞后，下游**保持 `ready`**（调度器依 depends_on 不选中，不另设 skipped 态）。
 - **绕过**：下游实际不依赖被阻塞 task 产出时，leader 可改该下游 `depends_on` 移除阻塞节点，decisions.md 记理由。无记录则不可绕过。
-- 阻塞解除后，`跳过` 的 task 恢复 `待开始`。
+- 阻塞解除后，下游可被调度器选中。
 - 所有可跑 task 跑完仍剩阻塞，leader 才停下报告。
 
 ### 挂起项处理

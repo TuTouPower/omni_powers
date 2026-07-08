@@ -73,7 +73,7 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
    - 性能 → `perf`
 3. 分配属性：
    - `title`: `修issue: {简要描述}`
-   - `status`: `待开始`（已有 spec/工作集，可直接 `/oprun`）或 `待规划`（只有问题描述，需先 `/opintake` 补 spec）
+   - `status`: `ready`（已有 spec/工作集，可直接 `/oprun`）或 `pending`（只有问题描述，需先 `/opintake` 补 spec）
    - `spec`: issue 的所属 spec
    - `depends_on`: 推导
    - `workset`: 从 issue 描述推导
