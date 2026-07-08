@@ -51,7 +51,7 @@ if ! grep -qE "^- $TID[[:space:]]*\\|" "$PROGRESS_FILE"; then
     printf -- '- %s | %s | %s | 完成\n' "$TID" "$FEATURE" "$DATE" >> "$PROGRESS_FILE" || die "追加 progress.md 失败"
 fi
 
-bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" 完成 || die "更新状态失败: $TID → 完成"
+bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" done || die "更新状态失败: $TID → done"
 
 # P0-4：收口完成，清 current_task（hook 不再校验本 task 证据）
 # 用临时文件代 sed -i（BSD/GNU 通吃），失败 WARN 不静默

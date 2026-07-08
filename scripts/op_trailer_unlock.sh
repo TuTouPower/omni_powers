@@ -46,7 +46,7 @@ if [ -z "$e2e_paths" ]; then
     exit 1
 fi
 
-hmac_data="$(printf '%s\n' "$e2e_paths" | sort | tr '\n' ':')"
+hmac_data="$(printf '%s' "$e2e_paths" | grep . | sort | tr '\n' ':')"
 
 # 兼容 openssl 新旧语法
 trailer="$(printf '%s' "$hmac_data" | openssl dgst -sha256 -hmac "$secret" 2>/dev/null | awk '{print $NF}')"

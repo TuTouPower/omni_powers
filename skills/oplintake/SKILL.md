@@ -80,11 +80,12 @@ spec 正文必含：
 {
   "id": "T0001",
   "title": "<语义级标题，一句 commit message 能说清>",
-  "status": "待开始",
-  "spec": "{TID}",
-  "type": "实现",
+  "status": "ready",
+  "spec": "specs/{TID}_{slug}.md",
   "depends_on": null,
-  "workset": ["src/..."]
+  "workset": ["src/..."],
+  "eval": "required",
+  "eval_reason": null
 }
 ```
 

@@ -140,7 +140,7 @@ spec: docs/omni_powers/op_execution/specs/{TID}_{slug}.md
 ```
 
 ```bash
-bash "$OP_HOME/scripts/op_status.sh" {TID} 进行中
+bash "$OP_HOME/scripts/op_status.sh" {TID} in_progress
 # P0-4：写 current_task，PostToolUse/SubagentStop hook 据此校验新鲜证据
 sed -i "s/^current_task:.*/current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
 ```
@@ -160,7 +160,7 @@ head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md
 ### 子步骤 3.3：派 op-reviewer（双裁决）
 
 ```bash
-bash "$OP_HOME/scripts/op_status.sh" {TID} 审阅中
+bash "$OP_HOME/scripts/op_status.sh" {TID} reviewing
 bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
 ```
@@ -171,7 +171,7 @@ Agent({ name: "op-reviewer", subagent_type: "op-reviewer",
   prompt: "cd <work_dir> && pwd\nreview {TID}。\n读 spec（路径见 dispatch prompt）（op_execution/specs/{spec}.md）。\n读 tasks/{TID}/report.md（顶部总报告 + 分轮）。\n代码变更：git diff\n输出：tasks/{TID}/review.md\n双裁决：规格合规（覆盖验收标准/不偏航/不自由发挥）+ 测试可信（测的是验收标准还是 mock/断言用户可观察/危险模式/implementer 是否偷跑了 e2e）。\n文件最后一行必须写 verdict: PASS 或 FAIL。重审在末尾追加新 verdict 行。" })
 ```
 
-reviewer spawn/环境出错退避重试 max 3。重试仍失败 → 不写质量 verdict；`bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 spawn`，下游 `跳过`，记录 spawn 错误摘要到 `op_execution/issues/{TID}_spawn.md` 后回 3.1。
+reviewer spawn/环境出错退避重试 max 3。重试仍失败 → 不写质量 verdict；`bash "$OP_HOME/scripts/op_status.sh {TID} blocked spawn`，下游保持 ready（调度器依 depends_on 不选中，A16），记录 spawn 错误摘要到 `op_execution/issues/{TID}_spawn.md` 后回 3.1。
 
 ### 子步骤 3.4：判定 review 结果
 
@@ -184,7 +184,7 @@ bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
 |---|---|---|
 | 双裁决 PASS | 任意 | 收口（3.5） |
 | 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
-| 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 quality`，按 optriage issue 元字段格式写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
+| 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} blocked quality`，按 optriage issue 元字段格式写 `issues/{TID}_quality.md`，下游保持 ready（A16），回 3.1 |
 
 ### 子步骤 3.5：per-task 验收（merge 前验，design §2.5）
 
