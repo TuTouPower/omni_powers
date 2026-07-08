@@ -39,10 +39,28 @@ verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$ACTIVE_DIR/review.md" |
 [ -n "$verdict" ] || die "review verdict 不存在: $ACTIVE_DIR/review.md"
 [ "$verdict" = "PASS" ] || die "review 未 PASS: $ACTIVE_DIR/review.md ($verdict)"
 
-# 归档（工作区 → 归档）
+# 校验 eval.md verdict PASS（D6 验收前置，design §2.5）——非行为型 task（eval:skip）豁免
+EVAL_SKIP="$(jq -r --arg tid "$TID" '.tasks[] | select(.id==$tid) | .eval // "required"' "$ROOT/docs/omni_powers/op_execution/tasks_list.json" 2>/dev/null || echo required)"
+if [ "$EVAL_SKIP" != "skip" ]; then
+    EVAL_MD="$ROOT/docs/omni_powers/op_execution/acceptance/$TID/eval.md"
+    [ -s "$EVAL_MD" ] || die "eval.md 缺或空: $EVAL_MD（D6：验收 PASS 才收口）"
+    eval_verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$EVAL_MD" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
+    [ "$eval_verdict" = "PASS" ] || die "eval 未 PASS: $EVAL_MD ($eval_verdict)（D6：验收 PASS 才收口）"
+fi
+
+# 归档（工作区 → 归档）：task 目录 + spec 原文 + acceptance（design §1.2 三态——活区清理）
 if [ "$ACTIVE_DIR" = "$TASK_DIR" ]; then
-    mkdir -p "$(dirname "$ARCHIVE_DIR")" || die "创建归档父目录失败"
+    mkdir -p "$(dirname "$ARCHIVE_DIR")" "$ROOT/docs/omni_powers/op_record/specs" "$ROOT/docs/omni_powers/op_record/acceptance" || die "创建归档父目录失败"
     git mv "$TASK_DIR" "$ARCHIVE_DIR" || die "归档 task 失败: $TID"
+    SPEC_SRC="$(ls "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md 2>/dev/null | head -1)"
+    if [ -n "$SPEC_SRC" ] && [ ! -e "$ROOT/docs/omni_powers/op_record/specs/$(basename "$SPEC_SRC")" ]; then
+        git mv "$SPEC_SRC" "$ROOT/docs/omni_powers/op_record/specs/" || die "归档 spec 失败: $TID"
+    fi
+    ACCEPT_SRC="$ROOT/docs/omni_powers/op_execution/acceptance/$TID"
+    ACCEPT_DST="$ROOT/docs/omni_powers/op_record/acceptance/$TID"
+    if [ -d "$ACCEPT_SRC" ] && [ ! -e "$ACCEPT_DST" ]; then
+        git mv "$ACCEPT_SRC" "$ACCEPT_DST" || die "归档 acceptance 失败: $TID"
+    fi
 fi
 
 # progress 追加一行（幂等）

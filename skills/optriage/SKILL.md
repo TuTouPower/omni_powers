@@ -55,8 +55,8 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
 
 跳过 `状态: closed` 的。对 open issue：
 
-- **P0 阻断上线** → 必须转 task，本 spec 收尾前必修，默认阻断闸门 C；只有用户显式豁免并记录 decisions 才可放行。
-- **P1 下个 spec 前必修** → 转 task，排进下个 spec；默认不阻断当前 merge，闸门 C 呈报。
+- **P0 进结束报告标注** → 必须转 task，**不事中阻断归档**（A18）：进结束报告 `blocks_merge` 标注，用户事后处置（转修复 task / 显式豁免记 decisions / revert）。design §3.2。
+- **P1 下个 spec 前必修** → 转 task，排进下个 spec；进结束报告标注（不事中阻断，A18）。
 - **P2 排期** → 标 `tech-debt`，登记不转 task，等用户排期。
 - **P3 可容忍** → 标 `tech-debt`，登记不转 task。
 

@@ -28,7 +28,7 @@ description: >
 ### (c) 规格变了
 
 - 验收标准/不变量 本身要变（需求改了/发现原规格不对）
-- **动作**：走 spec 变更子流程（agent 提 delta → 人批 → 重新 commit → 受影响 task 失效重拆）
+- **动作**：走 spec 变更子流程（发现者提 delta → **leader 自主记录改 spec + 更新 tasks_list + 同 TID 重跑**，不重拆、不等用户事批；事后报告呈现，design §2.4/A18）
 - 不直接改测试
 
 ## 没有归因不准碰测试

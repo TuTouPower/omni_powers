@@ -74,6 +74,7 @@ leader 先建 task 工作区（不写 brief）：
 ```bash
 mkdir -p docs/omni_powers/op_execution/tasks/{TID}
 # report.md/review.md 由 agent 产出；无 brief——dispatch 给指针
+DISPATCH_SHA=$(git rev-parse HEAD)   # 记 dispatch 锚点 sha（D3：3.4 reviewer diff 锚定 + 3.6 spec 写保护用，leader 循环内持有）
 bash "$SCRIPTS/op_coder_check.sh" {TID}   # 输出 mode=normal|fail|blocked, round
 bash "$SCRIPTS/op_status.sh" {TID} in_progress
 sed -i "s/^current_task:.*/current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
@@ -126,7 +127,7 @@ bash "$SCRIPTS/op_status.sh" {TID} reviewing
 Agent(subagent_type="op-reviewer", prompt:
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite OP_SCRIPT_ROOT=<oplrun skill 目录>
-   review {TID}。读 spec（dispatch 给路径）。读 report.md。代码变更：git diff。
+   review {TID}。读 spec（dispatch 给路径）。读 report.md。代码变更：git diff ${DISPATCH_SHA}（leader 注入锚点 sha，防 implementer 自行 commit 致 diff 空，D3；新增文件先 git add -N 纳入）。
    输出 tasks/{TID}/review.md。
    双裁决：规格合规（覆盖验收标准/不偏航）+ 测试可信（测的是验收标准还是 mock/断言用户可观察/危险模式）。
    末行必须 verdict: PASS 或 FAIL。重审末尾追加新 verdict 行。
@@ -178,9 +179,13 @@ Agent(subagent_type="op-evaluator", prompt:
 验收 PASS 后 leader 机械收口（**不派 closer**，git add 用实际 diff 文件集，A16/D6）：
 
 ```bash
-# ⚠️ lite 无 worktree——implementer 直改主工作树。按实际 diff add（非预估 workset，防漏新增文件）
-git add -A          # 实际改动文件集（src/... 与新增测试 + 三文档）；越界靠 reviewer advisory（lite 无 merge gate）
-bash "$SCRIPTS/op_close_post.sh" {TID} {feature}   # 校验 PASS + 归档 + progress + 标 done + stage 文档
+# ⚠️ lite 无 worktree——implementer 直改主工作树。
+# D3 spec 写保护：dispatch 锚点 sha 后 specs/ 不许动（防 implementer 改 spec 迎合实现）
+git diff --quiet "$DISPATCH_SHA" -- docs/omni_powers/op_execution/specs/ || echo "[WARN] specs/ dispatch 后改动——走变更子流程（§2.4）或显式确认" >&2
+# Q6 收紧 add：-u（已跟踪改动，归档由 op_close_post 的 git mv 处理）+ 未跟踪文件 leader 确认（防 git add -A 误纳 docs/omni_powers/ 外的临时文件/.env）
+git add -u
+git status --short | grep -E '^\?\? ' | grep -v 'docs/omni_powers/' && echo "[WARN] 有未跟踪的非 omni_powers 文件——leader 确认是否本 task 产出（lite 无 merge gate，越界靠 advisory）" || true
+bash "$SCRIPTS/op_close_post.sh" {TID} {feature}   # 校验 review+eval PASS + 归档 task/spec/acceptance + 标 done
 ```
 
 leader append `op_record/decisions.md`（若本 task 有架构决策），**来源标记 `leader-close`**：
