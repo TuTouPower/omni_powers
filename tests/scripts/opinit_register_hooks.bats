@@ -30,7 +30,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [ -f .claude/settings.json ]
   jq -e '.hooks.PreToolUse' .claude/settings.json >/dev/null
-  jq -e '.hooks.SessionStart' .claude/settings.json >/dev/null
+  jq -e '.hooks.SubagentStop' .claude/settings.json >/dev/null
 }
 
 @test "opinit_register_hooks: concat 不覆盖用户已有 hooks" {

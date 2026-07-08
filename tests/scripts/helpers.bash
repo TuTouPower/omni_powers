@@ -18,13 +18,12 @@ setup_mock_project() {
   mkdir -p docs/omni_powers/op_record/tasks
   mkdir -p e2e
 
-  # tasks_list.json（opintake schema）
+  # tasks_list.json（schema：id/title/status/spec/depends_on/workset/eval/eval_reason，design §2.3/D9）
   cat > docs/omni_powers/op_execution/tasks_list.json <<'JSON'
-{"tasks":[{"id":"T01","title":"test task","status":"收口中","spec":"b01","type":"实现","covers_ac":["AC-1"],"touches_inv":[],"depends_on":null,"risk_probe":false,"workset":["src/x.ts"]}]}
+{"tasks":[{"id":"T01","title":"test task","status":"closing","spec":"specs/T01_x.md","depends_on":null,"workset":["src/x.ts"],"eval":"skip","eval_reason":"fixture"}]}
 JSON
 
-  # task 工作区三件（review verdict PASS）
-  echo "# brief" > docs/omni_powers/op_execution/tasks/T01/brief.md
+  # task 工作区（review verdict PASS；无 brief，design §1.1）
   echo "# report" > docs/omni_powers/op_execution/tasks/T01/report.md
   printf "# review\\n\\nverdict: PASS\\n" > docs/omni_powers/op_execution/tasks/T01/review.md
 
