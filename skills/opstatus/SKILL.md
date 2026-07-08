@@ -10,7 +10,7 @@ description: >
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
 >
-> **profile 感知**：先 `cat docs/omni_powers/profile`。`lite` 项目脚本寻址改用 oplrun skill 自带目录（`$SCRIPTS` = `~/.claude/skills/oplrun/scripts`，代替下文 `$OP_HOME/scripts`），无「收口中」态、无闸门 C；异常提示中 `/opintake` 对应换 `/oplintake`。
+> **profile 感知**：先 `cat docs/omni_powers/profile`。`lite` 项目脚本寻址用共享 scripts 目录（`$SCRIPTS` = `~/.claude/scripts/omni_powers/`，design §5.5，代替下文 `$OP_HOME/scripts`），无「收口中」态、无闸门 C；异常提示中 `/opintake` 对应换 `/oplintake`。
 
 `/opstatus` 渲染当前状态。只读，不改任何文件。
 
@@ -28,7 +28,7 @@ cat docs/omni_powers/op_execution/leader_checkpoint.md
 bash "$OP_HOME/scripts/op_jq.sh" all          # 全部概览
 bash "$OP_HOME/scripts/op_jq.sh" pending      # 待开始
 bash "$OP_HOME/scripts/op_jq.sh" blocked      # 阻塞
-bash "$OP_HOME/scripts/op_jq.sh" skipped      # 跳过
+bash "$OP_HOME/scripts/op_jq.sh" obsolete     # 废弃
 ```
 
 ### 3. 渲染报告
@@ -39,10 +39,11 @@ bash "$OP_HOME/scripts/op_jq.sh" skipped      # 跳过
 == 当前 spec == {TID} {名称}
 == 上次断点 == {checkpoint 摘要}
 == task 进度 ==
-  T01 ✅完成  {title}
-  T02 🔄进行中 {title}
-  T03 ⏳待开始 (依赖 T02) {title}
+  T0001 ✅完成  {title}
+  T0002 🔄进行中 {title}
+  T0003 ⏳待开始 (依赖 T0002) {title}
   T04 🚫阻塞 (quality) {title}
+  T05 ⚫废弃 {title}
 == 下一步 == {下一个可跑 task 或阻塞原因}
 == issues == {open issue 计数 + P0/P1 列表}
 ```
@@ -51,6 +52,7 @@ bash "$OP_HOME/scripts/op_jq.sh" skipped      # 跳过
 
 - 有 `待规划` task → 提示用 `/opintake`
 - 有 `阻塞` task → 列出 blocked_by 与所需外部条件
+- 有 `废弃` task → 提示方案调整连带，确认下游是否也废弃
 - 有 `tech-debt` 标签 issue → 列出计数
 
 ## 相关文件

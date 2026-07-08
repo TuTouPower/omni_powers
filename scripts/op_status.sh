@@ -4,7 +4,7 @@
 #   op-status <TID> <status> [blocked_by]         单 task
 #   op-status --batch <TID1,TID2,...> <status>     批量 task（同状态）
 #
-# status 有效值: 待规划 待开始 进行中 审阅中 收口中 完成 阻塞 跳过 挂起
+# status 有效值（ASCII 机读）: pending ready in_progress reviewing closing done suspended blocked obsolete
 # blocked_by 仅在 status=阻塞 时填写 (resource/quality/spawn)，其余留空
 set -euo pipefail
 
@@ -35,8 +35,8 @@ fi
 # ── 校验 status ──
 
 case "$status" in
-    待规划|待开始|进行中|审阅中|收口中|完成|阻塞|跳过|挂起) ;;
-    *) die "无效 status: $status（有效值: 待规划 待开始 进行中 审阅中 收口中 完成 阻塞 跳过 挂起）" ;;
+    pending|ready|in_progress|reviewing|closing|done|suspended|blocked|obsolete) ;;
+    *) die "无效 status: $status（有效值: pending ready in_progress reviewing closing done suspended blocked obsolete）" ;;
 esac
 
 # blocked_by 映射到 JSON null / string
@@ -68,7 +68,7 @@ if $batch; then
     echo "[OK] $tids → $status"
 else
     # 阻塞需要同时设 blocked_by（P1-5：必须有值）
-    if [ "$status" = "阻塞" ]; then
+    if [ "$status" = "blocked" ]; then
         [ "$blocked" != "null" ] && [ -n "$blocked" ] || die "status=阻塞 必须提供 blocked_by（resource/quality/spawn）"
         jq --arg tid "$tid" --arg status "$status" --argjson blocked "$blocked_json" \
             '.tasks |= map(if .id == $tid then .status = $status | .blocked_by = $blocked else . end)' \
@@ -79,7 +79,7 @@ else
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     fi
     echo "[OK] $tid → $status"
-    if [ "$status" = "阻塞" ]; then
+    if [ "$status" = "blocked" ]; then
         echo "[INFO]   blocked_by=$blocked"
     fi
 fi

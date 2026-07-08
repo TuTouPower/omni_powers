@@ -24,13 +24,6 @@
           { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" stop" }
         ]
       }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          { "type": "command", "command": "bash \"$OP_HOME/hooks/run-hook.cmd\" session_start" }
-        ]
-      }
     ]
   }
 }

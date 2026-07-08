@@ -2,11 +2,11 @@
 # op_jq：tasks_list.json 通用查询
 # 用法: op_jq.sh <query> [args...]
 # 查询项:
-#   pending              — 查所有待开始 task
-#   pending_plan         — 查所有待规划 task
+#   pending              — 查所有待开始 task（status=ready）
+#   pending_plan         — 查所有待规划 task（status=pending）
 #   deps <TID>           — 查某 task 的前置依赖是否全完成
 #   blocked              — 查所有阻塞 task
-#   skipped              — 查所有跳过 task
+#   obsolete             — 查所有废弃 task
 #   suspended            — 查所有挂起 task
 #   downstream <TID>     — 查某 task 的下游（谁依赖它）
 #   status <TID>         — 查某 task 的 status
@@ -15,15 +15,15 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
-CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|skipped|suspended|downstream|status|all> [args...]}"
+CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]}"
 shift
 
 case "$CMD" in
 pending)
-    jq '.tasks[] | select(.status=="待开始") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="ready") | {id, title, status}' "$TASKS"
     ;;
 pending_plan)
-    jq '.tasks[] | select(.status=="待规划") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="pending") | {id, title, status}' "$TASKS"
     ;;
 deps)
     TID="${1:?用法: op_jq.sh deps <TID>}"
@@ -36,8 +36,8 @@ deps)
     for d in $DEPS; do
         st=$(jq --arg d "$d" -r '.tasks[] | select(.id==$d) | .status' "$TASKS")
         echo "$d: $st"
-        # 未就绪 = 非完成（#22：原条件含冗余的 待规划/挂起 分支，等价于 st != 完成）
-        if [ "$st" != "完成" ]; then
+        # 未就绪 = 前置非 done（含 blocked/obsolete/pending 等——obsolete 上游视为不做，下游不就绪，靠 leader 在闸门 A 判断连带废弃或重拆）
+        if [ "$st" != "done" ]; then
             has_unready=1
         fi
     done
@@ -46,13 +46,13 @@ deps)
     fi
     ;;
 blocked)
-    jq '.tasks[] | select(.status=="阻塞") | {id, title, status, blocked_by}' "$TASKS"
+    jq '.tasks[] | select(.status=="blocked") | {id, title, status, blocked_by}' "$TASKS"
     ;;
-skipped)
-    jq '.tasks[] | select(.status=="跳过") | {id, title, status}' "$TASKS"
+obsolete)
+    jq '.tasks[] | select(.status=="obsolete") | {id, title, status}' "$TASKS"
     ;;
 suspended)
-    jq '.tasks[] | select(.status=="挂起") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="suspended") | {id, title, status}' "$TASKS"
     ;;
 downstream)
     TID="${1:?用法: op_jq.sh downstream <TID>}"
@@ -66,7 +66,7 @@ all)
     jq '[.tasks[] | {id, status, depends_on}]' "$TASKS"
     ;;
 *)
-    echo "用法: op_jq.sh <pending|pending_plan|deps|blocked|skipped|suspended|downstream|status|all> [args...]" >&2
+    echo "用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]" >&2
     exit 1
     ;;
 esac

@@ -57,13 +57,31 @@ cat RULES.md
 
 | 条件 | 动作 |
 |---|---|
-| 全部 status=完成 | 循环结束，进入收尾 |
-| 存在 status=收口中 | 从 checkpoint 恢复，跳到收口子步骤 |
-| 存在 status=审阅中 | 进入循环，先检查 review 是否完成（读 verdict） |
-| 存在 status=进行中 | 进入循环，先检查 implementer 是否完成（读 `tasks/{TID}/report.md` 顶部总报告状态） |
+| 全部 status=done | 循环结束，进入收尾 |
+| 存在 status=closing | 从 checkpoint 恢复，跳到收口子步骤 |
+| 存在 status=reviewing | 进入循环，先检查 review 是否完成（读 verdict） |
+| 存在 status=in_progress | 进入循环，先检查 implementer 是否完成（读 `tasks/{TID}/report.md` 顶部总报告状态） |
 | 存在可跑 task | 进入循环 |
-| 存在 status=待规划 | 提醒：用 `/opintake` 生成 spec |
-| 全部阻塞/跳过/挂起 | 输出原因，等外部解除或用户修改状态 |
+| 存在 status=pending | 提醒：用 `/opintake` 生成 spec |
+| 全部 blocked/suspended/obsolete | 输出原因，等外部解除或用户修改状态 |
+
+### 1.3 approved spec 漂移复查（SessionStart 职责挪入，design §3.3 第 4 道）
+
+启动时（读状态后、task 循环前）跑 approved spec 漂移复查——扫 `op_blueprint/specs/*.md` status=approved/in_progress 的 spec，有未 commit 改动则 WARN 走变更子流程（§2.4）：
+
+```bash
+if [ -d "docs/omni_powers/op_blueprint/specs" ]; then
+  for spec in docs/omni_powers/op_blueprint/specs/*.md; do
+    [ -f "$spec" ] || continue
+    st="$(awk -F': *' '/^status:/{print $2; exit}' "$spec" 2>/dev/null | tr -d ' ')"
+    if [ "$st" = "approved" ] || [ "$st" = "in_progress" ]; then
+      git diff --quiet HEAD -- "$spec" 2>/dev/null || echo "[WARN] $spec 状态=$st 但有未 commit 改动，疑似规格漂移，走变更子流程（§2.4）" >&2
+    fi
+  done
+fi
+```
+
+按需触发（跑 /oprun 才查），不每会话强灌——原 SessionStart hook 已移除，此复查是其职责落点。
 
 ---
 
@@ -168,36 +186,19 @@ bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
 | 任一 FAIL | 第1轮 | 回到 3.2（implementer fail 模式修复） |
 | 任一 FAIL | 第2轮 | `bash "$OP_HOME/scripts/op_status.sh {TID} 阻塞 quality`，按 optriage issue 元字段格式写 `issues/{TID}_quality.md`，下游 `跳过`，回 3.1 |
 
-### 子步骤 3.5：merge gate + squash-merge
+### 子步骤 3.5：per-task 验收（merge 前验，design §2.5）
 
-双裁决 PASS 后，**先过 merge gate（写入硬底线，design §3.4）**——squash-merge 回主分支前必跑：
-
-```bash
-bash "$OP_HOME/scripts/op_merge_gate.sh" {TID}   # P1 交付（design §0.2 能力矩阵）
-# 校验：受保护路径零 diff（approved spec / e2e/** 含 BUG-* / op_blueprint/** / decisions.md / tasks_list.json）
-#       + review verdict PASS 存在 + 工作集越界检查（advisory）
-# PASS 才许合；task 分支对受保护路径的任何变更直接 REJECT（合法变更走专属通道：spec 变更子流程 / e2e leader 入口 / closer 提案）
-```
-
-> **实现状态**：`op_merge_gate.sh` 是 P1 交付物（design §0.2/§4.2）。脚本就位前，受保护路径靠 reviewer 双裁决 + 纪律兜底。
-
-merge gate PASS → squash-merge 回主分支（design §3.4 步骤 5，`git merge --squash`，兑现"task 即 commit"）。**不归档、不删分支**——归档在闸门 C 后（3.8）。直接进 per-task 验收（3.6）。
-
----
-
-## per-task 验收（Stage 3 循环内，task merge 后即验，3.6）
-
-派 op-evaluator 做 per-task 真机验收。**每 task merge 后即派一次**：评估 → 固化 → 破坏检查 → 对抗探索。
+双裁决 PASS 后、squash-merge 前派 op-evaluator 做 per-task 真机验收（构建产物从 task 分支构建）。**非行为型 task 免派**（接口先行/脚手架/纯内部重构，验收由 reviewer + 编译器承担，design §2.5）。
 
 **派 evaluator 前 leader 先做访问隔离准备（结构 + 脚本，design §2.5；前提：hook 对 subagent 失效，隔离靠 worktree 结构 + 脚本机械组装 brief，不靠 hook 拦截）**：
-1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec / 生效规格开工前基线 / baselines 索引 / 启动方式），leader 不参与内容，evaluator 只读 brief 文件。
-2. **创建 evaluator 隔离 worktree**（sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防无意抄实现）：
+1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
+2. **创建 evaluator 隔离 worktree**（基于 task 分支切出，sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防无意抄实现）：
 
    ```bash
    bash "$OP_HOME/scripts/op_worktree_setup.sh" eval .claude/worktrees/op-eval feat/op-eval
    ```
 
-   evaluator 在 `.claude/worktrees/op-eval` 工作——**sparse-checkout 已落地（git 2.25+），advisory 防无意耦合**（正常读文件流程碰不到被排除路径；但 object store 共享，git 底层命令可绕，design §0.1）。**真正的硬底线**：写入侧靠 merge gate（§3.4，受保护路径零 diff）。旧 git（<2.25）脚本失败则退化为 advisory + WARN，merge gate 不受影响。
+   evaluator 在 `.claude/worktrees/op-eval` 工作——**sparse-checkout 已落地（git 2.25+），advisory 防无意耦合**（正常读文件流程碰不到被排除路径；但 object store 共享，git 底层命令可绕，design §0.1）。**真正的硬底线**：写入侧靠 merge gate（§3.4，白名单）。旧 git（<2.25）脚本失败则退化为 advisory + WARN，merge gate 不受影响。
 3. dispatch prompt 固定模板（advisory 留痕，不拦截），`cd` 指向 `.claude/worktrees/op-eval`。
 
 ```js
@@ -208,9 +209,26 @@ Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
   prompt: "cd <work_dir> && pwd\n读 {eval_brief_path}，按 brief 执行 per-task 验收 {TID}。" })
 ```
 
-> prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、验收标准、可测性契约执行：逐条验收标准评估 → PASS 的验收标准 固化成 e2e/{TID}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
+> prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、验收标准、可测性契约执行：逐条验收标准评估 → PASS 的验收标准 固化成 acceptance/{TID}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
 
-验收范围内 FAIL → 修复 task 回流（走 task 循环）重验收，**≤3 轮**。到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 closer 一段式收尾（3.7）。
+验收范围内 FAIL → 修复 task 回流（同分支续做）重验收，**≤3 轮**。到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 merge gate（3.6）。
+
+---
+
+## merge gate + squash-merge（验收 PASS 后，3.6）
+
+验收 PASS 后过 merge gate（写入硬底线，design §3.4）——squash-merge 回主分支前必跑：
+
+```bash
+bash "$OP_HOME/scripts/op_merge_gate.sh" {TID}   # P1 交付（design §0.2 能力矩阵）
+# 校验：白名单允许触碰 = workset ∪ tasks/{TID}/report.md ∪ 结构层测试路径；其余 REJECT
+#       + review verdict PASS 存在（读主分支 review.md 末行）+ 工作集越界即拒（advisory 升硬）
+# PASS 才许合；task 分支对白名单外路径的任何变更直接 REJECT（合法变更走专属通道：spec 变更子流程 / e2e leader 入口 / closer 提案）
+```
+
+> **实现状态**：`op_merge_gate.sh` 是 P1 交付物（design §0.2/§4.2）。脚本就位前，白名单靠 reviewer 双裁决 + 纪律兜底。
+
+merge gate PASS → squash-merge 回主分支（design §3.4 步骤 6，`git merge --squash`，兑现"task 即 commit"）。**不归档、不删分支**——归档在闸门 C 后（3.8）。进 closer 一段式收尾（3.7）。
 
 ---
 
