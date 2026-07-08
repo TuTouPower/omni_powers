@@ -14,7 +14,7 @@ description: >
 > SKILL_DIR="<本 skill 安装目录>"   # 如 ~/.claude/skills/oplintake
 > bash "$SKILL_DIR/scripts/op_check_env.sh"   # jq/git
 > ```
-> lite 脚本走 `${OP_SCRIPT_ROOT:-$OP_HOME}` fallback——全量安装设了 `$OP_HOME` 则用它，否则 leader dispatch 注入 skill 自带目录。
+> lite 脚本走 `${OP_SCRIPT_ROOT:-$OP_HOME}` fallback——全量安装设了 `$OP_HOME` 则用它，否则指向 install.sh 装的共享 scripts 目录 `~/.claude/scripts/omni_powers/`（design §5.5）。
 
 `/oplintake "<需求>"` 是 lite 模式需求入口。spec 编写（task:spec 1:1）→ 拆 task → 闸门 A。
 
@@ -38,7 +38,7 @@ description: >
 
 > 建议本步骤前 `/model` 切 Opus（错误放大系数最大）。
 
-写 `docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec 1:1，每 task 一份）。TID 全局单调递增 T001/T002…永不复用。共享不变量/跨 task 技术决策复制进每个相关 task spec（自足）。
+写 `docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec 1:1，每 task 一份）。TID 全局单调递增 T0001/T0002…永不复用。共享不变量/跨 task 技术决策复制进每个相关 task spec（自足）。
 
 frontmatter：
 
@@ -78,7 +78,7 @@ spec 正文必含：
 
 ```json
 {
-  "id": "T01",
+  "id": "T0001",
   "title": "<语义级标题，一句 commit message 能说清>",
   "status": "待开始",
   "spec": "{TID}",

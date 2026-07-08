@@ -10,7 +10,7 @@
 | 模板 | 用途 | 谁写 |
 |---|---|---|
 | [op_execution/tasks/{TID}/report.md](op_execution/tasks/{TID}/report.md) | 顶部总报告（每轮覆盖）+ 分 Round 追加 | op-implementer |
-| [op_execution/tasks/{TID}/review.md](op_execution/tasks/{TID}/review.md) | 双裁决审查，FAIL 轮 implementer 追加 Fix-N | op-reviewer + op-implementer |
+| [op_execution/tasks/{TID}/review.md](op_execution/tasks/{TID}/review.md) | 双裁决审查（单写者 = leader，主分支落盘；Fix-N 并入 report.md） | op-reviewer（leader 落盘） |
 
 ### 持久文件
 

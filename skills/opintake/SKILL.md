@@ -36,7 +36,7 @@ change type 只决定测试规则与 验收标准侧重（权威矩阵 design §
 
 > spec 编写归 leader 主会话，建议本步骤前 `/model` 切 Opus（错误放大系数最大，design §2.2）。
 
-调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec = 1:1，每 task 一份；TID 全局单调递增 T001/T002…永不复用；命名统一 `{TID}_{slug}.md`，标题放 markdown H1）。共享不变量/跨 task 技术决策**复制进每个相关 task spec**（自足）。
+调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec = 1:1，每 task 一份；TID 全局单调递增 T0001/T0002…永不复用；命名统一 `{TID}_{slug}.md`，标题放 markdown H1）。共享不变量/跨 task 技术决策**复制进每个相关 task spec**（自足）。
 
 spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
@@ -62,12 +62,12 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
 ```json
 {
-  "id": "T03",
+  "id": "T0003",
   "title": "<语义级标题，一句 commit message 能说清>",
   "status": "待开始",
-  "spec": "T01",
+  "spec": "T0001",
   "type": "实现",
-  "depends_on": ["T01"],
+  "depends_on": ["T0001"],
   "workset": ["src/store/session.ts"]
 }
 ```

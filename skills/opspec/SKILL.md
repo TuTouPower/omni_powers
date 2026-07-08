@@ -30,9 +30,9 @@ opintake 传入（或兜底时本 skill 补齐）：
 
 ## TID 编码
 
-- TID 全局单调递增 `T001/T002/…`，固定三位数宽度，永不复用（e2e/baselines/归档按 TID 存）。
+- TID 全局单调递增 `T0001/T0002/…`，固定四位数宽度，永不复用（e2e/baselines/归档按 TID 存）。
 - 一次 intake 拆出的多个 task 连续编号；不同 intake 续编。spec 文件名 `{TID}_{slug}.md`，slug 为语义短横线名。
-- **分配**：opintake 拆 task 时定 TID，写进 tasks_list.json 的 `spec` 字段（值为 TID，如 `"T01"`）；spec 文件名含 TID。分配前扫描现有 `op_execution/specs/`、`op_record/specs/`、`tasks_list.json`，取下一个未用 TID；并发 `/opintake` 未加锁时禁止同时运行，需先人工确认无另一个 intake 在写。
+- **分配**：opintake 拆 task 时定 TID，写进 tasks_list.json 的 `spec` 字段（值为 TID，如 `"T0001"`）；spec 文件名含 TID。分配前扫描现有 `op_execution/specs/`、`op_record/specs/`、`tasks_list.json`，取下一个未用 TID；并发 `/opintake` 未加锁时禁止同时运行，需先人工确认无另一个 intake 在写。
 
 ## 产出
 

@@ -129,7 +129,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 
 | 维度 | lite 分叉 |
 |---|---|
-| 脚本寻址 | 无 `$OP_HOME`——`${OP_SCRIPT_ROOT:-$OP_HOME}` fallback，lite 由 leader dispatch 注入 skill 自带目录 |
+| 脚本寻址 | 无 `$OP_HOME`——`${OP_SCRIPT_ROOT:-$OP_HOME}` fallback，lite 指向共享 scripts 目录（install.sh 装的 `~/.claude/scripts/omni_powers/`） |
 | 状态机 | **无「收口中」态**；`完成` = review PASS + leader commit + per-task 裸评 PASS + P0 检查过 + 归档 |
 | 收口 | **无 op-closer**，leader 机械执行：review PASS → `git add workset` + commit → per-task 裸评 → P0 检查 → 归档（`op_close_post.sh`），无「收口中」中间态、无 per-task append decisions |
 | 闸门 | 无闸门 C（per-task 裸评 PASS + P0 检查后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |

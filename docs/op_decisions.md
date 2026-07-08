@@ -411,4 +411,39 @@
 
 **影响**：design §2.5（自举期例外句删）、§4.2 P2（op-evaluator 浏览器基建作为自举第一 task 段删）、§0.1/§0.2/§2.5（水位→级别）、全文圈号替换；运行时：tasks_list.json 模板（删 risk_probe）、opintake/oplintake/opspec SKILL、op-evaluator/op-reviewer/oprun/oplrun SKILL、RULES.md、hooks/README（①②③→顿号）。
 
+## D27：review.md 两轮审阅处置——硬门闭合 + 闸门 C 批量化 + 状态机校正（2026-07-08）
+
+**触发**：`docs/review.md` 两轮架构审阅（威胁模型诚实度获肯定，问题集中在 merge gate 硬度/merge 时序/状态机一致性）。处置清单存 `docs/review_response.md`（E1-E3 审阅错误 / A1-A25 照改 / D1-D9 用户定夺）。
+
+**决策（D1-D9 用户裁定）**：
+- **D-1=A**：evaluator 验收挪到 squash-merge 前（task 分支上验，构建产物从分支构建）。原"merge 后验收"致未验收代码进主分支、下游踩着切，且修复回流同分支再 squash 靠三方合并侥幸。
+- **D-2=C**：执行期 spec-delta 维持现状（leader 自批 + 闸门 C 事后报），不升级人审——守原则 3"执行期不设人工阻塞点"。
+- **D-3=A**：闸门 C 批量化（攒一批 task 的 closer 提案一次审），per-task 中断压到 1 次；快速审只读自然语言，>5 条变更或跨功能 baseline/e2e 升级详细审。
+- **D-4=A**：非行为型 task（接口先行/脚手架/纯内部重构）免派 evaluator——无用户可观察行为，hard-pass gate 无从落地；evaluator 是最贵护栏，与原则 12 按需付费一致。
+- **D-5=B**：baseline 功能名维持 closer 判断（D23 不变），接受漂移风险。
+- **D-6=A**：tasks_list.status 机读值改 ASCII（pending/ready/in_progress/reviewing/closing/done/suspended/blocked），opstatus 渲染层映射中文——跨平台 locale 无关，Windows Git Bash/PowerShell 下 jq/grep 稳定。
+- **D-7=A**：lite 改共享 scripts 目录（install.sh 装 `~/.claude/scripts/omni_powers/`），消灭 per-skill 副本同步（build_lite.sh 及三份 op_check_env 互检淘汰）。
+- **D-8=自定义**：e2e 路径初始化时问用户，记项目级 `docs/omni_powers/config`（`OP_E2E_DIR=...`），脚本读此不硬编码；用户项目已有顶层 e2e/ 时 init 探测提示。
+- **D-9=B**：不上 merge gate trailer 强制，§0.1 诚实声明信任根——硬底线之"硬"以 leader 执行协议为前提，leader 失守靠 git 历史审计 + 闸门 A/C 人审。
+
+**A1-A25 照改（硬门闭合三件最关键）**：
+- **A1 review.md 单写者化**：verdict 由 leader 落盘主分支 review.md（task 分支不许碰，merge gate 白名单 REJECT）；Fix-N 并入 report.md。消除"verdict 落被监督者可写域"违反第一原则 + 双物理副本 squash-merge 冲突。
+- **A2 merge gate 黑名单→白名单**：task 分支允许触碰 = workset ∪ `tasks/{TID}/report.md` ∪ 结构层测试路径，其余 REJECT。比枚举受保护路径严、简，越界检查从 advisory 升硬。
+- **A3 tasks_list.json 读取矛盾**：dispatch 脚本提取 workset/depends_on 注入 prompt/review-package，tasks_list.json 不挂给任何 subagent。
+- **A4 spec 变更子流程 task 处置**：不引入 cancelled 终态——改 spec → 更新当前 task 记录 → 扫后续所有 task 检查受影响逐个更新 → 从当前 task 重新跑 implementer（同 TID，不重拆）。frontmatter approved 后冻结，状态只走 tasks_list；"清出"统一改"标完成"。
+- **A5 TID 四位数**：T001→T0001 风格全文统一（原 T01/T001 混用，宽度不统一在 T9/T10 处坏）。
+- **A6 closer gate**：closer 返回后机械校验触碰路径 ⊆ {decisions.md, issues/, acceptance/{TID}/}，越界 reset。
+- **A7 落盘者赋 P 统一协议**：reviewer 范围外发现写返回文本暂存段 → leader 收口落 issues 赋 P（对齐 evaluator 协议）。
+- **A8-A11 lite 机械洞**：oplrun 收口按实际 diff add（非预估 workset）/ dispatch 记 HEAD sha 锚定 reviewer diff（防 implementer 自行 commit 致 diff 空）/ specs/ git diff 非零即停（spec 写保护升机械）/ 验收后 git status 干净才归档。
+- **A12 leader 亲跑收敛**：heavy 侧"亲跑验证"统一为"脚本跑 + 单行 verdict 回传"（对齐 lite op_read_verdict），不把完整测试输出/diff 灌进主会话。
+- **A13 subagent 重派协议**：崩溃/超时按 report 累积总结判恢复点（复用分支续做 vs 重切重做）。
+- **A14 阻塞 task 归因沉淀**：review/验收到顶标阻塞时，leader 亲提红灯归因 append decisions.md（blocked-attribution），不让归因停在 report.md。
+- **A15 spec-delta 受影响清单**：delta 记录强制列受影响 spec/task 清单，脚本 grep 核对覆盖。
+- **A16 eval_brief 剥探索结论**：组装时剥 spec"设计探索结论/已知坑"段（实现路径蒸馏），留条件强制 + 可测性契约。
+- **A17 能力矩阵补 e2e trailer 行**；**A18/D-9 §0.1 信任根诚实声明**；**A23 闸门 C 升级阈值定义（>5 条）**；A19-A25 编辑级（fix 枚举去重/防防水衍字/depends_on 措辞/closer 重复行/归因(b)/流程图箭头）。
+
+**清标记 + T0001**：处置落地后清 design 全文 review 追踪标记（A1-A25/D1-D9/审1-X 不留在设计文档），TID 全文统一四位 T0001。
+
+**影响**：design.md（§0-§5 全文，硬门闭合 + 闸门 C 批量 + 状态机校正 + ASCII 机读 + 共享脚本 + e2e config + T0001 + 清标记）；运行时（agents/skills/scripts/RULES/docs_template 同步关键冲突——D-1 顺序/A1 单写者/A5 T0001/D-7 共享目录/D-6 模板 ASCII/归因(b)/op-evaluator merge 前验；脚本实现细节——op_merge_gate 白名单逻辑、op_closer_gate 新建、oplrun 收口 A8/A9/A11、opinit/oplinit D-8 e2e config——属 P1 实现工作，design 已正本清源）。
+
 
