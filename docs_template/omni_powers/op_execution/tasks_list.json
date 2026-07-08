@@ -1,31 +1,33 @@
 {
   "tasks": [
     {
-      "id": "T01",
+      "id": "T0001",
       "title": "{语义级标题，一句 commit message 能说清}",
-      "status": "待开始",
+      "status": "ready",
       "spec": "{TID}",
       "type": "实现",
       "depends_on": null,
-      "workset": ["src/..."]
+      "workset": ["src/..."],
+      "eval": "required",
+      "eval_reason": null
     },
     {
-      "id": "T02",
+      "id": "T0002",
       "title": "{title}",
-      "status": "待开始",
+      "status": "ready",
       "spec": "{TID}",
       "type": "实现",
-      "depends_on": ["T01"],
+      "depends_on": ["T0001"],
       "workset": ["src/..."]
     },
     {
-      "id": "T03",
+      "id": "T0003",
       "title": "{title}",
-      "status": "阻塞",
+      "status": "blocked",
       "blocked_by": "resource",
       "spec": "{TID}",
       "type": "实现",
-      "depends_on": ["T01"],
+      "depends_on": ["T0001"],
       "workset": ["src/..."]
     }
   ]

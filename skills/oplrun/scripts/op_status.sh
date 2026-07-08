@@ -4,8 +4,8 @@
 #   op_status.sh <TID> <status> [blocked_by]
 #   op_status.sh --batch <TID1,TID2,...> <status>
 #
-# lite 状态枚举（去 heavy 的「收口中」）: 待规划 待开始 进行中 审阅中 完成 阻塞 跳过 挂起
-# blocked_by 仅在 status=阻塞 时填（resource/quality/spawn）
+# lite 状态枚举（ASCII，去 heavy 的 closing——收口是 leader 瞬时操作）: pending ready in_progress reviewing done blocked obsolete suspended
+# blocked_by 仅在 status=blocked 时填（resource/quality/spawn）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -31,9 +31,9 @@ else
 fi
 
 case "$status" in
-    待规划|待开始|进行中|审阅中|完成|阻塞|跳过|挂起) ;;
-    收口中) die "lite 无「收口中」态（收口是 leader 瞬时操作）；有效值: 待规划 待开始 进行中 审阅中 完成 阻塞 跳过 挂起" ;;
-    *) die "无效 status: $status（有效值: 待规划 待开始 进行中 审阅中 完成 阻塞 跳过 挂起）" ;;
+    pending|ready|in_progress|reviewing|done|blocked|obsolete|suspended) ;;
+    closing) die "lite 无 closing 态（收口是 leader 瞬时操作）；有效值: pending ready in_progress reviewing done blocked obsolete suspended" ;;
+    *) die "无效 status: $status（有效值: pending ready in_progress reviewing done blocked obsolete suspended）" ;;
 esac
 
 if [ "$blocked" = "null" ] || [ -z "$blocked" ]; then
@@ -58,8 +58,8 @@ if $batch; then
         "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     echo "[OK] $tids → $status"
 else
-    if [ "$status" = "阻塞" ]; then
-        [ "$blocked" != "null" ] && [ -n "$blocked" ] || die "status=阻塞 必须提供 blocked_by（resource/quality/spawn）"
+    if [ "$status" = "blocked" ]; then
+        [ "$blocked" != "null" ] && [ -n "$blocked" ] || die "status=blocked 必须提供 blocked_by（resource/quality/spawn）"
         jq --arg tid "$tid" --arg status "$status" --argjson blocked "$blocked_json" \
             '.tasks |= map(if .id == $tid then .status = $status | .blocked_by = $blocked else . end)' \
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
@@ -69,7 +69,7 @@ else
             "$TASKS_FILE" > "$TASKS_FILE.tmp" || die "jq 执行失败"
     fi
     echo "[OK] $tid → $status"
-    if [ "$status" = "阻塞" ]; then
+    if [ "$status" = "blocked" ]; then
         echo "[INFO]   blocked_by=$blocked"
     fi
 fi

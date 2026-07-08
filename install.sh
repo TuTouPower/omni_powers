@@ -53,6 +53,10 @@ for a in op-implementer op-reviewer op-evaluator op-closer; do
     install_one "$REPO_ROOT/agents/$a.md" "$AGENTS_DST/$a.md"
 done
 
+echo "=== 装 scripts（共享脚本目录，heavy/lite 共用，D5 基础）==="
+SCRIPTS_DST="$CLAUDE_HOME/scripts/omni_powers"
+install_one "$REPO_ROOT/scripts" "$SCRIPTS_DST"
+
 if [ "$MODE" = "cp" ]; then
     find "$SKILLS_DST"/{opinit,oprun,oplinit,oplintake,oplrun} -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
 fi

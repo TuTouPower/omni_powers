@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 # op_jq（lite）：tasks_list.json 通用查询。读相对项目路径，无 OP_HOME 依赖。
 # 用法: op_jq.sh <query> [args...]
-#   pending | pending_plan | deps <TID> | blocked | skipped | suspended
+#   pending | pending_plan | deps <TID> | blocked | obsolete | suspended
 #   downstream <TID> | status <TID> | all
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
-CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|skipped|suspended|downstream|status|all> [args...]}"
+CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]}"
 shift
 
 case "$CMD" in
 pending)
-    jq '.tasks[] | select(.status=="待开始") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="ready") | {id, title, status}' "$TASKS"
     ;;
 pending_plan)
-    jq '.tasks[] | select(.status=="待规划") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="pending") | {id, title, status}' "$TASKS"
     ;;
 deps)
     TID="${1:?用法: op_jq.sh deps <TID>}"
@@ -28,7 +28,7 @@ deps)
     for d in $DEPS; do
         st=$(jq --arg d "$d" -r '.tasks[] | select(.id==$d) | .status' "$TASKS")
         echo "$d: $st"
-        if [ "$st" != "完成" ]; then
+        if [ "$st" != "done" ]; then
             has_unready=1
         fi
     done
@@ -37,13 +37,13 @@ deps)
     fi
     ;;
 blocked)
-    jq '.tasks[] | select(.status=="阻塞") | {id, title, status, blocked_by}' "$TASKS"
+    jq '.tasks[] | select(.status=="blocked") | {id, title, status, blocked_by}' "$TASKS"
     ;;
-skipped)
-    jq '.tasks[] | select(.status=="跳过") | {id, title, status}' "$TASKS"
+obsolete)
+    jq '.tasks[] | select(.status=="obsolete") | {id, title, status}' "$TASKS"
     ;;
 suspended)
-    jq '.tasks[] | select(.status=="挂起") | {id, title, status}' "$TASKS"
+    jq '.tasks[] | select(.status=="suspended") | {id, title, status}' "$TASKS"
     ;;
 downstream)
     TID="${1:?用法: op_jq.sh downstream <TID>}"
@@ -57,7 +57,7 @@ all)
     jq '[.tasks[] | {id, status, depends_on}]' "$TASKS"
     ;;
 *)
-    echo "用法: op_jq.sh <pending|pending_plan|deps|blocked|skipped|suspended|downstream|status|all> [args...]" >&2
+    echo "用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]" >&2
     exit 1
     ;;
 esac
