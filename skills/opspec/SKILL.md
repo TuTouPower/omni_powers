@@ -32,7 +32,7 @@ opintake 传入（或兜底时本 skill 补齐）：
 
 - TID 全局单调递增 `T0001/T0002/…`，固定四位数宽度，永不复用（e2e/baselines/归档按 TID 存）。
 - 一次 intake 拆出的多个 task 连续编号；不同 intake 续编。spec 文件名 `{TID}_{slug}.md`，slug 为语义短横线名。
-- **分配**：opintake 拆 task 时定 TID，写进 tasks_list.json 的 `spec` 字段（值为 TID，如 `"T0001"`）；spec 文件名含 TID。分配前扫描现有 `op_execution/specs/`、`op_record/specs/`、`tasks_list.json`，取下一个未用 TID；并发 `/opintake` 未加锁时禁止同时运行，需先人工确认无另一个 intake 在写。
+- **分配**：opintake 拆 task 时定 TID，写进 tasks_list.json 的 `spec` 字段（值为相对路径 `specs/{TID}_{slug}.md`，如 `"specs/T0001_user_auth.md"`）；TID 只放 `id` 字段。spec 文件名含 TID。分配前扫描现有 `op_execution/specs/`、`op_record/specs/`、`tasks_list.json`，取下一个未用 TID；并发 `/opintake` 未加锁时禁止同时运行，需先人工确认无另一个 intake 在写。
 
 ## 产出
 
@@ -44,6 +44,8 @@ opintake 传入（或兜底时本 skill 补齐）：
 ---
 status: draft        # draft（本 skill 写）→ approved（闸门 A 人批）。本 skill 只写 draft，approved 后冻结（design §1.2，执行期 spec-delta 走变更子流程不改 status）
 type: feat           # feat | refactor | perf | ...（决定测试规则与 验收标准侧重）
+eval: required       # required（默认，派 evaluator）| skip（免派——接口先行/脚手架/纯内部重构，design §2.4）
+eval_reason: null    # eval=skip 时必填免派理由；required 时 null
 ---
 # {名称}
 ## 一句话意图

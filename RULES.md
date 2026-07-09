@@ -5,7 +5,7 @@
 > **各 agent 行为**见 `$OP_HOME/agents/*.md`；**各 skill 流程**见 `$OP_HOME/skills/*/SKILL.md`。
 > **模板/脚本**通过 `$OP_HOME`（插件安装目录环境变量）引用。
 >
-> compact 恢复：读本文件 + jq 查 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
+> compact 恢复：先读 `docs/omni_powers/profile`（判定 heavy/lite）→ 按 profile 选状态机（见「profile 分叉」段）→ jq 查 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 >
 > **核心心智**：磁盘是真状态，所有 agent 上下文都是可重建缓存。全线 Sub Agent，每次 fresh dispatch。
 
@@ -64,7 +64,7 @@ obsolete（方案调整废弃，不参与流转，spec 移 op_record/specs/obsol
 不用 reset（丢历史）。
 
 1. `git revert <commit_hash>` — 反向提交
-2. `bash $OP_HOME/scripts/op_status.sh {TID} 待开始` — 该 task 回退
+2. `bash $OP_HOME/scripts/op_status.sh {TID} ready` — 该 task 回退
 3. `bash $OP_HOME/scripts/op_jq.sh downstream {TID}` 查下游，逐一回退
 4. 已归档的 task：`git mv docs/omni_powers/op_record/tasks/{TID} docs/omni_powers/op_execution/tasks/{TID}` 移回工作区
 
@@ -94,7 +94,6 @@ bash $OP_HOME/scripts/op_jq.sh pending          # 待开始
 bash $OP_HOME/scripts/op_jq.sh pending_plan     # 待规划
 bash $OP_HOME/scripts/op_jq.sh deps {TID}       # 依赖
 bash $OP_HOME/scripts/op_jq.sh blocked          # 阻塞
-bash $OP_HOME/scripts/op_jq.sh skipped          # 跳过
 bash $OP_HOME/scripts/op_jq.sh suspended        # 挂起
 bash $OP_HOME/scripts/op_jq.sh downstream {TID} # 下游
 bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
@@ -127,19 +126,20 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 
 **heavy**（现状默认）：本文件通篇规则原样生效。
 
-**lite**（零侵入版，入口 `/oplintake` `/oplrun`）差异声明：
+**lite**（零侵入版，入口 `/oplintake` `/oplrun`。lite 也需 `--set-ophome`——全局 `~/.claude/` 不算侵入，零侵入指不修改项目级 `.claude/` 配置与文件结构）。差异声明：
 
 | 维度 | lite 分叉 |
 |---|---|
-| 脚本寻址 | 无 `$OP_HOME`——`${OP_SCRIPT_ROOT:-$OP_HOME}` fallback，lite 指向共享 scripts 目录（install.sh 装的 `~/.claude/scripts/omni_powers/`） |
-| 状态机 | **无「收口中」态**；`完成` = review PASS + leader commit + per-task 裸评 PASS + P0 检查过 + 归档 |
-| 收口 | **无 op-closer**，leader 机械执行：review PASS → `git add workset` + commit → per-task 裸评 → P0 检查 → 归档（`op_close_post.sh`），无「收口中」中间态、无 per-task append decisions |
-| 闸门 | 无闸门 C（per-task 裸评 PASS + P0 检查后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |
+| 脚本寻址 | `$OP_HOME/scripts/`（与 heavy 统一，两版共用一份脚本） |
+| 状态机 | heavy 全态（含 `obsolete`/`suspended`/`blocked`）；**仅删「收口中」态**（`closing`）——收口在 lite 是 leader 瞬时操作 |
+| 完成 | `done` = evaluator 裸评 PASS → leader commit + 归档 + P0 检查过 |
+| 收口 | **无 op-closer**，leader 机械执行：evaluator 裸评 PASS → `git add workset` + commit → 归档（`op_close_post.sh`），无「收口中」中间态、无 per-task append decisions |
+| 闸门 | 无闸门 C（裸评 PASS + P0 检查后 leader 直接归档，无 blueprint 合入——lite 无 blueprint 真相源） |
 | decisions 来源 | 闭集加入 `leader-close`（leader 代 closer append 时标记） |
 | spec 写保护 | 降级为约定 + git diff 可回溯（无 hook 强制拦截） |
 | evaluator | 裸评退化（per-task）：无 worktree 隔离、无 baseline 对照、无跨迭代回归，每 task 裸评一次 |
 | 证据校验 | 无 hook——leader 每 task 亲自跑测试 + 读 diff |
-| compact 恢复 | 读本文件 + 读 `profile` + `bash "$SCRIPTS/op_jq.sh" all` + 读 `leader_checkpoint.md`（`$SCRIPTS` = oplrun skill 安装目录下的 `scripts/` 子目录，如 `~/.claude/skills/oplrun/scripts`） |
+| compact 恢复 | 先读 `profile` → 读本文件 + `bash "$OP_HOME/scripts/op_jq.sh" all` + 读 `leader_checkpoint.md` |
 
 ## 不做
 

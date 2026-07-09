@@ -33,7 +33,7 @@ description: >
 
 ## 没有归因不准碰测试
 
-implementer 改测试前必须在 `report.md` 的归因段（或 `review.md` 的 Fix-N 段）写明归因（a/b/c + 依据）——**implementer 对 decisions.md 无写权（design §2.4），归因经 closer per-task 收口提取 append 到 decisions.md（来源标记 red-attribution）**。reviewer 审查时核对归因是否成立。
+implementer 改测试前必须在 `report.md` 的归因段/Fix-N 段写明归因（a/b/c + 依据）——**implementer 对 decisions.md 无写权（design §2.4），归因经 closer per-task 收口提取 append 到 decisions.md（来源标记 red-attribution）**。reviewer 审查时核对归因是否成立。
 
 ## 危险模式（reviewer 扫这些 = 自动怀疑归因缺失）
 

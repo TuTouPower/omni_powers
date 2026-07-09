@@ -14,7 +14,7 @@ description: >
 > SKILL_DIR="<本 skill 安装目录>"   # 如 ~/.claude/skills/oplintake
 > bash "$SKILL_DIR/scripts/op_check_env.sh"   # jq/git
 > ```
-> lite 脚本走 `${OP_SCRIPT_ROOT:-$OP_HOME}` fallback——全量安装设了 `$OP_HOME` 则用它，否则指向 install.sh 装的共享 scripts 目录 `~/.claude/scripts/omni_powers/`（design §5.5）。
+> lite 脚本统一在 `$OP_HOME/scripts/`（与 heavy 共用，两版均需 `install.sh --set-ophome`）。
 
 `/oplintake "<需求>"` 是 lite 模式需求入口。spec 编写（task:spec 1:1）→ 拆 task → 闸门 A。
 

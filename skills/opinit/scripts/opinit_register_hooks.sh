@@ -56,7 +56,11 @@ if [ -f .claude/settings.json ]; then
   jq -s '
     .[0] as $u | .[1] as $t
     | reduce ($t.hooks // {} | keys[]) as $k ($u;
-        .hooks[$k] = (($u.hooks // {})[$k] // []) + ($t.hooks // {})[$k]
+        .hooks[$k] = (($u.hooks // {})[$k] // []) + (
+          ($t.hooks // {})[$k] | map(select(. as $item |
+            ($u.hooks // {})[$k] // [] | map(.command == $item.command) | any | not
+          ))
+        )
       )
   ' .claude/settings.json "$TEMPLATE_FILE" > .claude/settings.json.tmp
   mv .claude/settings.json.tmp .claude/settings.json

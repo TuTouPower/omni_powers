@@ -26,7 +26,17 @@ fi
 mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
 mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
 mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
-mkdir -p docs/archive e2e
+mkdir -p docs/archive
+
+# e2e 目录（heavy 默认 tests/e2e/；已存在则探测提示）
+if [ -d tests/e2e ]; then
+    echo "[WARN] tests/e2e/ 已存在——将纳入 omni_powers E2E 保护语义（merge gate 拦 task 分支 e2e 变更）" >&2
+elif [ -d e2e ]; then
+    echo "[WARN] 顶层 e2e/ 已存在，将使用 tests/e2e/ 作为 E2E 落点（已有 e2e/ 不会被纳入保护语义）" >&2
+    mkdir -p tests/e2e
+else
+    mkdir -p tests/e2e
+fi
 
 # ── profile（无则写 heavy）──
 [ -f "$PROFILE_FILE" ] || echo "heavy" > "$PROFILE_FILE"
@@ -68,7 +78,7 @@ next_step:
 <!-- AUTO：op_checkpoint.sh 追加 "- {TID} "{title}" ✅ {hash}" -->
 
 ## tasks_list 状态
-<!-- AUTO：op_checkpoint.sh 更新（完成/待开始/待规划/阻塞/跳过/挂起）-->
+<!-- AUTO：op_checkpoint.sh 更新（完成/待开始/待规划/阻塞/废弃/挂起，ASCII: done/ready/pending/blocked/obsolete/suspended）-->
 EOF
 fi
 

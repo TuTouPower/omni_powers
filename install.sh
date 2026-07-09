@@ -43,34 +43,29 @@ install_one() {
     fi
 }
 
-echo "=== 装 skill（全部）==="
+echo "=== 装 skill + agent（全部）==="
 for s in opinit opintake oprun opspec opred opstatus optriage oplinit oplintake oplrun; do
     [ -d "$REPO_ROOT/skills/$s" ] && install_one "$REPO_ROOT/skills/$s" "$SKILLS_DST/$s"
 done
 
-echo "=== 装 agent（全部）==="
 for a in op-implementer op-reviewer op-evaluator op-closer; do
     install_one "$REPO_ROOT/agents/$a.md" "$AGENTS_DST/$a.md"
 done
-
-echo "=== 装 scripts（共享脚本目录，heavy/lite 共用，D5 基础）==="
-SCRIPTS_DST="$CLAUDE_HOME/scripts/omni_powers"
-install_one "$REPO_ROOT/scripts" "$SCRIPTS_DST"
 
 if [ "$MODE" = "cp" ]; then
     find "$SKILLS_DST"/{opinit,oprun,oplinit,oplintake,oplrun} -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
 fi
 
-# ── OP_HOME（heavy 模式需要；lite 走 fallback 不强依赖）──
+# ── OP_HOME（两版都需要——脚本统一在 $OP_HOME/scripts/）──
 if [ "$SET_OPHOME" -eq 1 ]; then
     SETTINGS="$CLAUDE_HOME/settings.json"
     [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
     tmp="$(mktemp)"
     jq --arg oh "$REPO_ROOT" '.env = (.env // {}) | .env.OP_HOME = $oh' "$SETTINGS" > "$tmp" \
         && mv "$tmp" "$SETTINGS" \
-        && echo "[OK] OP_HOME=$REPO_ROOT 写入 $SETTINGS（heavy 模式用）"
+        && echo "[OK] OP_HOME=$REPO_ROOT 写入 $SETTINGS（两版共用脚本根）"
 else
-    echo "[INFO] 未设 OP_HOME（--set-ophome 可写）。heavy 模式需要它；lite 走 \${OP_SCRIPT_ROOT:-\$OP_HOME} fallback"
+    echo "[INFO] 未设 OP_HOME（--set-ophome 可写）。两版都需要它定位脚本"
 fi
 
 echo ""

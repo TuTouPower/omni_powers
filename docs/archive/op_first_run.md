@@ -1,6 +1,8 @@
-# 首跑计划：人工 leader 跑通全流程
+# 首跑计划：人工 leader 跑通全流程（已过期——历史档案）
 
-> **定位**：一次性执行计划。目标——人工作为 leader，在真实项目上把 omni_powers 全流程（opinit → opintake → oprun → 闸门 C → 归档）跑通一遍，evaluator 按 TESTING_PLAN 用 CDP/CUA 执行验收。
+> **状态**：已归档（2026-07-09）。此为首跑历史计划，与当前 design 多处冲突（验收时序/闸门 C/调教循环/模型配置），不可直接执行。当前流程见 `docs/omni_powers_design.md`。
+>
+> **定位**：一次性执行计划。目标——人工作为 leader，在真实项目上把 omni_powers 全流程跑通。
 > **形态**：半自动——主会话照 skill 执行，每个节点（dispatch / 状态流转 / commit / 闸门）停下人工确认。
 > **产出**：跑通记录 + 摩擦点清单 + 人工 leader runbook 素材 + evaluator 二阶判断首批校准样例。
 > **完成后**：本文档移 `docs/archive/`，结论沉淀进 op_decisions.md。

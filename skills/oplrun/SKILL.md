@@ -17,11 +17,10 @@ lite 无 `$OP_HOME`。leader 定位本 skill 脚本目录并注入 agent：
 
 ```bash
 SKILL_DIR="<本 skill 安装目录>"        # 如 ~/.claude/skills/oplrun
-SCRIPTS="$SKILL_DIR/scripts"
-OP_SCRIPT_ROOT="$SKILL_DIR"            # 注入 agent，agent 内 ${OP_SCRIPT_ROOT:-$OP_HOME} 走此
+# 脚本统一在 $OP_HOME/scripts/（两版共用，install.sh --set-ophome 已设）
 ```
 
-派 agent 用 `subagent_type`（agent 定义已装 `~/.claude/agents/op-*.md`）。**dispatch prompt 必须注入 `OP_SCRIPT_ROOT` + `OP_PROFILE=lite`**，agent 环境入口据此寻址脚本、走 lite 分支。
+派 agent 用 `subagent_type`（agent 定义已装 `~/.claude/agents/op-*.md`）。**dispatch prompt 必须注入 `OP_PROFILE=lite`**，agent 环境入口据此走 lite 分支。
 
 **不派 op-closer**——lite 收口由 leader 机械完成（子步骤 3.6）。
 
@@ -93,7 +92,7 @@ spec: docs/omni_powers/op_execution/specs/{TID}_{slug}.md
 ```
 Agent(subagent_type="op-implementer", prompt:
   "cd <项目根> && pwd
-   环境：OP_PROFILE=lite OP_SCRIPT_ROOT=<oplrun skill 目录>
+   环境：OP_PROFILE=lite
    {title}（{TID}）。先跑 op_coder_check.sh {TID} 定模式。
    读 spec（路径见 dispatch prompt）+ jq tasks_list 取 workset。TDD 实现（先写映射验收标准的结构层单测，不跑 e2e）。
    写 report.md：顶部总报告（状态 + evidence 命令/路径）+ 分 Round。
@@ -126,7 +125,7 @@ bash "$SCRIPTS/op_status.sh" {TID} reviewing
 ```
 Agent(subagent_type="op-reviewer", prompt:
   "cd <项目根> && pwd
-   环境：OP_PROFILE=lite OP_SCRIPT_ROOT=<oplrun skill 目录>
+   环境：OP_PROFILE=lite
    review {TID}。读 spec（dispatch 给路径）。读 report.md。代码变更：git diff ${DISPATCH_SHA}（leader 注入锚点 sha，防 implementer 自行 commit 致 diff 空，D3；新增文件先 git add -N 纳入）。
    输出 tasks/{TID}/review.md。
    双裁决：规格合规（覆盖验收标准/不偏航）+ 测试可信（测的是验收标准还是 mock/断言用户可观察/危险模式）。
@@ -160,7 +159,7 @@ bash "$SCRIPTS/op_assemble_eval_brief.sh" {TID}
 ```
 Agent(subagent_type="op-evaluator", prompt:
   "cd <项目根> && pwd
-   环境：OP_PROFILE=lite OP_SCRIPT_ROOT=<oplrun skill 目录>
+   环境：OP_PROFILE=lite
    读 docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md，按 brief 执行 per-task 裸评 {TID}。
    逐条验收标准评估 → PASS 的验收标准 固化成 docs/omni_powers/e2e/{TID}/（lite 零侵入，不进用户测试 runner，§5.3） → 破坏检查 → 对抗探索。
    输出 acceptance/{TID}/eval.md，末行 verdict: PASS 或 FAIL。

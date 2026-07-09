@@ -56,7 +56,7 @@
 - 上下文满了由 Claude Code 自动 compact/截断
 - 只在 teammate 完全无响应时才 shutdown 重建
 
-## D6：一个 task 一次 commit，hash 回填延迟（2026-06-25）— ⚠️ 已被 D12 取代
+## D6：一个 task 一次 commit，hash 回填延迟（2026-06-25）— ⚠️ 已被 D16 取代（经 D12 两 commit→D16 恢复一 commit）
 
 **变更**：收口只有一次主 commit。progress.md 和 leader_checkpoint.md 中的 `<待回填>` hash 不单独 commit，延迟到下一个 task 收口时一并回填提交。
 

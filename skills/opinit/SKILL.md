@@ -69,7 +69,7 @@ for f in <步骤零确认归档的文件/目录>; do mv "$f" docs/archive/; done
 
 ## 步骤三：生成 Blueprint（按职责矩阵分工 + specs 不空）
 
-派发 Agent 读归档区 + git log + 现有代码，提炼"现在是什么"，按 `$OP_HOME/docs/omni_powers_design.md §3.3` 文档职责矩阵生成（各文档单一职责，重复内容独占一份，其他"详见 X.md"）：
+派发 Agent 读归档区 + git log + 现有代码，提炼"现在是什么"，按 `$OP_HOME/docs/omni_powers_design.md §1.3` 文档职责矩阵生成（各文档单一职责，重复内容独占一份，其他"详见 X.md"）：
 
 ```js
 Agent({

@@ -3,7 +3,7 @@ name: opintake
 description: >
   需求入口：spec 编写（含设计探索，task:spec 1:1 每 task 一份）→ 闸门 A 批复 → 自动拆 task → tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
   触发：/opintake "<需求>"、新需求、做个功能。
-  终点：tasks_list 就绪，task status=`待开始`，leader_checkpoint 标注 spec 就绪，交给 /oprun。
+  终点：tasks_list 就绪，task status=`ready`，leader_checkpoint 标注 spec 就绪，交给 /oprun。
 ---
 
 # Op Intake Skill
@@ -83,7 +83,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
 ## 终点：task 待开始
 
-`tasks_list.json` 已写入 `status=待开始` 的 task（顺序依赖机读）+ `leader_checkpoint.md` 标注 spec 就绪。交接给 `/oprun`。
+`tasks_list.json` 已写入 `status="ready"` 的 task（顺序依赖机读）+ `leader_checkpoint.md` 标注 spec 就绪。交接给 `/oprun`。
 
 ## compact 恢复
 
@@ -99,4 +99,3 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 | `skills/opspec/SKILL.md` | spec 模板与设计探索（内部 skill，被本 skill 调用） |
 | `scripts/op_new_task.sh` | 工作区创建 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |
-| `skills/opspec/SKILL.md` | spec 模板来源（`op_execution/specs/{TID}_{slug}.md` 由 opspec 生成） |

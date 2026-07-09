@@ -8,6 +8,8 @@ description: >
 # optriage：issue 分级与转 task
 
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
+>
+> **profile 感知**：先 `cat docs/omni_powers/profile`。`lite` 项目无 closer（leader 直接调本 skill 收尾）、无闸门 C（P0 进结束报告标注，不事中阻断归档，A18）；异常提示中 `/opintake` 对应换 `/oplintake`。脚本统一在 `$OP_HOME/scripts/`（两版共用）。
 
 ## 触发
 
@@ -66,14 +68,14 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
 
 对要转 task 的 issue：
 
-1. 用 jq 取当前最大 TID，新 task 从 `T{NN+1}` 开始
+1. 用 jq 取当前最大 TID，新 task 从 `T%04d` 开始（固定四位宽度，如 T0006）
 2. 确定 change type：
    - bug → `fix`（契约=那条回归测试，先红后绿）
    - 改进 → `feat` 或 `refactor`
    - 性能 → `perf`
 3. 分配属性：
    - `title`: `修issue: {简要描述}`
-   - `status`: `ready`（已有 spec/工作集，可直接 `/oprun`）或 `pending`（只有问题描述，需先 `/opintake` 补 spec）
+   - `status`: `pending`（默认进 `/opintake` 生成新工作 spec——P0/P1 修复应有独立验收标准，避免免检通道；issue 已附带完整工作 spec 路径、AC/INV、workset 且通过闸门 A 时允许 `ready`）
    - `spec`: issue 的所属 spec
    - `depends_on`: 推导
    - `workset`: 从 issue 描述推导
@@ -81,7 +83,7 @@ ls docs/omni_powers/op_execution/issues/*.md 2>/dev/null || echo "无 issue"
 5. issue 文件状态改 `triaged → 转 task`，记录转到的 TID
 
 ```bash
-bash "$OP_HOME/scripts/op_new_task.sh {TID}
+bash "$OP_HOME/scripts/op_new_task.sh" "{TID}"
 ```
 
 转 task 后的 issue 走标准 `/oprun` 循环，**不走免检通道**——issue 是登记处不是免检通道。
@@ -94,10 +96,10 @@ bash "$OP_HOME/scripts/op_new_task.sh {TID}
 === issue triage 结果 ===
 
 P0（本 spec 必修，已转 task）:
-  I-20260702-01 会话列表滚动掉帧 → T06
+  I-20260702-01 会话列表滚动掉帧 → T0006
 
 P1（下个 spec 前修，已转 task）:
-  I-20260702-02 错误格式不统一 → T07
+  I-20260702-02 错误格式不统一 → T0007
 
 P2 排期（tech-debt，未转 task）:
   I-20260702-03 日志未脱敏
