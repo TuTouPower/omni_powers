@@ -142,7 +142,7 @@ spec: docs/omni_powers/op_execution/specs/{TID}_{slug}.md
 ```bash
 bash "$OP_HOME/scripts/op_status.sh" {TID} in_progress
 # P0-4：写 current_task，PostToolUse/SubagentStop hook 据此校验新鲜证据
-sed -i "s/^### current_task:.*/### current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
+awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {if(!f)print}' docs/omni_powers/op_execution/leader_checkpoint.md > /tmp/cp.md && mv /tmp/cp.md docs/omni_powers/op_execution/leader_checkpoint.md
 ```
 
 ```js

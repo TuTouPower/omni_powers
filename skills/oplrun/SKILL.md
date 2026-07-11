@@ -76,7 +76,7 @@ mkdir -p docs/omni_powers/op_execution/tasks/{TID}
 DISPATCH_SHA=$(git rev-parse HEAD)   # 记 dispatch 锚点 sha（D3：3.4 reviewer diff 锚定 + 3.6 spec 写保护用，leader 循环内持有）
 bash "$SCRIPTS/op_coder_check.sh" {TID}   # 输出 mode=normal|fail|blocked, round
 bash "$SCRIPTS/op_status.sh" {TID} in_progress
-sed -i "s/^### current_task:.*/### current_task: {TID}/" docs/omni_powers/op_execution/leader_checkpoint.md
+awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {if(!f)print}' docs/omni_powers/op_execution/leader_checkpoint.md > /tmp/cp.md && mv /tmp/cp.md docs/omni_powers/op_execution/leader_checkpoint.md
 ```
 
 dispatch 指针（不生成文件，prompt 直给）：
