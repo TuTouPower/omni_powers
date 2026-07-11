@@ -23,7 +23,7 @@ description: >
 | `issues_dir` | `docs/omni_powers/op_execution/issues/` | issue 目录 |
 | `tasks_list_path` | `docs/omni_powers/op_execution/tasks_list.json` | ⚠️ 严禁 Read 整文件，用 jq |
 
-issue 文件命名两种（用途不同，非不一致）：`I-{YYYYMMDD}-{NN}.md`（泛 issue——evaluator/reviewer/系统层范围外发现）+ `{TID}_quality.md`（绑 review 2 轮 FAIL 的 task，RULES.md 阻塞项 `blocked_by=quality`）。
+issue 文件命名两种（用途不同，非不一致）：`issue_{slug}.md`（泛 issue——evaluator/reviewer/系统层范围外发现，文件名语义 slug）+ `{TID}_quality.md`（绑 review 2 轮 FAIL 的 task，RULES.md 阻塞项 `blocked_by=quality`）。**frontmatter `id` 统一 `I-{YYYYMMDD}-{NN}`**（机器主键，与文件名解耦——id 给机器，文件名给人）。
 
 ## issue 文件格式（design §3.2 frontmatter）
 

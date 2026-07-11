@@ -20,7 +20,7 @@
 | [op_execution/tasks_list.json](op_execution/tasks_list.json) | `docs/omni_powers/op_execution/tasks_list.json` | task 清单 + 依赖 + status（核心） |
 | [op_execution/leader_checkpoint.md](op_execution/leader_checkpoint.md) | `docs/omni_powers/op_execution/leader_checkpoint.md` | compact 恢复断点（机器读） |
 | [op_execution/acceptance/](op_execution/acceptance/) | `docs/omni_powers/op_execution/acceptance/{TID}/` | evaluator 验收工作区（运行时生成） |
-| [op_execution/issues/I-{YYYYMMDD}-{NN}.md](op_execution/issues/I-{YYYYMMDD}-{NN}.md) | `docs/omni_powers/op_execution/issues/I-{YYYYMMDD}-{NN}.md` | 泛 issue 模板（范围外发现/暂存项/夜跑/体检） |
+| [op_execution/issues/issue_{slug}.md](op_execution/issues/issue_{slug}.md) | `docs/omni_powers/op_execution/issues/issue_{slug}.md` | 泛 issue 模板（范围外发现/暂存项/夜跑/体检），frontmatter id 用 `I-{YYYYMMDD}-{NN}` |
 | [op_execution/issues/{TID}_quality.md](op_execution/issues/{TID}_quality.md) | `docs/omni_powers/op_execution/issues/{TID}_quality.md` | 质量阻塞记录（技术债加 `tech-debt` 标签） |
 | [op_record/progress.md](op_record/progress.md) | `docs/omni_powers/op_record/progress.md` | 进度日志 |
 | [op_record/decisions.md](op_record/decisions.md) | `docs/omni_powers/op_record/decisions.md` | 设计探索 + spec-delta（leader 变更子流程）+ 红灯归因（closer 提取），append-only |

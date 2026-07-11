@@ -120,7 +120,12 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 若步骤零用户**确认提取**，分两步（leader + agent）：
 1. **leader 扫候选**（只扫 `archive_valid/` 有效文档——废弃文档 `archive/` 的待办可能已过期，不捞）：`grep -rilE '待办|未做|todo|待完成|TODO' docs/archive_valid/ 2>/dev/null | head -10`
 2. **派 Agent 读候选文件**，提炼【还没做】的项（严格过滤已完成 + 暂缓项），返回清单（title / source 行号 / 一句话 / severity 建议）
-3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §3.2 frontmatter 格式：`id: I-YYYYMMDD-NN` + `title` + `source` + `spec` + `severity`/`tags` + `status: open` + `blocks_merge`）。**`source` 写 `docs/archive/` 最终路径**（步骤七合并后位置，非当前 `archive_valid/`）
+3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**，每项一个 issue 文件：
+   - **文件名 `issue_{slug}.md`**（语义 slug，人读；非 `I-YYYYMMDD-NN`）
+   - **frontmatter `id` 强制 `I-{YYYYMMDD}-{NN}`**（机器主键，唯一+排序；与文件名解耦——id 给机器，文件名给人）
+   - **`severity` 必须 `P0|P1|P2|P3`**（ASCII，非 medium/low/high）
+   - **`created_at` 必填** `YYYY-MM-DD HH:mm:ss UTC+8`
+   - 其余字段（title/source/spec/tags/status:open/blocks_merge）按 design §3.2；**`source` 写 `docs/archive/` 最终路径**（步骤七合并后位置，非当前 `archive_valid/`）
 
 否则跳过。**不再次问**。
 
