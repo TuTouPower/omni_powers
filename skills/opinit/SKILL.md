@@ -98,7 +98,7 @@ Agent({
 Agent({
   name: "index-generator",
   // model: 不传则继承主会话；如需固定模型由用户配置 OP_*_MODEL
-  prompt: "读 docs/omni_powers/op_blueprint/ 文档列表，生成两个导航：\n(1) docs/omni_powers/index.md（给 agent）：三态模型 + 各文档定位，/oprun 启动读其摘要（A17，原 SessionStart 注入已移除）\n(2) docs/omni_powers/README.md（给人）：项目用 omni_powers 工作流 + 三区一句话说明 + 指向 index.md + 常用命令（/opintake '/需求/' /oprun /opstatus）" })
+  prompt: "读 docs/omni_powers/op_blueprint/ 文档列表，生成两个导航：\n(1) docs/omni_powers/index.md（给 agent）：三态模型 + 各文档定位，/oprun 启动读其摘要（A17，原 SessionStart 注入已移除）。**禁 profile 段**——profile 有单独文件 `docs/omni_powers/profile`（机器读，唯一真相源），index 不复写模式说明。**禁溯源头注释**（'最后更新'/'来源'，和 blueprint 一致——稳定文档不带易过期日期）。**禁'关键约束'段重复 design/RULES 内容**——index 只做文档导航。\n(2) docs/omni_powers/README.md（给人）：项目用 omni_powers 工作流 + 三区一句话说明 + 指向 index.md + 常用命令（/opintake '/需求/' /oprun /opstatus）。**不重复 index 的详细文档定位**，只做入口概览。" })
 ```
 
 ## 步骤五：注册 hooks（到使用方 .claude/settings.json）
