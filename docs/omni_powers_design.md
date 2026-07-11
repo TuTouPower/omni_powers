@@ -167,7 +167,7 @@ docs/omni_powers/op_execution/
 | `spec_index.md` | **纯 specs/ 索引**：功能清单 + 一句话说明 + 文件指引 | 技术栈/架构/安全（→ architecture/domain） |
 | `specs/{feature}.md` | 各功能生效规格：接口/数据模型/行为（每功能一份） | — |
 
-**已有项目 opinit**：blueprint-generator 从 `docs/archive/` + git log + 现有代码提炼**已实现功能**到 `specs/{feature}.md`（非空，每功能一份），spec_index 索引；新增功能（未实现）opinit 不生成，由 closer 在 per-task 验收 PASS 后提案合入 op_blueprint（A18）。详见 `skills/opinit/SKILL.md` 步骤三。
+**已有项目 opinit**：blueprint-generator 从 `docs/archive_valid/` + git log + 现有代码提炼**已实现功能**到 `specs/{feature}.md`（非空，每功能一份），spec_index 索引；新增功能（未实现）opinit 不生成，由 closer 在 per-task 验收 PASS 后提案合入 op_blueprint（A18）。详见 `skills/opinit/SKILL.md` 步骤三。
 
 ---
 

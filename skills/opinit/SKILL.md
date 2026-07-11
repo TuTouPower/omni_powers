@@ -31,11 +31,12 @@ echo "=== 未执行计划候选（扫现有 md 里 task/plan/todo 关键词）==
 
 据浏览结果整理需问的点，**一次问完**（合并多问题到一次用户提问）：
 
-1. **旧文档归档**（**用户指令优先 + 列计划让用户批准**）：
+1. **旧文档归档 + 有效/废弃分类**（**用户指令优先 + 列计划让用户一次批准**）：
    - 先听用户初始指令（如"重构所有文档"/"归档所有"）——**用户说"所有"则所有进候选，不偷偷排除**
    - 列全部归档候选：根 md + docs md + docs 子目录（含 `design/`/`superpowers/` 等全部，**不预设排除**）
+   - **agent 据文件名/路径判有效/废弃（不读内容）**：路径或文件名含 `deprecated`/`archive`（非本次 opinit 建的 `docs/archive`）/`archive_spec`/`old`/`legacy`/`旧`/`废弃` → 废弃；否则 → 有效。有效文档归 `archive_valid/`（步骤六 issues 提取的可信矿藏），废弃文档归 `archive/`
    - 标注"建议保留"（仅供用户参考，**用户指令覆盖**）：`README.md`（项目入口）/ `CLAUDE.md`（步骤三重构）/ `docs/omni_powers/`（本次生成）。`docs/design/` 默认建议保留（UI 真相源），但**用户说"所有"则归档**，不擅自排除
-   - 向用户呈现计划（候选 + 建议保留），用户批准或调整。用户已说"所有/全部"时**不要二次确认每一个**
+   - 向用户呈现计划（候选 + agent 分类 + 建议保留），**用户一次批准或调整分类**。用户已说"所有/全部"时**不要二次确认每一个**
 2. **未执行计划提取**：docs/archive/ 有 task/plan/todo 文件？问是否提取为 tasks_list.json 的 task
 3. **其他歧义**（有则问，无则跳过）：
    - 三区已存在（重跑 opinit）：保留不覆盖（步骤一脚本幂等），只补缺——无需问
@@ -57,11 +58,13 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
 
 ## 步骤二：归档旧文档（按步骤零答案）
 
-将步骤零用户确认归档的文件移入 `docs/archive/`。**不再次问**——按零答案执行。
+将步骤零用户确认归档的文件**按分类**移入：有效 → `docs/archive_valid/`，废弃 → `docs/archive/`。**不再次问**——按零答案执行。
 
 ```bash
-# leader 据步骤零用户确认的清单，逐个移（文件或整子目录都可）
-for f in <步骤零确认归档的文件/目录>; do mv "$f" docs/archive/; done
+mkdir -p docs/archive_valid
+# leader 据步骤零确认的分类逐个移：有效进 archive_valid（步骤六 issues 矿藏），废弃进 archive
+for f in <有效文档>; do mv "$f" docs/archive_valid/; done
+for f in <废弃文档>; do mv "$f" docs/archive/; done
 ```
 
 - **三区已存在的文件保留**（步骤一脚本幂等，不破坏）——只归档用户确认的旧文档，不动 `docs/omni_powers/`
@@ -75,7 +78,7 @@ for f in <步骤零确认归档的文件/目录>; do mv "$f" docs/archive/; done
 Agent({
   name: "blueprint-generator",
   // model: 不传则继承主会话；如需固定模型由用户配置 OP_*_MODEL
-  prompt: "读 docs/archive/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §1.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）。**只列 specs/ 下每功能一行（功能名 + spec 文件路径），无状态列**（op_blueprint 定义即'已实现'，状态恒 done 无信息量）；**禁止'归档文档位置/archive 清单'段**（归档路径归 index.md）。\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。\n**全体 blueprint 文档禁止溯源头注释**（'来源：docs/archive/...'、'最后更新：日期'、'文件：src/...' 一律不写）——blueprint 是当前真相源，非 archive 派生物，头注释会误导读者回溯废档。\n**test.md 的测试目录结构必须先 `find tests -type d` + `ls tests/` 核对实际再落笔**（含 e2e 目录实际位置/命名），禁止画理想树；测试/构建/启动命令同样从项目实际提取（CLAUDE.md / README / 旧 test.md / package.json scripts / scripts/ / Makefile 各处都可能），找不到标 NEEDS CLARIFICATION 问用户，**绝勿臆造**。" })
+  prompt: "读 docs/archive_valid/ + 近期 git log（git log --oneline -50）+ 现有代码（src/ 结构 + 关键模块），提炼项目'现在是什么'，按 design §1.3 职责矩阵生成 docs/omni_powers/op_blueprint/ 文档（避免重复）：\n- prd.md：产品需求（定位/用户/功能/成功标准/不做）\n- architecture.md：技术栈 + 目录结构 + 模块 + 数据流（唯一目录/技术栈真相）\n- domain.md：术语表 + 跨功能业务不变量\n- conventions.md：命名/风格/文件组织/浏览器 API/日志/适配器步骤（编码独占，技术栈不在此）\n- test.md：测试分层/覆盖/Mock/调试入口\n- spec_index.md：纯 specs/ 索引（功能清单 + 文件指引，不塞技术栈/架构/安全）。**只列 specs/ 下每功能一行（功能名 + spec 文件路径），无状态列**（op_blueprint 定义即'已实现'，状态恒 done 无信息量）；**禁止'归档文档位置/archive 清单'段**（归档路径归 index.md）。\n- specs/{feature}.md：从 archive + 代码 + commit 提炼**已实现功能**，每功能一份（接口/数据模型/行为——'现在是什么'）。已实现功能逐个生成，不遗留空；新增功能（未实现）不生成，留 /opintake 拆分时补。\n丢弃过期内容。重复内容只留独占者，其他文档'详见 X.md'。\n**全体 blueprint 文档禁止溯源头注释**（'来源：docs/archive/...'、'最后更新：日期'、'文件：src/...' 一律不写）——blueprint 是当前真相源，非 archive 派生物，头注释会误导读者回溯废档。\n**test.md 的测试目录结构必须先 `find tests -type d` + `ls tests/` 核对实际再落笔**（含 e2e 目录实际位置/命名），禁止画理想树；测试/构建/启动命令同样从项目实际提取（CLAUDE.md / README / 旧 test.md / package.json scripts / scripts/ / Makefile 各处都可能），找不到标 NEEDS CLARIFICATION 问用户，**绝勿臆造**。" })
 ```
 
 完成后**重构 CLAUDE.md**（dispatch agent 改——对齐"重构所有文档"指令，不只是去重，是重新组织）：
@@ -115,13 +118,19 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 > 一句话：issue = "有这事，还没决定怎么做"；task = "决定好了，照着干"。opinit 不负责拆。
 
 若步骤零用户**确认提取**，分两步（leader + agent）：
-1. **leader 扫候选**：`grep -rilE '待办|未做|todo|待完成|TODO' docs/archive/ 2>/dev/null | head -10`
+1. **leader 扫候选**（只扫 `archive_valid/` 有效文档——废弃文档 `archive/` 的待办可能已过期，不捞）：`grep -rilE '待办|未做|todo|待完成|TODO' docs/archive_valid/ 2>/dev/null | head -10`
 2. **派 Agent 读候选文件**，提炼【还没做】的项（严格过滤已完成 + 暂缓项），返回清单（title / source 行号 / 一句话 / severity 建议）
-3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §3.2 frontmatter 格式：`id: I-YYYYMMDD-NN` + `title` + `source` + `spec` + `severity`/`tags` + `status: open` + `blocks_merge`）
+3. **leader 据清单写 `docs/omni_powers/op_execution/issues/`**（每项一个 issue 文件，design §3.2 frontmatter 格式：`id: I-YYYYMMDD-NN` + `title` + `source` + `spec` + `severity`/`tags` + `status: open` + `blocks_merge`）。**`source` 写 `docs/archive/` 最终路径**（步骤七合并后位置，非当前 `archive_valid/`）
 
 否则跳过。**不再次问**。
 
-## 步骤七：完成报告
+## 步骤七：合并暂存区 + 完成报告
+
+**合并 `archive_valid` → `archive`**（`archive_valid` 是临时暂存区，步骤六 issues 提取完即归一，不留额外目录）：
+
+```bash
+[ -d docs/archive_valid ] && { mv docs/archive_valid/* docs/archive/ 2>/dev/null; rmdir docs/archive_valid 2>/dev/null || true; }
+```
 
 输出：
 1. 归档了哪些文件
