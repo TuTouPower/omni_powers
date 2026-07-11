@@ -23,7 +23,7 @@ esac
 
 # 找当前 TID
 checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
-tid="$(awk -F': *' '/^current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
+tid="$(awk -F': *' '/^### current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
 [ -z "$tid" ] && exit 0
 
 tasks_dir="docs/omni_powers/op_execution/tasks/$tid"

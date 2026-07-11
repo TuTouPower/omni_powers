@@ -17,7 +17,7 @@ agent_type="$(echo "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 if [ -z "$agent_type" ]; then
   # 主会话 Stop：current_task 非空 = task 未收尾，WARN（不 BLOCK，允许用户中断）
   checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
-  tid="$(awk -F': *' '/^current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
+  tid="$(awk -F': *' '/^### current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
   if [ -n "$tid" ]; then
     echo "[Hook Stop] WARN: current_task=$tid 非空——task 未收尾（归档/status done）。oprun 收尾或显式中断。" >&2
   fi
@@ -25,7 +25,7 @@ if [ -z "$agent_type" ]; then
 fi
 
 checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
-tid="$(awk -F': *' '/^current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
+tid="$(awk -F': *' '/^### current_task:/{print $2; exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
 
 # 无活跃 task → WARN（不静默放行；current_task 应由 oprun 派 implementer 前写入）
 if [ -z "$tid" ]; then

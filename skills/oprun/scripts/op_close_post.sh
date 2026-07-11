@@ -78,7 +78,7 @@ bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" done || die "更新状态失败:
 CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
 if [ -f "$CHECKPOINT" ]; then
     tmp="$(mktemp)"
-    if sed 's/^current_task:.*/current_task:/' "$CHECKPOINT" > "$tmp"; then
+    if sed 's/^### current_task:.*/### current_task:/' "$CHECKPOINT" > "$tmp"; then
         mv "$tmp" "$CHECKPOINT"
     else
         rm -f "$tmp"

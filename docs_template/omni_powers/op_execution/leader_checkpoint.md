@@ -5,9 +5,9 @@
 
 ## 断点
 
-current_task:
-last_completed:
-next_step:
+### current_task:
+### last_completed:
+### next_step:
 
 ## 关键上下文
 
