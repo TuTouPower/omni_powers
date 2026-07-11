@@ -69,10 +69,16 @@ if [ ! -f docs/omni_powers/op_execution/leader_checkpoint.md ]; then
   cat > docs/omni_powers/op_execution/leader_checkpoint.md << 'EOF'
 # Leader Checkpoint
 
+## 断点
+
 current_task:
 last_completed:
 next_step:
-关键上下文:
+
+## 关键上下文
+
+- 当前目标：...
+- 卡点 / 待决策：...
 EOF
 fi
 

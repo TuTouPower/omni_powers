@@ -95,7 +95,7 @@ spec 正文必含：
 
 ## 步骤五：写 checkpoint
 
-编辑 `docs/omni_powers/op_execution/leader_checkpoint.md`：`next_step: 交 /oplrun 续跑`，关键上下文段填当前目标。
+编辑 `docs/omni_powers/op_execution/leader_checkpoint.md`：`current_task` 留空（未领），`next_step: 交 /oplrun 续跑`，关键上下文段填当前目标。
 
 ## 终点
 

@@ -85,6 +85,8 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
 `tasks_list.json` 已写入 `status="ready"` 的 task（顺序依赖机读）+ `leader_checkpoint.md` 标注 spec 就绪。交接给 `/oprun`。
 
+> checkpoint 写规范：`current_task` 只填领用的 TID（oprun 领后写）或**空**（intake/awaiting_gate 未领）——状态信息归 `next_step`/关键上下文，hook P0-4 awk 读 current_task 校验新鲜证据，填描述会得乱 tid。格式见 `docs_template/omni_powers/op_execution/leader_checkpoint.md`。
+
 ## compact 恢复
 
 1. 读 `RULES.md`
