@@ -242,6 +242,8 @@ token 消耗排序（定性，per-task 验收后 evaluator 频次上升）：imp
 
 #### spec 模板
 
+> **行为段去坐标（§290——人不审文件/函数清单，杠杆全在行为层）**：意图 / INV / AC / 边界 / 不做 五段只写行为与用户可观察结果。禁行号、文件名、函数名、变量名、CSS 类 / DOM selector、公式、API 字段——收敛到「技术决策 → 实现锚点」。人是首要读者（闸门 A），坐标随重构腐烂让契约失效；AI 从锚点区自取坐标。
+
 ```markdown
 ---
 status: draft        # draft → approved（approved 后冻结；状态推进只走 tasks_list.status——免每次推进都解锁写保护）
@@ -251,11 +253,14 @@ type: feat           # feat | fix | refactor | perf | style | test | ...
 ## 一句话意图
 ## 不变量（INV——填不出 = 没理解需求；每条编号 INV-N，如 INV-1；与 domain.md/生效规格冲突必须显式标注）
    <!-- refactor 型此区最长：列出所有必须保持的行为契约 -->
+   <!-- 只写行为契约，禁坐标（行号/文件/函数/变量/selector/公式）→ 坐标入「实现锚点」 -->
 ## 验收场景（验收标准AC，Acceptance Criteria——每条编号 AC-N，如 AC-1；Then 必须用户可观察；每条须可直接翻译为可执行断言）
    <!-- feat: 用户能做什么新事 | refactor: 等价性验证 | perf: 量化指标 -->
+   <!-- 可观察=用户视角（看见/能做/状态变化），非 DOM 度量或 selector 存在性 -->
 ## 边界与反例（竞态、并发、空状态、失败路径、刷新/重启、多显示器/多窗口）
+   <!-- 同样禁坐标，场景与期望用白话行为描述 -->
 ## 不做的事
-## 技术决策（三类内容，均随闸门 A 过人审）
+## 技术决策（四类内容，均随闸门 A 过人审）
 ### 条件强制：被 2+ task 依赖的决策
    - {数据模型/模块通信/状态存储/接口形状} —— {理由}
 ### 设计探索结论：命中方案先行信号时
@@ -263,6 +268,11 @@ type: feat           # feat | fix | refactor | perf | style | test | ...
    - 推荐：{选哪个} —— {复杂度与边界行为权衡 + 理由}
    - 已知坑：{坑}
    <!-- 完整探索过程存 decisions.md，此处只留结论。未命中信号则此区空 -->
+### 实现锚点：坐标集中地（给 implementer/reviewer，可选）
+   - 文件/函数/行号: {如 dashboard_detail.ts:207 mark 定位逻辑}
+   - DOM/CSS 锚点: {如 #tlZoom 滑块 / .tl-mm-window 窗口}
+   - 状态/变量: {如 _dt_zoom 模块级状态}
+   <!-- 行为段禁出现的坐标全收敛到此。无坐标则省此区；evaluator 测试 selector 归「可测性契约」不在此 -->
 ### 可测性契约（必填）
    {写 spec 时顺手推导——验收标准的验收方式自然延伸；implementer 把测试缝当成和验收标准同级的交付义务}
    - 应用启动方式: {一条命令启动，如 npm start / ./app / ...}
@@ -287,7 +297,7 @@ type: feat           # feat | fix | refactor | perf | style | test | ...
 | task 间接口契约 | **接口先行 task 以代码提交**（类型/schema，编译器强制——严格强于文档签名，文档会漂移代码不会）。**验收**：编译/类型检查通过 + 下游 task 能 import；reviewer 确认接口形状对齐 spec 技术决策 | implementer |
 | 工作集（文件级清单） | tasks_list.json | leader（merge gate 越界检查参考，§3.4） |
 
-三个消费者的裁定：**人不审文件/函数清单**（没有代码深度判断不了对错，拦截率≈0，杠杆全在行为层）；**leader 需要文件级工作集但纯属机械用途**；**implementer 拿 spec + tasks_list 该条元数据 + 接口代码，函数级内部结构自定**——实际触碰文件与预估偏差过大时，reviewer 规格合规裁决抓范围偏航。
+三个消费者的裁定：**人不审文件/函数清单**（没有代码深度判断不了对错，拦截率≈0，杠杆全在行为层）；**leader 需要文件级工作集但纯属机械用途**；**implementer 拿 spec + tasks_list 该条元数据 + 接口代码，函数级内部结构自定**——实际触碰文件与预估偏差过大时，reviewer 规格合规裁决抓范围偏航。同理，spec 行为段（意图/INV/AC/边界/不做）禁夹坐标，坐标收敛至「技术决策-实现锚点」（§2.2 模板）。
 
 #### task 元数据（tasks_list.json 一条记录）
 

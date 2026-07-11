@@ -40,6 +40,8 @@ opintake 传入（或兜底时本 skill 补齐）：
 
 ## spec 模板
 
+> **行为段去坐标（design §290——人不审文件/函数清单，杠杆全在行为层）**：意图 / INV / AC / 边界 / 不做 五段只写行为与用户可观察结果。**禁**行号、文件名、函数名、变量名、CSS 类 / DOM selector、公式、API 字段——这些坐标收敛到「技术决策 → 实现锚点」子区。人是 spec 首要读者（闸门 A 人批），坐标随重构腐烂会让契约失效；AI 能从锚点区自取坐标。
+
 ```markdown
 ---
 status: draft        # draft（本 skill 写）→ approved（闸门 A 人批）。本 skill 只写 draft，approved 后冻结（design §1.2，执行期 spec-delta 走变更子流程不改 status）
@@ -55,21 +57,24 @@ eval_reason: null    # eval=skip 时必填免派理由；required 时 null
 {填不出 = 没理解需求。与 docs/omni_powers/op_blueprint/domain.md / 生效规格冲突必须显式标注}
 - INV-1: {不变量} —— {为什么}
 <!-- refactor 型此区最长：列出所有必须保持的行为契约 -->
+<!-- 只写行为契约，禁坐标（行号/文件/函数/变量/selector/公式）→ 坐标入「实现锚点」 -->
 
 ## 验收场景（验收标准 AC）
 {Then 必须用户可观察。每条须可直接翻译为可执行断言}
 - AC-1: Given {前置} When {操作} Then {可观察结果}
 <!-- feat: 用户能做什么新事 | refactor: 等价性验证 | perf: 量化指标 -->
+<!-- 可观察=用户视角（看见/能做/状态变化），非 DOM 度量或 selector 存在性 -->
 
 ## 边界与反例
 {竞态、并发、空状态、失败路径、刷新/重启、多显示器/多窗口}
 - {边界场景}: {期望行为}
+<!-- 同样禁坐标，场景与期望用白话行为描述 -->
 
 ## 不做的事
 - {明确排除的范围}
 
 ## 技术决策
-{三类内容，均随闸门 A 过人审}
+{四类内容，均随闸门 A 过人审}
 ### 条件强制（被 2+ task 依赖的决策）
 - {数据模型/模块通信/状态存储/接口形状} —— {理由}
 
@@ -78,6 +83,12 @@ eval_reason: null    # eval=skip 时必填免派理由；required 时 null
 - 推荐：{选哪个} —— {复杂度与边界行为权衡 + 理由}
 - 已知坑：{坑}
 <!-- 完整探索过程存 docs/omni_powers/op_record/decisions.md，此处只留结论。未命中信号则此区空 -->
+
+### 实现锚点（坐标集中地——给 implementer/reviewer，可选）
+- 文件/函数/行号: {如 dashboard_detail.ts:207 mark 定位逻辑}
+- DOM/CSS 锚点: {如 #tlZoom 滑块 / .tl-mm-window 窗口}
+- 状态/变量: {如 _dt_zoom 模块级状态}
+<!-- 行为段禁出现的坐标全收敛到此。无坐标则省此区；evaluator 测试 selector 归「可测性契约」不在此 -->
 
 ### 可测性契约（必填，design §2.2——无 N/A 例外）
 {写 spec 时顺手推导——验收标准的验收方式自然延伸}
@@ -147,7 +158,7 @@ CDP 接入方式（写进可测性契约的"应用启动方式"旁）：
 
 ## 不变量优先
 
-填不出 不变量 = 没理解需求。不变量与 `docs/omni_powers/op_blueprint/domain.md` 或既有生效规格冲突必须显式标注（写 `⚠️ 与 domain.md X 冲突，待闸门 A 裁定`）。
+填不出 不变量 = 没理解需求。不变量与 `docs/omni_powers/op_blueprint/domain.md` 或既有生效规格冲突必须显式标注（写 `⚠️ 与 domain.md X 冲突，待闸门 A 裁定`）。不变量陈述行为契约，不夹坐标（行号/文件/selector/公式）——坐标入「技术决策 → 实现锚点」，避免随重构腐烂（design §290）。
 
 ## spec 自审
 
