@@ -1,7 +1,7 @@
 ---
 name: opintake
 description: >
-  需求入口：spec 编写（含设计探索，task:spec 1:1 每 task 一份）→ 闸门 A 批复 → 自动拆 task → tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
+  需求入口：spec 编写（含设计探索，task:spec 1:1 每 task 一份）→ 拆 task（awaiting_gate）→ 闸门 A 批复（→ready）→ tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
   触发：/opintake "<需求>"、新需求、做个功能。
   终点：tasks_list 就绪，task status=`ready`，leader_checkpoint 标注 spec 就绪，交给 /oprun。
 ---
@@ -12,7 +12,7 @@ description: >
 >
 > **profile 互斥**：`[ -f docs/omni_powers/profile ] && ! grep -qx heavy docs/omni_powers/profile` 命中 → **停**，提示 lite 项目用 `/oplintake`，不混跑。（无 profile 文件 = 旧 heavy 项目，放行）
 
-`/opintake "<需求>"` 是需求入口。spec 编写（task:spec 1:1）→ 闸门 A → 拆 task → task 待开始。
+`/opintake "<需求>"` 是需求入口。spec 编写（task:spec 1:1）→ 拆 task（`awaiting_gate`）→ 闸门 A → task 待开始（`ready`）。
 
 协议规则见 `RULES.md`。spec 模板与设计探索流程见内部 skill `opspec`。
 
@@ -44,19 +44,9 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
 先输出假设清单一并供审。
 
-## 步骤三：闸门 A（人工审 spec + 方案）
+## 步骤三：拆 task 写入 tasks_list.json（awaiting_gate）
 
-呈报一次 intake 的全部 task spec 给用户审（**闸门 A 预算 15-30 分钟/需求**——design 原则 11/§2.2：spec 含不变量+验收标准+边界+三类技术决策+可测性契约，是全系统唯一质量单点，5-10 分钟审不完只会橡皮图章；只读自然语言）：
-- 不变量覆盖沉默失败区（数据隔离/持久化/权限）
-- 边界含竞态与失败路径
-- Then 全部可翻译为断言
-- 技术决策无遗漏（拆 task 时发现某 task 产出约束他人而 spec 未写 = 打回补 spec）
-
-人批 → `status: approved` + 写保护（**硬底线是 merge gate**——task 分支对 approved spec 路径零 diff，design §3.4；主分支侧 git pre-commit 拦 leader 误改 + 主会话 PreToolUse 拦截；subagent 场景 hook deny 失效，靠 merge gate + 结构）。是否立即 commit 需用户明确授权；闸门 A 批准本身不等于 commit 授权。
-
-## 步骤四：拆 task 写入 tasks_list.json
-
-沿低耦合缝隙切（层/模块/数据流阶段），先列缝再核工作集。
+沿低耦合缝隙切（层/模块/数据流阶段），先列缝再核工作集。task:spec 1:1（步骤二 spec 已确定划分，本 step 形式化写入）。
 
 每个 task 写入 `tasks_list.json`：
 
@@ -64,7 +54,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 {
   "id": "T0003",
   "title": "<语义级标题，一句 commit message 能说清>",
-  "status": "ready",
+  "status": "awaiting_gate",
   "spec": "specs/{TID}_{slug}.md",
   "depends_on": ["T0001"],
   "workset": ["src/store/session.ts"],
@@ -73,13 +63,23 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 }
 ```
 
-沿低耦合缝隙切（层/模块/数据流阶段）；天然不可分（横切重构/脚手架）→ 单 task 自足 spec，不硬锯（design §2.3）。
+`status` 写 `awaiting_gate`（draft spec 就位 + task 已拆，待闸门 A 批；oprun 不领，design §1.1）。沿低耦合缝隙切（层/模块/数据流阶段）；天然不可分（横切重构/脚手架）→ 单 task 自足 spec，不硬锯（design §2.3）。
 
 **接口先行 task**：被 2+ task 依赖的接口/数据模型，用代码先占位提交（编译器强制，严格强于文档签名）。
 
+## 步骤四：闸门 A（人工审 spec + task 划分 → approved + ready）
+
+呈报一次 intake 的全部 task spec + tasks_list 给用户审（**闸门 A 预算 15-30 分钟/需求**——design 原则 11/§2.2：spec 含不变量+验收标准+边界+三类技术决策+可测性契约，是全系统唯一质量单点，5-10 分钟审不完只会橡皮图章；只读自然语言）：
+- 不变量覆盖沉默失败区（数据隔离/持久化/权限）
+- 边界含竞态与失败路径
+- Then 全部可翻译为断言
+- 技术决策无遗漏（拆 task 时发现某 task 产出约束他人而 spec 未写 = 打回补 spec）
+
+人批 → spec `status: approved` + 写保护 + 本 intake 的 task `awaiting_gate`→`ready`（`bash "$OP_HOME/scripts/op_status.sh" <TID> ready`，多 task 用 `--batch`）（**硬底线是 merge gate**——task 分支对 approved spec 路径零 diff，design §3.4；主分支侧 git pre-commit 拦 leader 误改 + 主会话 PreToolUse 拦截；subagent 场景 hook deny 失效，靠 merge gate + 结构）。是否立即 commit 需用户明确授权；闸门 A 批准本身不等于 commit 授权。
+
 ## 步骤五：顺序依赖归位（不进 spec 本体）
 
-顺序依赖已在步骤四写入 `tasks_list.json`（`depends_on` 字段，机读）+ `leader_checkpoint.md`（人扫）。**不进 spec 本体**——spec 经闸门 A 写保护后追加会冲突。Stage 2 自检扫 `tasks_list.json` 依赖 + 拆 task 自检（跨 task 决策遗漏则回补 spec 再过 A，可跳过）。
+顺序依赖已在步骤三写入 `tasks_list.json`（`depends_on` 字段，机读）+ `leader_checkpoint.md`（人扫）。**不进 spec 本体**——spec 经闸门 A 写保护后追加会冲突。Stage 2 自检扫 `tasks_list.json` 依赖 + 拆 task 自检（跨 task 决策遗漏则回补 spec 再过 A，可跳过）。
 
 ## 终点：task 待开始
 

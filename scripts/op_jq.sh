@@ -3,6 +3,7 @@
 # 用法: op_jq.sh <query> [args...]
 # 查询项:
 #   pending              — 查所有待开始 task（status=ready）
+#   awaiting             — 查所有待闸门 A 审批 task（status=awaiting_gate）
 #   pending_plan         — 查所有待规划 task（status=pending）
 #   deps <TID>           — 查某 task 的前置依赖是否全完成
 #   blocked              — 查所有阻塞 task
@@ -15,12 +16,15 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
-CMD="${1:?用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]}"
+CMD="${1:?用法: op_jq.sh <pending|awaiting|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]}"
 shift
 
 case "$CMD" in
 pending)
     jq '.tasks[] | select(.status=="ready") | {id, title, status}' "$TASKS"
+    ;;
+awaiting)
+    jq '.tasks[] | select(.status=="awaiting_gate") | {id, title, status}' "$TASKS"
     ;;
 pending_plan)
     jq '.tasks[] | select(.status=="pending") | {id, title, status}' "$TASKS"
@@ -66,7 +70,7 @@ all)
     jq '[.tasks[] | {id, status, depends_on}]' "$TASKS"
     ;;
 *)
-    echo "用法: op_jq.sh <pending|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]" >&2
+    echo "用法: op_jq.sh <pending|awaiting|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]" >&2
     exit 1
     ;;
 esac

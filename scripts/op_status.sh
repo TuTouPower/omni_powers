@@ -4,7 +4,7 @@
 #   op-status <TID> <status> [blocked_by]         单 task
 #   op-status --batch <TID1,TID2,...> <status>     批量 task（同状态）
 #
-# status 有效值（ASCII 机读）: pending ready in_progress reviewing closing done suspended blocked obsolete
+# status 有效值（ASCII 机读）: pending awaiting_gate ready in_progress reviewing closing done suspended blocked obsolete
 # blocked_by 仅在 status=阻塞 时填写 (resource/quality/spawn)，其余留空
 set -euo pipefail
 
@@ -35,8 +35,8 @@ fi
 # ── 校验 status ──
 
 case "$status" in
-    pending|ready|in_progress|reviewing|closing|done|suspended|blocked|obsolete) ;;
-    *) die "无效 status: $status（有效值: pending ready in_progress reviewing closing done suspended blocked obsolete）" ;;
+    pending|awaiting_gate|ready|in_progress|reviewing|closing|done|suspended|blocked|obsolete) ;;
+    *) die "无效 status: $status（有效值: pending awaiting_gate ready in_progress reviewing closing done suspended blocked obsolete）" ;;
 esac
 
 # blocked_by 映射到 JSON null / string

@@ -27,6 +27,7 @@ cat docs/omni_powers/op_execution/leader_checkpoint.md
 ```bash
 bash "$OP_HOME/scripts/op_jq.sh" all          # 全部概览
 bash "$OP_HOME/scripts/op_jq.sh" pending      # 待开始
+bash "$OP_HOME/scripts/op_jq.sh" awaiting     # 待闸门 A 审批
 bash "$OP_HOME/scripts/op_jq.sh" blocked      # 阻塞
 bash "$OP_HOME/scripts/op_jq.sh" obsolete     # 废弃
 ```
@@ -42,6 +43,7 @@ bash "$OP_HOME/scripts/op_jq.sh" obsolete     # 废弃
   T0001 ✅完成  {title}
   T0002 🔄进行中 {title}
   T0003 ⏳待开始 (依赖 T0002) {title}
+  T0004 ⏸待闸门 A 审批 {title}
   T04 🚫阻塞 (quality) {title}
   T05 ⚫废弃 {title}
 == 下一步 == {下一个可跑 task 或阻塞原因}
@@ -51,6 +53,7 @@ bash "$OP_HOME/scripts/op_jq.sh" obsolete     # 废弃
 ### 4. 异常提示
 
 - 有 `待规划` task → 提示用 `/opintake`
+- 有 `待闸门 A 审批` task → 提示批准（spec→approved + 转 ready）或 `/opintake` 调整
 - 有 `阻塞` task → 列出 blocked_by 与所需外部条件
 - 有 `废弃` task → 提示方案调整连带，确认下游是否也废弃
 - 有 `tech-debt` 标签 issue → 列出计数

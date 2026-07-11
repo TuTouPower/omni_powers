@@ -59,20 +59,7 @@ spec 正文必含：
 
 > lite 无 blueprint 定向包——spec 是 implementer 唯一契约源，须自足（含必要的架构/命名约束内联）。
 
-## 步骤三：闸门 A（人工审 spec）
-
-呈报一次 intake 的全部 task spec 给用户审（**闸门 A 预算 15-30 分钟/需求**，design 原则 11/§2.2；只读自然语言）：
-
-- 不变量覆盖沉默失败区
-- 边界含竞态与失败路径
-- Then 全部可翻译为断言
-- 技术决策无遗漏
-
-人批 → 改 frontmatter `status: approved`。
-
-> lite 无 hook 写保护——approved 后靠约定 + git diff 可回溯。leader 单点掌控 spec，不擅自改。
-
-## 步骤四：拆 task 写 tasks_list.json
+## 步骤三：拆 task 写 tasks_list.json（awaiting_gate）
 
 沿低耦合缝隙切（层/模块/数据流阶段）。每 task 追加到 `docs/omni_powers/op_execution/tasks_list.json`：
 
@@ -80,7 +67,7 @@ spec 正文必含：
 {
   "id": "T0001",
   "title": "<语义级标题，一句 commit message 能说清>",
-  "status": "ready",
+  "status": "awaiting_gate",
   "spec": "specs/{TID}_{slug}.md",
   "depends_on": null,
   "workset": ["src/..."],
@@ -89,9 +76,22 @@ spec 正文必含：
 }
 ```
 
-leader 用 jq 写入（`.tasks += [{...}]`）。`depends_on` 记前置依赖数组（无则 null）。
+`status` 写 `awaiting_gate`（draft spec 就位 + task 已拆，待闸门 A 批；oplrun 不领）。leader 用 jq 写入（`.tasks += [{...}]`）。`depends_on` 记前置依赖数组（无则 null）。
 
 **接口先行**：被 2+ task 依赖的接口/数据模型，用代码先占位提交。
+
+## 步骤四：闸门 A（人工审 spec + task 划分 → approved + ready）
+
+呈报一次 intake 的全部 task spec + tasks_list 给用户审（**闸门 A 预算 15-30 分钟/需求**，design 原则 11/§2.2；只读自然语言）：
+
+- 不变量覆盖沉默失败区
+- 边界含竞态与失败路径
+- Then 全部可翻译为断言
+- 技术决策无遗漏
+
+人批 → 改 frontmatter `status: approved` + 本 intake 的 task `awaiting_gate`→`ready`（`bash "$OP_HOME/scripts/op_status.sh" <TID> ready`）。
+
+> lite 无 hook 写保护——approved 后靠约定 + git diff 可回溯。leader 单点掌控 spec，不擅自改。
 
 ## 步骤五：写 checkpoint
 
