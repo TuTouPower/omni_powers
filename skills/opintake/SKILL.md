@@ -58,8 +58,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
   "spec": "specs/{TID}_{slug}.md",
   "depends_on": ["T0001"],
   "workset": ["src/store/session.ts"],
-  "eval": "required",
-  "eval_reason": null
+  "eval": "required"
 }
 ```
 

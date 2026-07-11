@@ -46,8 +46,7 @@ opintake 传入（或兜底时本 skill 补齐）：
 ---
 status: draft        # draft（本 skill 写）→ approved（闸门 A 人批）。本 skill 只写 draft，approved 后冻结（design §1.2，执行期 spec-delta 走变更子流程不改 status）
 type: feat           # feat | refactor | perf | ...（决定测试规则与 验收标准侧重）
-eval: required       # required（默认，派 evaluator）| skip（免派——接口先行/脚手架/纯内部重构，design §2.4）
-eval_reason: null    # eval=skip 时必填免派理由；required 时 null
+eval: required       # "required"（派 evaluator，默认）| <免派理由文本>（免派——接口先行/脚手架/纯内部重构，design §2.4/D9）。值非 "required" 即免派，值即理由
 ---
 # {名称}
 ## 一句话意图

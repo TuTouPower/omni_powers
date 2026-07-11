@@ -7,8 +7,7 @@
       "spec": "specs/{TID}_{slug}.md",
       "depends_on": null,
       "workset": ["src/..."],
-      "eval": "required",
-      "eval_reason": null
+      "eval": "required"
     },
     {
       "id": "T0002",
@@ -17,8 +16,7 @@
       "spec": "specs/{TID}_{slug}.md",
       "depends_on": ["T0001"],
       "workset": ["src/..."],
-      "eval": "required",
-      "eval_reason": null
+      "eval": "required"
     },
     {
       "id": "T0003",
@@ -28,8 +26,7 @@
       "spec": "specs/{TID}_{slug}.md",
       "depends_on": ["T0001"],
       "workset": ["src/..."],
-      "eval": "required",
-      "eval_reason": null
+      "eval": "required"
     }
   ]
 }

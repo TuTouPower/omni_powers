@@ -71,8 +71,7 @@ spec 正文必含：
   "spec": "specs/{TID}_{slug}.md",
   "depends_on": null,
   "workset": ["src/..."],
-  "eval": "required",
-  "eval_reason": null
+  "eval": "required"
 }
 ```
 
