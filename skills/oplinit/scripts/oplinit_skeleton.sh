@@ -62,10 +62,6 @@ current_task:
 last_completed:
 next_step:
 
-## 已完成 task
-
-<!-- leader 每 task 收口后追加: "- {TID} {title} ✅ {hash}" -->
-
 ## 关键上下文（leader 手动填）
 
 - 当前目标：...

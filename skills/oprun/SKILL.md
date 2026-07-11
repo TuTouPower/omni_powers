@@ -265,7 +265,6 @@ bash "$OP_HOME/skills/oprun/scripts/op_close_post.sh" {TID} {feature}
 #   + 追加 progress + tasks_list 标"完成"
 git status --short
 git commit -m "feat({TID}): {title}"
-bash "$OP_HOME/skills/oprun/scripts/op_checkpoint.sh {TID}
 bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
 # 删 task 分支与 worktree（per-task 分支模型）
 ```
@@ -312,7 +311,6 @@ cd <原项目根目录>
 | `skills/oprun/scripts/op_coder_check.sh` | implementer 模式判定 |
 | `skills/oprun/scripts/op_read_verdict.sh` | verdict 读取 + 轮次 |
 | `skills/oprun/scripts/close_check.sh` | 收口验收 |
-| `skills/oprun/scripts/op_checkpoint.sh` | checkpoint 写入 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |
 | `scripts/op_worktree_setup.sh` | 隔离 worktree 创建（dev 排除 e2e / eval 排除 src+tasks+decisions） |
 | `scripts/op_worktree_teardown.sh` | worktree + 分支清理 |

@@ -163,11 +163,11 @@ docs/omni_powers/op_execution/
 | `architecture.md` | 架构真相：**技术栈 + 目录结构 + 模块划分 + 数据流 + 跨模块契约**（唯一目录/技术栈真相） | 命名规范/编码风格（→ conventions） |
 | `domain.md` | 领域语言（术语表）+ 跨功能**业务**不变量（如"刷新恢复""hook 隔离原则""AI 实例不进 store"） | 编码风格/实现细节（→ conventions） |
 | `conventions.md` | 编码约定：命名/风格/文件组织/浏览器 API/不可变性/日志规则/适配器开发步骤（**编码独占**） | 业务不变量（→ domain）/架构（→ architecture） |
-| `test.md` | 测试宪章：分层/覆盖/lane/Mock 规则/调试入口（CDP 等） | 命名/架构 |
+| `test.md` | 测试宪章：分层/覆盖/Mock 规则/调试入口 | 命名/架构 |
 | `spec_index.md` | **纯 specs/ 索引**：功能清单 + 一句话说明 + 文件指引 | 技术栈/架构/安全（→ architecture/domain） |
 | `specs/{feature}.md` | 各功能生效规格：接口/数据模型/行为（每功能一份） | — |
 
-**已有项目 opinit**：blueprint-generator 从 `docs/archive/` + git log + 现有代码提炼**已实现功能**到 `specs/{feature}.md`（非空，每功能一份），spec_index 索引；新增功能（未实现）不生成，留 `/opintake` 拆分时补。详见 `skills/opinit/SKILL.md` 步骤三。
+**已有项目 opinit**：blueprint-generator 从 `docs/archive/` + git log + 现有代码提炼**已实现功能**到 `specs/{feature}.md`（非空，每功能一份），spec_index 索引；新增功能（未实现）opinit 不生成，由 closer 在 per-task 验收 PASS 后提案合入 op_blueprint（A18）。详见 `skills/opinit/SKILL.md` 步骤三。
 
 ---
 

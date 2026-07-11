@@ -5,12 +5,12 @@
 
 ## 功能清单
 
-> 每行：功能名 → specs/{feature}.md + 一句话说明 + 状态。
-> 已实现功能 opinit 时从 archive + 代码提炼填入；新增功能 /opintake 拆分时补。
+> 每行：功能名 → specs/{feature}.md + 一句话说明。
+> 已实现功能 opinit 时从 archive + 代码提炼填入；新增功能 closer 在 per-task 验收 PASS 后提案合入（不经 opintake）。
 
-| 功能 | 规格 | 一句话说明 | 状态 |
-|---|---|---|---|
-| {功能名} | [specs/{feature}.md](specs/{feature}.md) | {说明} | 已实现 / 待 opintake |
+| 功能 | 规格 | 一句话说明 |
+|---|---|---|
+| {功能名} | [specs/{feature}.md](specs/{feature}.md) | {说明} |
 
 ## 设计资产指引（可选）
 

@@ -2,7 +2,7 @@
 # close_check：per-task 收口后 checklist，leader 跑，非 0 拦住不许进下一个 task
 # 用法: close_check.sh <TID>
 # 检查项（per-task 收口）:
-#   1. leader_checkpoint.md 含本 task                → 必须通过
+#   1. tasks_list.json 该 task status=done           → 必须通过（唯一真相源）
 #   2. 归档目录二件齐全（report/review）       → 必须通过
 #   3. git status 非本 task 残留                     → 仅提醒，不拦
 # 注意: closer per-task 一段式已产 blueprint_update（验收后，design §2.4）；不查 spec.md（task:spec 1:1 各自独立）
@@ -18,11 +18,12 @@ warn=0
 
 echo "=== per-task 收口检查: $TID ==="
 
-# 1. leader_checkpoint.md 含本 task
-if grep -qE "^- ${TID} " docs/omni_powers/op_execution/leader_checkpoint.md 2>/dev/null; then
-    echo "[PASS] leader_checkpoint.md 含 ${TID}"
+# 1. tasks_list.json 该 task status=done（唯一真相源）
+status=$(jq -r ".tasks[] | select(.id == \"$TID\") | .status" docs/omni_powers/op_execution/tasks_list.json 2>/dev/null)
+if [ "$status" = "done" ]; then
+    echo "[PASS] tasks_list.json 标 ${TID} done"
 else
-    echo "[FAIL] leader_checkpoint.md 未更新 ${TID}"
+    echo "[FAIL] tasks_list.json 未标 ${TID} done（当前: ${status:-未找到}）"
     fail=1
 fi
 

@@ -30,9 +30,8 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 |---|---|
 | op_close_post.bats | 校验 review+eval verdict PASS（D6）+ 归档 task/spec/acceptance（§1.2 三态）+ 标 done + 清 current_task |
 | op_status.bats | blocked 强校验 blocked_by、状态流转（ASCII：blocked/done） |
-| op_checkpoint.bats | 幂等 + TID 锚定（不误配 T010） |
 | op_read_verdict.bats | 轮次判定、exit code |
-| close_check.bats | TID 精确匹配 |
+| close_check.bats | 归档验收（tasks_list done + 归档二件齐全） |
 | pre_tool_use.bats | 路径匹配（含 baselines）、spec 写保护 |
 | op_check_env.bats | 环境检查（jq/git/OP_HOME） |
 | opinit_register_hooks.bats | hooks 注册（PreToolUse/PostToolUse/SubagentStop/Stop）、OP_HOME 校验、Windows wrapper |
