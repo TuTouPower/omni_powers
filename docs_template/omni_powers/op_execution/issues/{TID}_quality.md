@@ -9,7 +9,7 @@ task: {TID}
 severity: P0 | P1
 status: open
 tags: [quality, blocker]
-created_at: {YYYY-MM-DD HH:mm UTC+8}
+created_at: {YYYY-MM-DD HH:mm:ss UTC+8}
 
 ## 未解决的问题
 （从 review.md 摘要残留的 CRITICAL/HIGH）

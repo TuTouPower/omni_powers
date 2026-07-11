@@ -10,7 +10,7 @@ tags: [tech-debt]
 status: open
 converted_to:
 blocks_merge: true | false
-created_at: {YYYY-MM-DD HH:mm UTC+8}
+created_at: {YYYY-MM-DD HH:mm:ss UTC+8}
 ---
 
 ## 描述

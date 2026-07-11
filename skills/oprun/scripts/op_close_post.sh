@@ -11,7 +11,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
 ARCHIVE_DIR="$ROOT/docs/omni_powers/op_record/tasks/$TID"
 PROGRESS_FILE="$ROOT/docs/omni_powers/op_record/progress.md"
-DATE="$(date +%F)"
+DATE="$(TZ='Asia/Shanghai' date +'%F %T UTC+8')"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
