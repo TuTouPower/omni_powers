@@ -30,7 +30,7 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 **收到任务后先跑判断脚本**：
 
 ```bash
-bash "$(op_script op_coder_check.sh)" {TID}   # op_script() 见文件顶部 resolver
+bash "$(op_script op_implementer_check.sh)" {TID}   # op_script() 见文件顶部 resolver
 # 输出 mode + round，据此决定走哪个流程
 ```
 

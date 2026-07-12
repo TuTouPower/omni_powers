@@ -119,7 +119,7 @@ fi
 ### 子步骤 3.2：派 op-implementer
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op_coder_check.sh" {TID}
+bash "$OP_HOME/scripts/op_implementer_check.sh" {TID}
 # 输出: mode=normal|fail|blocked, round=1|2|3（>=3 即 blocked，exit 1）
 # exit 0=可继续, exit 1=阻塞
 ```
@@ -148,7 +148,7 @@ awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {i
 ```js
 Agent({ name: "op-implementer", subagent_type: "op-implementer",
   // model: 按顶部"派发模型规则"传——读 OP_IMPLEMENTER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op_coder_check.sh {TID} 确定模式。读 spec（路径见 dispatch prompt）。TDD 实现（只跑结构层单测，不跑 e2e）。写 report.md（顶部总报告 + 分 Round 追加）。" })
+  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op_implementer_check.sh {TID} 确定模式。读 spec（路径见 dispatch prompt）。TDD 实现（只跑结构层单测，不跑 e2e）。写 report.md（顶部总报告 + 分 Round 追加）。" })
 ```
 
 implementer 返回后读摘要验证产出：
@@ -308,7 +308,7 @@ cd <原项目根目录>
 | `scripts/op_status.sh` | 状态流转 |
 | `skills/oprun/scripts/op_close_pre.sh` | 收口前机械步骤 |
 | `skills/oprun/scripts/op_close_post.sh` | 收口后机械步骤 |
-| `skills/oprun/scripts/op_coder_check.sh` | implementer 模式判定 |
+| `scripts/op_implementer_check.sh` | implementer 模式判定 |
 | `skills/oprun/scripts/op_read_verdict.sh` | verdict 读取 + 轮次 |
 | `skills/oprun/scripts/close_check.sh` | 收口验收 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |

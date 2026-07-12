@@ -74,7 +74,7 @@ leader 先建 task 工作区（不写 brief）：
 mkdir -p docs/omni_powers/op_execution/tasks/{TID}
 # report.md/review.md 由 agent 产出；无 brief——dispatch 给指针
 DISPATCH_SHA=$(git rev-parse HEAD)   # 记 dispatch 锚点 sha（D3：3.4 reviewer diff 锚定 + 3.6 spec 写保护用，leader 循环内持有）
-bash "$SCRIPTS/op_coder_check.sh" {TID}   # 输出 mode=normal|fail|blocked, round
+bash "$SCRIPTS/op_implementer_check.sh" {TID}   # 输出 mode=normal|fail|blocked, round
 bash "$SCRIPTS/op_status.sh" {TID} in_progress
 awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {if(!f)print}' docs/omni_powers/op_execution/leader_checkpoint.md > /tmp/cp.md && mv /tmp/cp.md docs/omni_powers/op_execution/leader_checkpoint.md
 ```
@@ -93,7 +93,7 @@ spec: docs/omni_powers/op_execution/specs/{TID}_{slug}.md
 Agent(subagent_type="op-implementer", prompt:
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite
-   {title}（{TID}）。先跑 op_coder_check.sh {TID} 定模式。
+   {title}（{TID}）。先跑 op_implementer_check.sh {TID} 定模式。
    读 spec（路径见 dispatch prompt）+ jq tasks_list 取 workset。TDD 实现（先写映射验收标准的结构层单测，不跑 e2e）。
    写 report.md：顶部总报告（状态 + evidence 命令/路径）+ 分 Round。
    lite 无 blueprint 定向包——spec 是唯一契约源。")
@@ -251,7 +251,7 @@ bash "$SCRIPTS/op_jq.sh" blocked
 |---|---|
 | `scripts/op_jq.sh` | tasks_list 查询 |
 | `scripts/op_status.sh` | 状态流转（lite 枚举，无 closing） |
-| `scripts/op_coder_check.sh` | implementer 模式判定 |
+| `scripts/op_implementer_check.sh` | implementer 模式判定 |
 | `scripts/op_read_verdict.sh` | verdict 读取 |
 | `scripts/op_close_post.sh` | 收口机械步骤（无 closing，自探测同目录 op_status） |
 | `scripts/op_assemble_eval_brief.sh` | per-task 裸评 evaluator brief 组装（lite 裸评版） |

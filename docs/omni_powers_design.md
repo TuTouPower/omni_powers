@@ -819,7 +819,7 @@ lite 与 heavy 统一用 `$OP_HOME/scripts/`——无需独立共享目录，无
 | 脚本 | lite 分支差异（脚本内 `OP_PROFILE=lite` 判定） |
 |---|---|
 | op_status.sh | 状态枚举去「收口中」 |
-| op_coder_check.sh | 环境入口变量 |
+| op_implementer_check.sh | implementer 模式判定 |
 | op_close_post.sh | 跳过 `status=closing` 前置检查；完成态用 lite 状态机（§1.1） |
 | op_check_env.sh | 只校验 jq/git（跳过 OP_HOME 段——两版都有 OP_HOME，但 lite 不做仓库完整性校验） |
 | op_assemble_eval_brief.sh | 裸评简化：跳基线/baselines 段（§5.7）+ 剥探索结论 |
