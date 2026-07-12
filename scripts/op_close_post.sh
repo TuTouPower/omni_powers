@@ -101,10 +101,11 @@ if [ -f "$CHECKPOINT" ]; then
     fi
 fi
 
-# stage 边界收窄（#25）：只 add 本 task 归档 + progress + tasks_list，不 blanket add op_blueprint/op_execution
+# stage 边界收窄（#25）：add 本 task 归档 + progress + tasks_list + 更新后的 checkpoint
 git add \
     "docs/omni_powers/op_record/tasks/$TID" \
     "docs/omni_powers/op_record/progress.md" \
-    "docs/omni_powers/op_execution/tasks_list.json" || die "git add 失败"
+    "docs/omni_powers/op_execution/tasks_list.json" \
+    "docs/omni_powers/op_execution/leader_checkpoint.md" || die "git add 失败"
 
 echo "[OK] close post: $TID"

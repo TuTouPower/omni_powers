@@ -40,11 +40,11 @@ if [ -z "$BASE" ]; then
 fi
 git show-ref --verify --quiet "refs/heads/$BASE" 2>/dev/null || die_env "主分支不存在: $BASE"
 
-# ── 算 task 分支相对主分支的实际改动集（merge-base 三点，不依赖 dispatch 锚点）──
-MB="$(git merge-base "$BASE" "$BRANCH" 2>/dev/null)"
-[ -n "$MB" ] || die_env "无法算 merge-base（$BASE / $BRANCH）"
-
-mapfile -t CHANGED < <(git diff --name-only "$MB".."$BRANCH" 2>/dev/null)
+# ── 算 task 分支相对主分支的实际改动集（直接 diff 两 tip，不依赖 merge-base）──
+# 用 tip-to-tip 而非 merge-base：支持 P0 模型（feat/op-dev 跨 task 复用）。
+# merge-base 在 squash-merge 后不前进（task 分支 commit SHA 不在主分支），
+# 导致前 task 文件出现在 diff 中、被后 task 的 workset 误判越界。
+mapfile -t CHANGED < <(git diff --name-only "$BASE" "$BRANCH" 2>/dev/null)
 
 if [ "${#CHANGED[@]}" -eq 0 ]; then
     echo "[WARN] task 分支相对 $BASE 无改动（空 diff）——无需 merge gate，但也无东西可合" >&2
@@ -67,6 +67,8 @@ PROTECTED=(
     "docs/omni_powers/op_execution/leader_checkpoint.md"
     "e2e/"
     "docs/omni_powers/e2e/"
+    "tests/e2e/"
+    "tests/"*"/e2e/"
 )
 
 # review.md 单独判（在 tasks/{TID}/ 下，但同目录 report.md 是白名单——精确匹配路径）
