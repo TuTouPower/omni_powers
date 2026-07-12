@@ -226,13 +226,14 @@ Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
 验收 PASS 后过 merge gate（写入硬底线，design §3.4）——squash-merge 回主分支前必跑：
 
 ```bash
-bash "$OP_HOME/scripts/op_merge_gate.sh" {TID}   # P1 交付（design §0.2 能力矩阵）
+bash "$OP_HOME/scripts/op_merge_gate.sh" {TID} {task_branch}   # task_branch 如 op/task/{TID} 或 feat/op-dev
 # 校验：白名单允许触碰 = workset ∪ tasks/{TID}/report.md ∪ 结构层测试路径；其余 REJECT
 #       + review verdict PASS 存在（读主分支 review.md 末行）+ 工作集越界即拒（advisory 升硬）
-# PASS 才许合；task 分支对白名单外路径的任何变更直接 REJECT（合法变更走专属通道：spec 变更子流程 / e2e leader 入口 / closer 提案）
+#       + 受保护路径黑名单二次确认（op_blueprint / op_record / specs / review.md / tasks_list.json / issues / e2e）
+# exit 0=PASS 才许合；task 分支对白名单外路径的任何变更直接 REJECT（合法变更走专属通道：spec 变更子流程 / e2e leader 入口 / closer 提案）
 ```
 
-> **实现状态**：`op_merge_gate.sh` 是 P1 交付物（design §0.2/§4.2）。脚本就位前，白名单靠 reviewer 双裁决 + 纪律兜底。
+> **实现状态**：`op_merge_gate.sh` 已落地（本轮）。用 `git merge-base {base} {task_branch}` 三点 diff 算实际改动集，不依赖 dispatch 锚点。REJECT（exit 1）时停下按越界项处理，不强合。
 
 merge gate PASS → squash-merge 回主分支（design §3.4 步骤 6，`git merge --squash`，兑现"task 即 commit"）。**不归档、不删分支**——归档在闸门 C 后（3.8）。进 closer 一段式收尾（3.7）。
 
