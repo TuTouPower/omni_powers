@@ -4,7 +4,7 @@
 # review.md 单文件；closer per-task 一段式已在验收后产 blueprint_update（见 design §2.4）
 set -euo pipefail
 
-OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 TID="${1:?用法: op_close_post.sh <TID> <feature>}"
 FEATURE="${2:?缺少 feature}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"

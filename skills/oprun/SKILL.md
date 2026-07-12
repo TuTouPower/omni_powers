@@ -161,7 +161,7 @@ head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md
 
 ```bash
 bash "$OP_HOME/scripts/op_status.sh" {TID} reviewing
-bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
+bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}
 # 输出 round: N, result: NONE|PASS|FAIL
 ```
 
@@ -176,7 +176,7 @@ reviewer spawn/环境出错退避重试 max 3。重试仍失败 → 不写质量
 ### 子步骤 3.4：判定 review 结果
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
+bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}
 # exit 0 = PASS, exit 1 = FAIL
 ```
 
@@ -191,7 +191,7 @@ bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
 双裁决 PASS 后、squash-merge 前派 op-evaluator 做 per-task 真机验收（构建产物从 task 分支构建）。**非行为型 task 免派**（接口先行/脚手架/纯内部重构，验收由 reviewer + 编译器承担，design §2.5）。
 
 **派 evaluator 前 leader 先做访问隔离准备（结构 + 脚本，design §2.5；前提：hook 对 subagent 失效，隔离靠 worktree 结构 + 脚本机械组装 brief，不靠 hook 拦截）**：
-1. 跑 `bash "$OP_HOME/skills/oprun/scripts/op_assemble_eval_brief.sh" {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
+1. 跑 `bash "$OP_HOME/scripts/op_assemble_eval_brief.sh" {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
 2. **创建 evaluator 隔离 worktree**（基于 task 分支切出，sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防无意抄实现）：
 
    ```bash
@@ -266,13 +266,13 @@ leader 自审 closer 提案（呈报四样：验收报告 + spec 变更决策表
 leader 自审采纳 → 跑归档脚本：
 
 ```bash
-bash "$OP_HOME/skills/oprun/scripts/op_close_post.sh" {TID} {feature}
+bash "$OP_HOME/scripts/op_close_post.sh" {TID} {feature}
 # 前置检查：review verdict PASS + merge gate PASS + decisions.md 存在本 TID closer append 块且已 commit（无则 die）
 # → git mv 归档 task 目录到 op_record/tasks/{TID}/ + spec 原文入 op_record/specs/ + acceptance 入 op_record/acceptance/{TID}/
 #   + 追加 progress + tasks_list 标"完成"
 git status --short
 git commit -m "feat({TID}): {title}"
-bash "$OP_HOME/skills/oprun/scripts/close_check.sh" {TID}
+bash "$OP_HOME/scripts/close_check.sh" {TID}
 # 删 task 分支与 worktree（per-task 分支模型）
 ```
 
@@ -314,10 +314,10 @@ cd <原项目根目录>
 | `docs_template/omni_powers/` | 文档模板 |
 | `scripts/op_status.sh` | 状态流转 |
 | `skills/oprun/scripts/op_close_pre.sh` | 收口前机械步骤 |
-| `skills/oprun/scripts/op_close_post.sh` | 收口后机械步骤 |
+| `scripts/op_close_post.sh` | 收口后机械步骤 |
 | `scripts/op_implementer_check.sh` | implementer 模式判定 |
-| `skills/oprun/scripts/op_read_verdict.sh` | verdict 读取 + 轮次 |
-| `skills/oprun/scripts/close_check.sh` | 收口验收 |
+| `scripts/op_read_verdict.sh` | verdict 读取 + 轮次 |
+| `scripts/close_check.sh` | 收口验收 |
 | `scripts/op_jq.sh` | tasks_list.json 查询 |
 | `scripts/op_worktree_setup.sh` | 隔离 worktree 创建（dev 排除 e2e / eval 排除 src+tasks+decisions） |
 | `scripts/op_worktree_teardown.sh` | worktree + 分支清理 |
