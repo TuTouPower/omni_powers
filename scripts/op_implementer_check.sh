@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# op_coder_check：implementer 启动时判断模式（正向/FAIL）和轮次
-# 用法: op_coder_check.sh <TID>
+# op_implementer_check：implementer 启动时判断模式（正向/FAIL）和轮次
+# 用法: op_implementer_check.sh <TID>
 # 输出: mode=normal|fail|blocked, round=1|2|3
 # exit 0 = 可继续, exit 1 = 阻塞（不应再派 implementer）
 # review.md 单文件；review ≤ 2 轮（第 3 轮 → blocked，design §7.2 / RULES.md）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TID="${1:?用法: op_coder_check.sh <TID>}"
+TID="${1:?用法: op_implementer_check.sh <TID>}"
 REVIEW_FILE="$ROOT/docs/omni_powers/op_execution/tasks/$TID/review.md"
 
 # 无 review.md 或无 verdict 行 → 首轮正向开发
