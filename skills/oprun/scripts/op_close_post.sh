@@ -38,13 +38,15 @@ verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$ACTIVE_DIR/review.md" |
 [ -n "$verdict" ] || die "review verdict 不存在: $ACTIVE_DIR/review.md"
 [ "$verdict" = "PASS" ] || die "review 未 PASS: $ACTIVE_DIR/review.md ($verdict)"
 
-# 校验 eval.md verdict PASS（D6 验收前置，design §2.5）——非行为型 task（eval:skip）豁免
+# 校验 acceptance_report.md verdict PASS（D6 验收前置，design §2.5）——非行为型 task（eval:skip）豁免
+# 文件名契约与 op-evaluator.md 输出段一致（acceptance_report.md，非 eval.md）
 EVAL_SKIP="$(jq -r --arg tid "$TID" '.tasks[] | select(.id==$tid) | .eval // "required"' "$ROOT/docs/omni_powers/op_execution/tasks_list.json" 2>/dev/null || echo required)"
 if [ "$EVAL_SKIP" != "skip" ]; then
-    EVAL_MD="$ROOT/docs/omni_powers/op_execution/acceptance/$TID/eval.md"
-    [ -s "$EVAL_MD" ] || die "eval.md 缺或空: $EVAL_MD（D6：验收 PASS 才收口）"
+    EVAL_MD="$ROOT/docs/omni_powers/op_execution/acceptance/$TID/acceptance_report.md"
+    [ -s "$EVAL_MD" ] || die "acceptance_report.md 缺或空: $EVAL_MD（D6：验收 PASS 才收口）"
     eval_verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$EVAL_MD" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
-    [ "$eval_verdict" = "PASS" ] || die "eval 未 PASS: $EVAL_MD ($eval_verdict)（D6：验收 PASS 才收口）"
+    [ -n "$eval_verdict" ] || die "acceptance_report.md 缺 verdict 末行: $EVAL_MD（evaluator 必写 verdict: PASS|FAIL）"
+    [ "$eval_verdict" = "PASS" ] || die "eval 未 PASS: $EVAL_MD ($eval_verdict)（D6：验收 PASS 才收口，FAIL 须回流 implementer 重验）"
 fi
 
 # 归档（工作区 → 归档）：task 目录 + spec 原文 + acceptance（design §1.2 三态——活区清理）
@@ -73,16 +75,26 @@ fi
 
 bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" done || die "更新状态失败: $TID → done"
 
-# P0-4：收口完成，清 current_task（hook 不再校验本 task 证据）
+# P0-4：收口完成，清 current_task + 写 last_completed + 刷 next_step（hook 不再校验本 task 证据）
+# checkpoint 更新并入脚本，不靠 leader 手动（防过期，本轮改进）
+# 段格式见 docs_template/.../leader_checkpoint.md（### 标题 + 正文），非 current_task: 冒号简写
 # 用临时文件代 sed -i（BSD/GNU 通吃），失败 WARN 不静默
 CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
 if [ -f "$CHECKPOINT" ]; then
     tmp="$(mktemp)"
-    if awk '/^### current_task$/{print;print "";f=1;next} /^### /{f=0} {if(!f)print}' "$CHECKPOINT" > "$tmp"; then
+    # 清 current_task 段正文 + last_completed 段刷成本 TID + next_step 提示回 3.1 选下一 task
+    if awk -v tid="$TID" '
+        /^### current_task$/{print;print "";f="skip";next}
+        /^### last_completed$/{print;print "";print tid;f="skip";next}
+        /^### next_step$/{print;print "";print "回 /oprun 3.1 选下一 task（或全完成进收尾）";f="skip";next}
+        /^### /{f="";print;next}
+        /^## /{f="";print;next}
+        {if(f=="")print}
+    ' "$CHECKPOINT" > "$tmp"; then
         mv "$tmp" "$CHECKPOINT"
     else
         rm -f "$tmp"
-        echo "[WARN] 清 current_task 失败（不阻塞收口）: $CHECKPOINT" >&2
+        echo "[WARN] 更新 checkpoint 失败（不阻塞收口）: $CHECKPOINT" >&2
     fi
 fi
 

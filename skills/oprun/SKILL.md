@@ -191,7 +191,7 @@ bash "$OP_HOME/skills/oprun/scripts/op_read_verdict.sh" {TID}
 双裁决 PASS 后、squash-merge 前派 op-evaluator 做 per-task 真机验收（构建产物从 task 分支构建）。**非行为型 task 免派**（接口先行/脚手架/纯内部重构，验收由 reviewer + 编译器承担，design §2.5）。
 
 **派 evaluator 前 leader 先做访问隔离准备（结构 + 脚本，design §2.5；前提：hook 对 subagent 失效，隔离靠 worktree 结构 + 脚本机械组装 brief，不靠 hook 拦截）**：
-1. 跑 `skills/oprun/scripts/op_assemble_eval_brief.sh {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
+1. 跑 `bash "$OP_HOME/skills/oprun/scripts/op_assemble_eval_brief.sh" {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
 2. **创建 evaluator 隔离 worktree**（基于 task 分支切出，sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防无意抄实现）：
 
    ```bash
@@ -211,7 +211,13 @@ Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
 
 > prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、验收标准、可测性契约执行：逐条验收标准评估 → PASS 的验收标准 固化成 acceptance/{TID}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
 
-验收范围内 FAIL → 修复 task 回流（同分支续做）重验收，**≤3 轮**。到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 merge gate（3.6）。
+验收范围内 FAIL → **回流 op-implementer 修复**（同分支续做，fail 模式，回 3.2 派 implementer——**leader 不亲自改 src/**，防越权顶替；leader 只派发+读结果），修复后**必须重派 op-evaluator 重验收**，**≤3 轮**。
+
+> **重验收强制闸（本轮改进，防跳验收标 done）**：eval FAIL 后的任何修复 commit，都必须重跑 evaluator 产新 `acceptance_report.md`（末行新 verdict）。`op_close_post.sh` 读 `acceptance_report.md` 末行 verdict——非 PASS 直接 die，收口走不动。禁止手工改 tasks_list 把 FAIL 的 task 标 done。
+>
+> **leader 不接管 implementer（本轮改进）**：eval FAIL 的根因常是运行时行为 bug（implementer 禁跑 e2e、reviewer 静态审看不见，必然堆到 eval 才爆——这是设计张力，非流程冗余）。但修复仍归 implementer，leader 亲自改 src 会击穿"被监督者之外证据链"。若限流/中断打断 eval，恢复后续跑，不由 leader 顶替。
+
+到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 merge gate（3.6）。
 
 ---
 
@@ -265,7 +271,7 @@ bash "$OP_HOME/skills/oprun/scripts/op_close_post.sh" {TID} {feature}
 #   + 追加 progress + tasks_list 标"完成"
 git status --short
 git commit -m "feat({TID}): {title}"
-bash "$OP_HOME/skills/oprun/scripts/close_check.sh {TID}
+bash "$OP_HOME/skills/oprun/scripts/close_check.sh" {TID}
 # 删 task 分支与 worktree（per-task 分支模型）
 ```
 

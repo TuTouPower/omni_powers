@@ -116,6 +116,8 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 - 中间状态不 commit；大 task 允许 `wip({TID})` 纯代码 sub-commit，不触发收口
 - Sub Agent 之间不直接通信
 - **worktree sparse-checkout 隔离已落地（advisory）**：evaluator worktree 无 `src/`、implementer worktree 无 `e2e/`（git 2.25+，design §0.2 能力矩阵）。**能力边界（design §0.1）**：sparse-checkout 只控制工作目录物化、不是访问控制——worktree 共享主 repo object store，`git show`/`git log -p` 可绕过；它防的是"正常读文件流程无意抄实现/顺手改 e2e"，不防有意规避。**真正的硬底线**：写入侧是 merge gate（design §3.4，受保护路径零 diff，P1 生效）。旧 git（<2.25）sparse-checkout 退化为纪律 + WARN，merge gate 不受影响
+- **状态流转只走脚本，禁裸编辑（本轮改进——防手工绕闸）**：`tasks_list.json` 的 status 一律经 `op_status.sh` 改，收口一律经 `op_close_pre.sh`/`op_close_post.sh`；**严禁 Edit/Write 直改 tasks_list.json 的 status、严禁手工模拟收口脚本职责**（手写 progress/手 git mv 归档/手改 checkpoint）。脚本内含 verdict 闸、归档、checkpoint 更新，手工绕过 = 伪完成。限流/中断打断循环，恢复后从 checkpoint 续跑重派 sub agent，不手工顶替。
+- **验证纪律：下状态结论前先核证据（本轮改进——防幻觉误判）**：声称"脚本/文件不存在"前必须全域 `find`/`grep -r`（别只搜一个目录就断言）；声称"某产物谁写的"前必须比对文件特征（脚本 echo 串 = 脚本产物，非手写）；声称"验收 PASS/修好了"前必须以 evaluator 的 `acceptance_report.md` verdict 或 E2E 脚本 `results.json` 为准，**手写一次性测试不作数**。
 - 不生成 dag.md
 
 ## profile 分叉（heavy / lite 两模式）

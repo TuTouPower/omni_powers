@@ -60,6 +60,15 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "从上方工作 spec 的「可测性契约」段提取。"
   echo
 
+  echo "## ⚠️ 构建产物新鲜度（强制自检，本轮改进——防跑旧代码伪绿）"
+  echo
+  echo "验收前必须确认加载的构建产物来自**当前 task 分支最新源码**，而非 leader 预放的旧产物："
+  echo "- **自建优先**：能自己从当前分支跑 build（见可测性契约的构建命令）就自建，别信别人放的 artifacts/dist。"
+  echo "- **无法自建时校验指纹**：对比构建产物与源码的时间戳/hash——\`find <src> -newer <artifacts/dist入口文件>\` 若有输出，说明源码比产物新 = 产物陈旧，判 INSUFFICIENT_EVIDENCE 并报告，不得用旧产物验收。"
+  echo "- **E2E 脚本路径校验**：E2E 用相对路径（\$__dirname 等）定位产物时，脚本内必须先 \`fs.existsSync\` 断言产物入口存在，不存在直接抛错——禁止静默跑不存在/错位的产物（T0002 事故直接教训）。"
+  echo "- 加载产物后，先截图/取版本标识确认是新代码再跑 AC。"
+  echo
+
   echo "## 执行后端（按 AC 通道字段选，CDP 优先）"
   echo
   echo "- 通道字段在上方可测性契约每条 AC 上（CDP | cua | 直驱）。能用 CDP 一律 CDP。"
