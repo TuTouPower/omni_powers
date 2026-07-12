@@ -2,7 +2,8 @@
 # opinit_register_hooks：校验全局 OP_HOME + 合并 hooks 到使用方 .claude/settings.json
 # 用法: 在使用方项目根跑 bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 # OP_HOME 由用户全局 settings.json 设（一次性，所有项目共享，subagent 继承）。opinit 不写项目级 OP_HOME。
-# 合并策略：按事件 concat 数组（不覆盖用户已有 hooks），不碰 env 段。
+# 合并策略：按事件 concat 数组（不覆盖用户已有 hooks）。
+# 同时写 OP_*_MODEL 四个 env 变量到项目级 settings.json（未设时填推荐默认值，已有值保留不覆盖）。
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -74,6 +75,24 @@ else
 fi
 chmod +x "$OP_HOME/hooks/"*.sh "$OP_HOME/hooks/run-hook.cmd" 2>/dev/null
 echo "[OK] hooks 已注册到项目 .claude/settings.json（OP_HOME 走全局 env）"
+
+# 2.5 写 OP_*_MODEL 四个 env 变量到项目级 settings.json（未设时填默认值，已有值保留）
+#    项目级覆盖全局——同一台机器上不同项目可配不同模型强度。
+#    不设 = 继承主会话 /model，设了就按指定模型派发 sub agent。
+#    默认值来自 common/performance.md 模型选择策略：
+#      implementer: sonnet（主开发）  reviewer: opus（深推理）
+#      evaluator: sonnet（验收）     closer: haiku（轻量频繁）
+jq --arg im "${OP_IMPLEMENTER_MODEL:-sonnet}" \
+   --arg rv "${OP_REVIEWER_MODEL:-opus}" \
+   --arg ev "${OP_EVALUATOR_MODEL:-sonnet}" \
+   --arg cl "${OP_CLOSER_MODEL:-haiku}" \
+   '.env.OP_IMPLEMENTER_MODEL //= $im
+    | .env.OP_REVIEWER_MODEL //= $rv
+    | .env.OP_EVALUATOR_MODEL //= $ev
+    | .env.OP_CLOSER_MODEL //= $cl' \
+   .claude/settings.json > .claude/settings.json.tmp
+mv .claude/settings.json.tmp .claude/settings.json
+echo "[OK] OP_*_MODEL 已写入项目 .claude/settings.json env（implementer=$(jq -r '.env.OP_IMPLEMENTER_MODEL' .claude/settings.json) reviewer=$(jq -r '.env.OP_REVIEWER_MODEL' .claude/settings.json) evaluator=$(jq -r '.env.OP_EVALUATOR_MODEL' .claude/settings.json) closer=$(jq -r '.env.OP_CLOSER_MODEL' .claude/settings.json)）"
 
 # 3. 注册 git 层 hooks（heavy 专属：pre-commit spec 写保护 + commit-msg e2e trailer 校验）
 #    绕过 Claude hook 对 subagent 失效问题（design §0.2 / op_decisions D18）。
