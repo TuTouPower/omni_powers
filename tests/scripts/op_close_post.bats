@@ -16,7 +16,12 @@ load helpers
   [ "$status" -eq 0 ]
   [ -d "docs/omni_powers/op_record/tasks/T01" ]
   [ ! -d "docs/omni_powers/op_execution/tasks/T01" ]
-  [[ "$(grep '^current_task:' docs/omni_powers/op_execution/leader_checkpoint.md)" == "current_task:" ]]
+  # current_task 段正文清空（### 段格式）：提取 current_task 标题下正文，应无 T01
+  cur="$(awk '/^### current_task$/{f=1;next} /^### /{f=0} /^## /{f=0} f && NF{print}' docs/omni_powers/op_execution/leader_checkpoint.md)"
+  [ -z "$cur" ]
+  # last_completed 段刷成 T01（收口脚本并入 checkpoint 更新）
+  last="$(awk '/^### last_completed$/{f=1;next} /^### /{f=0} /^## /{f=0} f && NF{print}' docs/omni_powers/op_execution/leader_checkpoint.md)"
+  [ "$last" = "T01" ]
   teardown_mock_project
 }
 

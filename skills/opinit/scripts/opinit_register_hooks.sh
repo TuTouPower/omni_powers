@@ -58,7 +58,11 @@ if [ -f .claude/settings.json ]; then
     | reduce ($t.hooks // {} | keys[]) as $k ($u;
         .hooks[$k] = (($u.hooks // {})[$k] // []) + (
           ($t.hooks // {})[$k] | map(select(. as $item |
-            ($u.hooks // {})[$k] // [] | map(.command == $item.command) | any | not
+            # 按内层 hooks[].command 集合判重（顶层无 .command，旧逻辑 null==null 误杀 template）
+            ($item.hooks // [] | map(.command)) as $tc
+            | (($u.hooks // {})[$k] // [] | map(.hooks // [] | map(.command)) | add // [])
+              as $uc
+            | ($tc | map(. as $c | $uc | index($c)) | all(. != null)) | not
           ))
         )
       )

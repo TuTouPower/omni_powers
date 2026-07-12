@@ -53,8 +53,11 @@ fi
 if [ "$ACTIVE_DIR" = "$TASK_DIR" ]; then
     mkdir -p "$(dirname "$ARCHIVE_DIR")" "$ROOT/docs/omni_powers/op_record/specs" "$ROOT/docs/omni_powers/op_record/acceptance" || die "创建归档父目录失败"
     git mv "$TASK_DIR" "$ARCHIVE_DIR" || die "归档 task 失败: $TID"
-    # spec 原文
-    SPEC_SRC="$(ls "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md 2>/dev/null | head -1)"
+    # spec 原文（glob 直取，避开 ls|head 在 pipefail 下 ls 非零杀脚本的陷阱）
+    SPEC_SRC=""
+    for _s in "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md; do
+        [ -e "$_s" ] && { SPEC_SRC="$_s"; break; }
+    done
     if [ -n "$SPEC_SRC" ] && [ ! -e "$ROOT/docs/omni_powers/op_record/specs/$(basename "$SPEC_SRC")" ]; then
         git mv "$SPEC_SRC" "$ROOT/docs/omni_powers/op_record/specs/" || die "归档 spec 失败: $TID"
     fi

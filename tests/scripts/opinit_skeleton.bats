@@ -18,7 +18,7 @@ teardown() {
   [ -n "${TEST_ROOT:-}" ] && [ -d "$TEST_ROOT" ] && rm -rf "$TEST_ROOT"
 }
 
-@test "opinit_skeleton: 建三区骨架（目录+baselines+tasks_list+checkpoint+.test_locks）" {
+@test "opinit_skeleton: 建三区骨架（目录+baselines+tasks_list+checkpoint）" {
   run bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
   [ "$status" -eq 0 ]
   [ -d docs/omni_powers/op_blueprint/specs ]
@@ -28,7 +28,6 @@ teardown() {
   [ -f docs/omni_powers/op_blueprint/baselines/baselines_index.md ]
   [ -f docs/omni_powers/op_execution/tasks_list.json ]
   [ -f docs/omni_powers/op_execution/leader_checkpoint.md ]
-  [ -f docs/omni_powers/op_execution/.test_locks ]
 }
 
 @test "opinit_skeleton: 重跑幂等——不覆盖 tasks_list/checkpoint" {

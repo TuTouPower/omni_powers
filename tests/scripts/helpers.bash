@@ -27,16 +27,23 @@ JSON
   echo "# report" > docs/omni_powers/op_execution/tasks/T01/report.md
   printf "# review\\n\\nverdict: PASS\\n" > docs/omni_powers/op_execution/tasks/T01/review.md
 
-  # leader_checkpoint（含 current_task: T01）
+  # leader_checkpoint（### 段格式，对齐 docs_template/.../leader_checkpoint.md；current_task 正文=T01）
   cat > docs/omni_powers/op_execution/leader_checkpoint.md <<'EOF'
-current_task: T01
-last_completed:
-next_step:
-关键上下文:
+# Leader Checkpoint
 
-## 已完成 task
+## 断点
 
-## tasks_list 状态
+### current_task
+
+T01
+
+### last_completed
+
+### next_step
+
+## 关键上下文
+
+- fixture
 EOF
 
   touch docs/omni_powers/op_record/progress.md

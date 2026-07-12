@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# opinit_skeleton：建 omni_powers 三区骨架（目录 + baselines_index 模板 + tasks_list + checkpoint + progress/decisions + .test_locks）
+# opinit_skeleton：建 omni_powers 三区骨架（目录 + baselines_index 模板 + tasks_list + checkpoint + progress/decisions）
 # 用法: 在使用方项目根跑 bash "$OP_HOME/skills/opinit/scripts/opinit_skeleton.sh"
-# 重跑幂等：已存在的 tasks_list/checkpoint/progress/decisions/.test_locks/baselines_index 保留不覆盖（只补缺）
+# 重跑幂等：已存在的 tasks_list/checkpoint/progress/decisions/baselines_index 保留不覆盖（只补缺）
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
