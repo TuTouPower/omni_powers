@@ -86,13 +86,30 @@ jq --arg im "${OP_IMPLEMENTER_MODEL:-sonnet}" \
    --arg rv "${OP_REVIEWER_MODEL:-opus}" \
    --arg ev "${OP_EVALUATOR_MODEL:-sonnet}" \
    --arg cl "${OP_CLOSER_MODEL:-haiku}" \
-   '.env.OP_IMPLEMENTER_MODEL //= $im
+   '.env //= {}
+    | .env.OP_IMPLEMENTER_MODEL //= $im
     | .env.OP_REVIEWER_MODEL //= $rv
     | .env.OP_EVALUATOR_MODEL //= $ev
     | .env.OP_CLOSER_MODEL //= $cl' \
    .claude/settings.json > .claude/settings.json.tmp
 mv .claude/settings.json.tmp .claude/settings.json
-echo "[OK] OP_*_MODEL 已写入项目 .claude/settings.json env（implementer=$(jq -r '.env.OP_IMPLEMENTER_MODEL' .claude/settings.json) reviewer=$(jq -r '.env.OP_REVIEWER_MODEL' .claude/settings.json) evaluator=$(jq -r '.env.OP_EVALUATOR_MODEL' .claude/settings.json) closer=$(jq -r '.env.OP_CLOSER_MODEL' .claude/settings.json)）"
+im=$(jq -r '.env.OP_IMPLEMENTER_MODEL' .claude/settings.json)
+rv=$(jq -r '.env.OP_REVIEWER_MODEL' .claude/settings.json)
+ev=$(jq -r '.env.OP_EVALUATOR_MODEL' .claude/settings.json)
+cl=$(jq -r '.env.OP_CLOSER_MODEL' .claude/settings.json)
+echo "[OK] OP_*_MODEL 已写入项目 .claude/settings.json env"
+echo ""
+echo "  Sub Agent 模型分配（当前值，改法见下）："
+echo "    implementer : $im     写代码 + 修复 FAIL"
+echo "    reviewer    : $rv       双裁决：规格合规 + 测试可信"
+echo "    evaluator   : $ev      真机验收 + E2E 固化"
+echo "    closer      : $cl       收口提案（只 heavy）"
+echo ""
+echo "  修改方式：编辑项目 .claude/settings.json → env 段改对应值。"
+echo "  可选值: haiku（快省）/ sonnet（均衡）/ opus（重推理）。"
+echo "  删掉变量 = 该 agent 继承主会话当前 /model。"
+echo "  不设全局 OP_*_MODEL，仅项目级覆盖——同机器不同项目可配不同强度。"
+echo ""
 
 # 3. 注册 git 层 hooks（heavy 专属：pre-commit spec 写保护 + commit-msg e2e trailer 校验）
 #    绕过 Claude hook 对 subagent 失效问题（design §0.2 / op_decisions D18）。
