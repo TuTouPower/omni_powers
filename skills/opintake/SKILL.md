@@ -42,7 +42,7 @@ spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
 **方案先行（设计探索内联）**：命中信号（不变量/验收标准 涉及正确性需论证的计算；验收标准含"高效/准确/一致"等需算法保证的词）→ spec 编写时内联做设计探索，候选思路 2-3 个、复杂度与边界、推荐及理由，结论进技术决策区，完整探索存 `decisions.md`。
 
-先输出假设清单一并供审。
+**假设清单（行为层方向对齐，落盘前）**：需求有多种合理理解、或关键行为方向未定时，先列假设清单（≤5 条，**只列行为层方向分叉**——如"缩放=时间窗口过滤 or CSS 拉伸"；**禁实现细节/公式/代码坐标/行号**，那些归 implementer TDD 自决，见 opspec「实现锚点」约束）供用户点头，再落 spec。需求已明确则跳过，直接落盘走闸门 A。与 opspec 的 `[NEEDS CLARIFICATION]` 分工：假设清单=落盘前拦方向错误（防整份 spec 返工），NEEDS CLARIFICATION=落盘后仍缺的待澄清项（阻断闸门 A）。
 
 ## 步骤三：拆 task 写入 tasks_list.json（awaiting_gate）
 
