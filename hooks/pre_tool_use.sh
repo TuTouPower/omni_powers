@@ -11,6 +11,19 @@
 
 set -uo pipefail
 
+project_root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+op_paths_script="${OP_HOME:-}/scripts/op_paths.sh"
+if [ -f "$op_paths_script" ]; then
+  source "$op_paths_script"
+  if ! op_load_paths "" "$project_root"; then
+    echo "[Hook] BLOCKED: OP_DOCS_DIR 配置无效，保护性拒绝" >&2
+    exit 2
+  fi
+else
+  echo "[Hook] BLOCKED: $op_paths_script 缺失，无法解析 OP_DOCS_DIR" >&2
+  exit 2
+fi
+
 input="$(cat)"
 tool_name="$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
 
@@ -43,7 +56,7 @@ rel="${file_path#$root/}"
 
 # --- spec 写保护：op_blueprint/** 下 approved/in_progress 的 spec 拦截 ---
 case "$rel" in
-  docs/omni_powers/op_blueprint/specs/*.md|docs/omni_powers/op_blueprint/*.md|docs/omni_powers/op_blueprint/baselines/*)
+  $OP_DOCS_DIR/op_blueprint/specs/*.md|$OP_DOCS_DIR/op_blueprint/*.md|$OP_DOCS_DIR/op_blueprint/baselines/*)
     if [ -f "$file_path" ]; then
       status="$(awk -F': *' '/^status:/{print $2; exit}' "$file_path" 2>/dev/null | tr -d ' ')"
       if [ "$status" = "approved" ] || [ "$status" = "in_progress" ]; then
@@ -64,14 +77,12 @@ case "$rel" in
 esac
 
 # --- e2e/** 与 BUG-* 行为层测试锁（advisory：仅主会话 leader 场景生效；subagent deny 失效，靠 worktree 对称 + git 层，design §10 / op_decisions.md D18）---
-case "$rel" in
-  e2e/*|*BUG-*)
-    # 行为层归 evaluator；implementer worktree 不挂 e2e/（结构隔离）
-    # 本 hook 仅主会话拦（防 leader 误写 e2e）；evaluator/implementer 是 subagent，deny 不生效
-    echo "[Hook] BLOCKED: $rel 是行为层测试（e2e/BUG-*），归 op-evaluator。主会话门禁；subagent 靠 worktree 结构隔离。" >&2
-    exit 2
-    ;;
-esac
+if op_is_e2e_path "$rel" || [[ "$rel" == *BUG-* ]]; then
+  # 行为层归 evaluator；implementer worktree 不挂 e2e/（结构隔离）
+  # 本 hook 仅主会话拦（防 leader 误写 e2e）；evaluator/implementer 是 subagent，deny 不生效
+  echo "[Hook] BLOCKED: $rel 是行为层测试（e2e/BUG-*），归 op-evaluator。主会话门禁；subagent 靠 worktree 结构隔离。" >&2
+  exit 2
+fi
 
 # --- 行级敏感度：测试文件改 expect/assert 警告层（不阻断，留痕） ---
 case "$rel" in

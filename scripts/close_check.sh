@@ -11,6 +11,9 @@ set -uo pipefail
 
 TID="${1:?用法: close_check.sh <TID>}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
 cd "$ROOT"
 
 fail=0
@@ -19,7 +22,7 @@ warn=0
 echo "=== per-task 收口检查: $TID ==="
 
 # 1. tasks_list.json 该 task status=done（唯一真相源）
-status=$(jq -r ".tasks[] | select(.id == \"$TID\") | .status" docs/omni_powers/op_execution/tasks_list.json 2>/dev/null)
+status=$(jq -r ".tasks[] | select(.id == \"$TID\") | .status" "$OP_DOCS_ROOT/op_execution/tasks_list.json" 2>/dev/null)
 if [ "$status" = "done" ]; then
     echo "[PASS] tasks_list.json 标 ${TID} done"
 else
@@ -28,7 +31,7 @@ else
 fi
 
 # 2. 归档目录二件齐全且非空
-arch="docs/omni_powers/op_record/tasks/${TID}"
+arch="$OP_DOCS_DIR/op_record/tasks/${TID}"
 missing=()
 for f in report.md review.md; do
     [ -s "$arch/$f" ] || missing+=("$f")

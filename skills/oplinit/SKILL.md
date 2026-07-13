@@ -1,7 +1,7 @@
 ---
 name: oplinit
 description: >
-  lite 项目初始化（零侵入版）：在目标项目建 omni_powers 三区骨架 + 写 profile=lite。
+  lite 项目初始化（低侵入版）：在目标项目建 omni_powers 三区骨架 + 写 profile=lite。
   触发：/oplinit。一次性。
   与 heavy 的 opinit 区别：不注册 hook、不归档旧文档、不重构 CLAUDE.md、不提炼 blueprint。
   前置：已全量安装到 ~/.claude（见仓库 install.sh）。
@@ -9,14 +9,9 @@ description: >
 
 # Op Lite Init Skill
 
-> **脚本根**：leader 先定位本 skill 安装目录（如 `~/.claude/skills/oplinit`），后续脚本用它：
-> ```bash
-> SKILL_DIR="<本 skill 安装目录>"   # 如 ~/.claude/skills/oplinit
-> SCRIPTS="$SKILL_DIR/scripts"
-> bash "$SCRIPTS/op_check_env.sh"   # jq/git
-> ```
+> **脚本根**：lite 与 heavy 共用 `$OP_HOME/scripts/`。先运行 `bash "$OP_HOME/scripts/op_check_env.sh"`。
 
-`/oplinit` 在目标项目初始化 lite 工作流骨架。**一次性**。零项目侵入——只建 `docs/omni_powers/` 自己的子目录（含 `docs/omni_powers/e2e/` 验收资产），不碰宿主任何已有文件（design §5.3）。**lite 验收 E2E 默认写 `docs/omni_powers/e2e/`**（零侵入，不进用户测试 runner 自动发现）；用户显式同意才写顶层 `e2e/`（heavy 路径）。
+`/oplinit` 在目标项目初始化 lite 工作流骨架。**一次性**。低项目侵入——只建 `$OP_DOCS_DIR/`（含 `$OP_DOCS_DIR/e2e/` 验收资产），不碰宿主任何已有文件（design §5.3）。**lite 验收 E2E 默认写 `$OP_DOCS_DIR/e2e/`**（不进用户测试 runner 自动发现）；用户显式同意才写顶层 `e2e/`（heavy 路径）。
 
 ## 与 heavy /opinit 的区别
 
@@ -29,16 +24,23 @@ description: >
 | 提炼 blueprint | ✓ | **✗**（op_blueprint 空壳占位） |
 | profile | heavy | lite |
 
-## 步骤：建骨架
+## 步骤：一次询问 OP 根并建骨架
+
+一次询问 OP 根：默认 `docs/omni_powers`，可选 `docs`，也可填安全项目相对路径。若已有根变化，同时取得迁移确认。
 
 ```bash
-bash "$SCRIPTS/oplinit_skeleton.sh"
+bash "$OP_HOME/scripts/op_configure_project.sh" --target "<确认的 OP 根>" --yes
+source "$OP_HOME/scripts/op_paths.sh"
+op_load_paths "" "$(git rev-parse --show-toplevel)"
+bash "$OP_HOME/skills/oplinit/scripts/oplinit_skeleton.sh"
 ```
+
+lite 不注册 hook；项目 settings 仅持久化 `env.OP_DOCS_DIR`。
 
 脚本做：
 
-- 建 `docs/omni_powers/` 三区（op_blueprint 空壳 / op_execution / op_record）+ `docs/omni_powers/e2e/`（lite 验收 E2E 默认落点，零侵入；§5.3）
-- 写 `docs/omni_powers/profile` = `lite`
+- 建 `$OP_DOCS_DIR/` 三区（op_blueprint 空壳 / op_execution / op_record）+ `$OP_DOCS_DIR/e2e/`（lite 验收 E2E 默认落点，低侵入；§5.3）
+- 写 `$OP_DOCS_DIR/profile` = `lite`
 - 内联生成 tasks_list.json / leader_checkpoint.md / progress.md / decisions.md / op_blueprint/README.md（占位说明）
 - **幂等**：已存在文件保留不覆盖，只补缺
 - **profile 互斥**：已有 `profile=heavy` 或疑似 heavy 残留 → die，不混跑
@@ -48,7 +50,7 @@ bash "$SCRIPTS/oplinit_skeleton.sh"
 骨架就绪，profile=lite。提示用户：
 
 - `/oplintake "<需求>"` 开始新需求
-- `git add docs/omni_powers && git commit -m "oplinit"` 提交骨架（oplinit 不自动 commit）
+- `git add -- "$OP_DOCS_DIR" .claude/settings.json && git commit -m "oplinit"` 提交骨架（oplinit 不自动 commit）
 
 ## 相关文件
 

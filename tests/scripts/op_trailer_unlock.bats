@@ -60,6 +60,26 @@ teardown() {
   [ "$status" -ne 0 ]
 }
 
+@test "commit-msg: 相同路径 staged 内容变化后旧 trailer 失效" {
+  mkdir -p e2e/b01
+  echo "first" > e2e/b01/t.spec.js
+  git add e2e/
+  trailer="$(bash "$SCRIPT" 2>/dev/null | head -1)"
+  echo "second" > e2e/b01/t.spec.js
+  git add e2e/
+  run git commit -m "changed content" -m "$trailer"
+  [ "$status" -ne 0 ]
+}
+
+@test "pre-commit: 使用 index 中 spec 状态而非工作树" {
+  mkdir -p docs/omni_powers/op_blueprint/specs
+  printf -- '---\nstatus: approved\n---\n# staged\n' > docs/omni_powers/op_blueprint/specs/feat.md
+  git add docs/omni_powers/op_blueprint/specs/feat.md
+  printf -- '---\nstatus: draft\n---\n# working tree\n' > docs/omni_powers/op_blueprint/specs/feat.md
+  run git commit -m "index protected"
+  [ "$status" -ne 0 ]
+}
+
 @test "commit-msg: staged 变了中国旧 trailer 失效" {
   mkdir -p e2e/b01
   echo "test" > e2e/b01/t.spec.js

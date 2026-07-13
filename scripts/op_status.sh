@@ -9,7 +9,10 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASKS_FILE="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
+TASKS_FILE="$OP_DOCS_ROOT/op_execution/tasks_list.json"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 

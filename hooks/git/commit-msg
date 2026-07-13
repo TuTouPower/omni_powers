@@ -12,22 +12,28 @@
 
 set -uo pipefail
 
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+op_paths_helper="$(git rev-parse --git-path hooks 2>/dev/null)/op_paths.sh"
+if [ -f "$op_paths_helper" ]; then
+    source "$op_paths_helper"
+elif [ -n "${OP_HOME:-}" ] && [ -f "$OP_HOME/scripts/op_paths.sh" ]; then
+    source "$OP_HOME/scripts/op_paths.sh"
+else
+    echo "[git hook] FATAL: op_paths.sh 缺失，重跑 /opinit" >&2
+    exit 1
+fi
+op_load_paths "" "$repo_root" || exit 1
+
 msg_file="${1:?usage: commit-msg <msg-file>}"
 msg="$(cat "$msg_file" 2>/dev/null)"
 
 against="$(git rev-parse --verify HEAD >/dev/null 2>&1 && echo HEAD || echo "$(git hash-object -t tree /dev/null)")"
 
-# 是否含 e2e staged 改动
-has_e2e=0
-e2e_paths=""
-while IFS= read -r path; do
-    case "$path" in
-        e2e/*) has_e2e=1; e2e_paths="${e2e_paths}${path}"$'\n' ;;
-    esac
-done < <(git diff-index --cached --name-only "$against")
+# 是否含 e2e staged 改动；fingerprint 绑定路径、状态、mode 和 staged blob OID
+hmac_data="$(op_staged_e2e_fingerprint "$against")"
 
 # 非 e2e 提交放行
-[ "$has_e2e" -eq 1 ] || exit 0
+[ -n "$hmac_data" ] || exit 0
 
 # 提取 trailer
 trailer="$(printf '%s\n' "$msg" | grep -oE '^Op-E2e-Unlock: [0-9a-f]+' | awk '{print $2}' | head -1)"
@@ -37,7 +43,7 @@ if [ -z "$trailer" ]; then
     exit 1
 fi
 
-# 校验 trailer：HMAC(secret, 排序后的 e2e 文件清单)
+# 校验 trailer：HMAC(secret, 排序后的 staged E2E fingerprint)
 secret_file="$HOME/.claude/omni_powers/e2e_secret"
 if [ ! -f "$secret_file" ]; then
     echo "[git commit-msg] FATAL: 无 secret 文件 $secret_file。leader 首次跑 op_trailer_unlock.sh 会生成。" >&2
@@ -45,8 +51,7 @@ if [ ! -f "$secret_file" ]; then
 fi
 secret="$(cat "$secret_file")"
 
-# 排序去重的 e2e 路径作为 HMAC 输入（与 op_trailer_unlock.sh 一致）
-hmac_data="$(printf '%s' "$e2e_paths" | grep . | sort | tr '\n' ':')"
+# staged E2E fingerprint 作为 HMAC 输入（与 op_trailer_unlock.sh 一致）
 
 # 兼容 openssl 新旧语法
 expected="$(printf '%s' "$hmac_data" | openssl dgst -sha256 -hmac "$secret" 2>/dev/null | awk '{print $NF}')"
@@ -61,7 +66,7 @@ fi
 
 if [ "$trailer" != "$expected" ]; then
     echo "[git commit-msg] BLOCKED: trailer 不合法或已失效。" >&2
-    echo "  trailer 绑本次 e2e 文件清单，staged 文件变了中国需重跑 op_trailer_unlock.sh。" >&2
+    echo "  trailer 绑本次 e2e 文件清单，staged 文件变了需重跑 op_trailer_unlock.sh。" >&2
     exit 1
 fi
 

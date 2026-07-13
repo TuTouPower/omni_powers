@@ -7,6 +7,19 @@
 
 set -uo pipefail
 
+project_root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+op_paths_script="${OP_HOME:-}/scripts/op_paths.sh"
+if [ -f "$op_paths_script" ]; then
+  source "$op_paths_script"
+  if ! op_load_paths "" "$project_root"; then
+    echo "[Hook] BLOCKED: OP_DOCS_DIR 配置无效，保护性拒绝" >&2
+    exit 2
+  fi
+else
+  echo "[Hook] BLOCKED: $op_paths_script 缺失，无法解析 OP_DOCS_DIR" >&2
+  exit 2
+fi
+
 input="$(cat)"
 if [ "$(echo "$input" | jq -r '.stop_hook_active // false' 2>/dev/null)" = "true" ]; then
   exit 0
@@ -16,7 +29,7 @@ fi
 agent_type="$(echo "$input" | jq -r '.agent_type // empty' 2>/dev/null)"
 if [ -z "$agent_type" ]; then
   # 主会话 Stop：current_task 非空 = task 未收尾，WARN（不 BLOCK，允许用户中断）
-  checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
+  checkpoint="$OP_DOCS_ROOT/op_execution/leader_checkpoint.md"
   tid="$(awk '/^### current_task$/{f=1;next} /^### /{f=0} f&&NF{print;exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
   if [ -n "$tid" ]; then
     echo "[Hook Stop] WARN: current_task=$tid 非空——task 未收尾（归档/status done）。oprun 收尾或显式中断。" >&2
@@ -24,7 +37,7 @@ if [ -z "$agent_type" ]; then
   exit 0
 fi
 
-checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
+checkpoint="$OP_DOCS_ROOT/op_execution/leader_checkpoint.md"
 tid="$(awk '/^### current_task$/{f=1;next} /^### /{f=0} f&&NF{print;exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
 
 # 无活跃 task → WARN（不静默放行；current_task 应由 oprun 派 implementer 前写入）
@@ -33,7 +46,7 @@ if [ -z "$tid" ]; then
   exit 0
 fi
 
-tasks_dir="docs/omni_powers/op_execution/tasks/$tid"
+tasks_dir="$OP_DOCS_ROOT/op_execution/tasks/$tid"
 
 # ── 按 agent 类型分别校验（本轮改进：evaluator/closer 缺位补齐）──
 case "$agent_type" in
@@ -49,7 +62,7 @@ case "$agent_type" in
     ;;
   op-evaluator)
     # evaluator 交工门禁：acceptance_report.md 必须存在且含 verdict:
-    acc_report="docs/omni_powers/op_execution/acceptance/$tid/acceptance_report.md"
+    acc_report="$OP_DOCS_ROOT/op_execution/acceptance/$tid/acceptance_report.md"
     if [ ! -f "$acc_report" ]; then
       echo "[Hook] BLOCKED: $tid evaluator 交工缺 acceptance_report.md。按 brief 执行验收并写报告。" >&2
       exit 2

@@ -8,11 +8,19 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
 OP_HOME="${OP_HOME:?全局 settings.json 未设 OP_HOME（opinit 步骤五校验，此处假设已设）}"
+source "$OP_HOME/scripts/op_paths.sh"
+op_load_paths "" "$ROOT"
+
+OP_ROOT="$OP_DOCS_ROOT"
+PROFILE_FILE="$OP_PROFILE_FILE"
+BLUEPRINT="$OP_BLUEPRINT_DIR"
+EXECUTION="$OP_EXECUTION_DIR"
+RECORD="$OP_RECORD_DIR"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
 # ── profile 互斥保护（lite_design §6 判定表）──
-PROFILE_FILE="docs/omni_powers/profile"
+PROFILE_FILE="$OP_PROFILE_FILE"
 if [ -f "$PROFILE_FILE" ]; then
     cur="$(head -1 "$PROFILE_FILE" | tr -d '[:space:]')"
     case "$cur" in
@@ -23,9 +31,9 @@ if [ -f "$PROFILE_FILE" ]; then
 fi
 
 # 三区目录
-mkdir -p docs/omni_powers/op_blueprint/{specs,baselines}
-mkdir -p docs/omni_powers/op_execution/{specs,tasks,issues,acceptance}
-mkdir -p docs/omni_powers/op_record/{specs,tasks,acceptance}
+mkdir -p "$BLUEPRINT"/{specs,baselines}
+mkdir -p "$EXECUTION"/{specs,tasks,issues,acceptance}
+mkdir -p "$RECORD"/{specs,tasks,acceptance}
 mkdir -p docs/archive
 
 # e2e 目录（heavy 默认 tests/e2e/；已存在则探测提示）
@@ -42,31 +50,31 @@ fi
 [ -f "$PROFILE_FILE" ] || echo "heavy" > "$PROFILE_FILE"
 
 # baselines 索引骨架（首次空，验收后填——blueprint-generator 不生成此文件，首次无基准数据）
-if [ ! -f docs/omni_powers/op_blueprint/baselines/baselines_index.md ]; then
+if [ ! -f "$BLUEPRINT"/baselines/baselines_index.md ]; then
   cp "$OP_HOME/docs_template/omni_powers/op_blueprint/baselines/baselines_index.md" \
-     docs/omni_powers/op_blueprint/baselines/baselines_index.md 2>/dev/null \
-    || echo "# baselines 索引（首次空，验收后填）" > docs/omni_powers/op_blueprint/baselines/baselines_index.md
+     "$BLUEPRINT"/baselines/baselines_index.md 2>/dev/null \
+    || echo "# baselines 索引（首次空，验收后填）" > "$BLUEPRINT"/baselines/baselines_index.md
 fi
 
 # progress + decisions（首次复制模板；重跑不覆盖已有内容）
-if [ ! -f docs/omni_powers/op_record/progress.md ]; then
+if [ ! -f "$RECORD"/progress.md ]; then
   cp "$OP_HOME/docs_template/omni_powers/op_record/progress.md" \
-     docs/omni_powers/op_record/progress.md 2>/dev/null \
-    || touch docs/omni_powers/op_record/progress.md
+     "$RECORD"/progress.md 2>/dev/null \
+    || touch "$RECORD"/progress.md
 fi
-if [ ! -f docs/omni_powers/op_record/decisions.md ]; then
+if [ ! -f "$RECORD"/decisions.md ]; then
   cp "$OP_HOME/docs_template/omni_powers/op_record/decisions.md" \
-     docs/omni_powers/op_record/decisions.md 2>/dev/null \
-    || touch docs/omni_powers/op_record/decisions.md
+     "$RECORD"/decisions.md 2>/dev/null \
+    || touch "$RECORD"/decisions.md
 fi
 
 # tasks_list.json（重跑不覆盖——保留已有 task）
-[ -f docs/omni_powers/op_execution/tasks_list.json ] \
-  || echo '{"tasks":[]}' > docs/omni_powers/op_execution/tasks_list.json
+[ -f "$EXECUTION"/tasks_list.json ] \
+  || echo '{"tasks":[]}' > "$EXECUTION"/tasks_list.json
 
 # leader_checkpoint.md（重跑不覆盖）
-if [ ! -f docs/omni_powers/op_execution/leader_checkpoint.md ]; then
-  cat > docs/omni_powers/op_execution/leader_checkpoint.md << 'EOF'
+if [ ! -f "$EXECUTION"/leader_checkpoint.md ]; then
+  cat > "$EXECUTION"/leader_checkpoint.md << 'EOF'
 # Leader Checkpoint
 
 ## 断点

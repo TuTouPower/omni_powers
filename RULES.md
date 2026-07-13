@@ -5,7 +5,7 @@
 > **各 agent 行为**见 `$OP_HOME/agents/*.md`；**各 skill 流程**见 `$OP_HOME/skills/*/SKILL.md`。
 > **模板/脚本**通过 `$OP_HOME`（插件安装目录环境变量）引用。
 >
-> compact 恢复：先读 `docs/omni_powers/profile`（判定 heavy/lite）→ 按 profile 选状态机（见「profile 分叉」段）→ jq 查 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
+> compact 恢复：先读 `$OP_DOCS_DIR/profile`（判定 heavy/lite）→ 按 profile 选状态机（见「profile 分叉」段）→ jq 查 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
 >
 > **核心心智**：磁盘是真状态，所有 agent 上下文都是可重建缓存。全线 Sub Agent，每次 fresh dispatch。
 
@@ -66,7 +66,7 @@ obsolete（方案调整废弃，不参与流转，spec 移 op_record/specs/obsol
 1. `git revert <commit_hash>` — 反向提交
 2. `bash $OP_HOME/scripts/op_status.sh {TID} ready` — 该 task 回退
 3. `bash $OP_HOME/scripts/op_jq.sh downstream {TID}` 查下游，逐一回退
-4. 已归档的 task：`git mv docs/omni_powers/op_record/tasks/{TID} docs/omni_powers/op_execution/tasks/{TID}` 移回工作区
+4. 已归档的 task：`git mv $OP_DOCS_DIR/op_record/tasks/{TID} $OP_DOCS_DIR/op_execution/tasks/{TID}` 移回工作区
 
 不连锁回滚下游，只重置状态。
 
@@ -122,7 +122,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 
 ## profile 分叉（heavy / lite 两模式）
 
-项目 `docs/omni_powers/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_design.md` §5。
+项目 `$OP_DOCS_DIR/profile` 单行值 `heavy` | `lite`。**compact 恢复第一步先读它**判断走哪套。设计详见 `$OP_HOME/docs/omni_powers_design.md` §5。
 
 > **安全声明（design §0.1）**：两版同靠 reviewer 双裁决 + evaluator 验收兜底；heavy 多 merge gate 写入硬底线（design §3.4），lite 无。lite 是 degraded mode，不是 heavy 同等安全版。
 

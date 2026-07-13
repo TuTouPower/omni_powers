@@ -8,9 +8,17 @@ description: >
 
 # Op Status Skill
 
+> **路径前置**：进入 skill 后先执行：
+> ```bash
+> source "$OP_HOME/scripts/op_paths.sh"
+> op_load_paths "" "$(git rev-parse --show-toplevel)"
+> ```
+> 后文 `$OP_DOCS_DIR` 使用解析后项目相对路径；旧项目无配置自动取 `docs/omni_powers`。
+
+
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
 >
-> **profile 感知**：先 `cat docs/omni_powers/profile`。`lite` 项目无「收口中」态、无闸门 C；异常提示中 `/opintake` 对应换 `/oplintake`。脚本统一在 `$OP_HOME/scripts/`（两版共用）。
+> **profile 感知**：先 `cat "$OP_DOCS_DIR/profile"`。`lite` 项目无「收口中」态、无闸门 C；异常提示中 `/opintake` 对应换 `/oplintake`。脚本统一在 `$OP_HOME/scripts/`（两版共用）。
 
 `/opstatus` 渲染当前状态。只读，不改任何文件。
 
@@ -19,7 +27,7 @@ description: >
 ### 1. 读 checkpoint
 
 ```bash
-cat docs/omni_powers/op_execution/leader_checkpoint.md
+cat "$OP_DOCS_DIR/op_execution/leader_checkpoint.md"
 ```
 
 ### 2. 查 tasks_list.json（严禁 Read 整文件，用 jq）
@@ -62,6 +70,6 @@ bash "$OP_HOME/scripts/op_jq.sh" obsolete     # 废弃
 
 | 文件 | 用途 |
 |---|---|
-| `docs/omni_powers/op_execution/tasks_list.json` | 唯一 task 真相源 |
-| `docs/omni_powers/op_execution/leader_checkpoint.md` | 断点 |
+| `$OP_DOCS_DIR/op_execution/tasks_list.json` | 唯一 task 真相源 |
+| `$OP_DOCS_DIR/op_execution/leader_checkpoint.md` | 断点 |
 | `scripts/op_jq.sh` | jq 查询 |

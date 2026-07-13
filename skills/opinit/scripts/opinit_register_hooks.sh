@@ -118,6 +118,8 @@ echo ""
 if git_dir="$(git rev-parse --git-dir 2>/dev/null)"; then
     hooks_dir="$git_dir/hooks"
     mkdir -p "$hooks_dir"
+    cp "$OP_HOME/scripts/op_paths.sh" "$hooks_dir/op_paths.sh"
+    chmod +x "$hooks_dir/op_paths.sh"
     for gh in "$OP_HOME/hooks/git/"*; do
         [ -f "$gh" ] || continue
         name="$(basename "$gh")"

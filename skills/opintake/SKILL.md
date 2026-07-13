@@ -8,9 +8,17 @@ description: >
 
 # Op Intake Skill
 
+> **路径前置**：进入 skill 后先执行：
+> ```bash
+> source "$OP_HOME/scripts/op_paths.sh"
+> op_load_paths "" "$(git rev-parse --show-toplevel)"
+> ```
+> 后文 `$OP_DOCS_DIR` 使用解析后项目相对路径；旧项目无配置自动取 `docs/omni_powers`。
+
+
 > **运行前检查环境**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git/OP_HOME，缺失 die + 装法）
 >
-> **profile 互斥**：`[ -f docs/omni_powers/profile ] && ! grep -qx heavy docs/omni_powers/profile` 命中 → **停**，提示 lite 项目用 `/oplintake`，不混跑。（无 profile 文件 = 旧 heavy 项目，放行）
+> **profile 互斥**：`[ -f "$OP_DOCS_DIR/profile" ] && ! grep -qx heavy "$OP_DOCS_DIR/profile"` 命中 → **停**，提示 lite 项目用 `/oplintake`，不混跑。（无 profile 文件 = 旧 heavy 项目，放行）
 
 `/opintake "<需求>"` 是需求入口。spec 编写（task:spec 1:1）→ 拆 task（`awaiting_gate`）→ 闸门 A → task 待开始（`ready`）。
 
@@ -36,7 +44,7 @@ change type 只决定测试规则与 验收标准侧重（权威矩阵 design §
 
 > spec 编写归 leader 主会话，建议本步骤前 `/model` 切 Opus（错误放大系数最大，design §2.2）。
 
-调用内部 skill `opspec`。spec 路径：`docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec = 1:1，每 task 一份；TID 全局单调递增 T0001/T0002…永不复用；命名统一 `{TID}_{slug}.md`，标题放 markdown H1）。共享不变量/跨 task 技术决策**复制进每个相关 task spec**（自足）。
+调用内部 skill `opspec`。spec 路径：`$OP_DOCS_DIR/op_execution/specs/{TID}_{slug}.md`（task:spec = 1:1，每 task 一份；TID 全局单调递增 T0001/T0002…永不复用；命名统一 `{TID}_{slug}.md`，标题放 markdown H1）。共享不变量/跨 task 技术决策**复制进每个相关 task spec**（自足）。
 
 spec frontmatter：`status: draft`、`type: feat|refactor|perf|...`。
 
