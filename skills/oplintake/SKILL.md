@@ -1,13 +1,21 @@
 ---
 name: oplintake
 description: >
-  lite 需求入口（零侵入版）：spec 编写（task:spec 1:1）→ 拆 task → 闸门 A → tasks_list.json 就绪。
+  lite 需求入口（低侵入版）：spec 编写（task:spec 1:1）→ 拆 task → 闸门 A → tasks_list.json 就绪。
   触发：/oplintake "<需求>"、新需求、做个功能。
   前置：已跑 /oplinit 建骨架（profile=lite）。
   终点：task status=待开始，写 leader_checkpoint，交给 /oplrun。
 ---
 
 # Op Lite Intake Skill
+
+> **路径前置**：进入 skill 后先执行：
+> ```bash
+> source "$OP_HOME/scripts/op_paths.sh"
+> op_load_paths "" "$(git rev-parse --show-toplevel)"
+> ```
+> 后文 `$OP_DOCS_DIR` 使用解析后项目相对路径；旧项目无配置自动取 `docs/omni_powers`。
+
 
 > **脚本根**：leader 定位本 skill 安装目录后用它：
 > ```bash
@@ -22,7 +30,7 @@ description: >
 
 ```bash
 # 命中即非 0 阻断（不能只 echo——leader 见非 0 必须停）
-[ -f docs/omni_powers/profile ] && grep -qx lite docs/omni_powers/profile \
+[ -f "$OP_DOCS_DIR/profile" ] && grep -qx lite "$OP_DOCS_DIR/profile" \
   || { echo "[FAIL] 未初始化或非 lite——先跑 /oplinit（heavy 项目用 /opintake）" >&2; false; }
 ```
 
@@ -38,7 +46,7 @@ description: >
 
 > 建议本步骤前 `/model` 切 Opus（错误放大系数最大）。
 
-写 `docs/omni_powers/op_execution/specs/{TID}_{slug}.md`（task:spec 1:1，每 task 一份）。TID 全局单调递增 T0001/T0002…永不复用。共享不变量/跨 task 技术决策复制进每个相关 task spec（自足）。
+写 `$OP_DOCS_DIR/op_execution/specs/{TID}_{slug}.md`（task:spec 1:1，每 task 一份）。TID 全局单调递增 T0001/T0002…永不复用。共享不变量/跨 task 技术决策复制进每个相关 task spec（自足）。
 
 frontmatter：
 
@@ -61,7 +69,7 @@ spec 正文必含：
 
 ## 步骤三：拆 task 写 tasks_list.json（awaiting_gate）
 
-沿低耦合缝隙切（层/模块/数据流阶段）。每 task 追加到 `docs/omni_powers/op_execution/tasks_list.json`：
+沿低耦合缝隙切（层/模块/数据流阶段）。每 task 追加到 `$OP_DOCS_DIR/op_execution/tasks_list.json`：
 
 ```json
 {
@@ -94,7 +102,7 @@ spec 正文必含：
 
 ## 步骤五：写 checkpoint
 
-编辑 `docs/omni_powers/op_execution/leader_checkpoint.md`：`current_task` 留空（未领），`next_step: 交 /oplrun 续跑`，关键上下文段填当前目标。
+编辑 `$OP_DOCS_DIR/op_execution/leader_checkpoint.md`：`current_task` 留空（未领），`next_step: 交 /oplrun 续跑`，关键上下文段填当前目标。
 
 ## 终点
 
@@ -102,7 +110,7 @@ spec 正文必含：
 
 ## compact 恢复
 
-1. 读本 SKILL + `docs/omni_powers/profile`（确认 lite）
+1. 读本 SKILL + `$OP_DOCS_DIR/profile`（确认 lite）
 2. jq 查 tasks_list.json 看有无 draft/approved spec 待拆
 3. 读对应 spec
 

@@ -8,7 +8,7 @@
 #   - 从 ~/.claude/settings.json 的 env 段移除 OP_HOME（备份后改）
 #
 # --purge-project（在已初始化的项目根跑，额外清理该项目的 omni_powers 产物）：
-#   - 删 docs/omni_powers/
+#   - 按项目 env.OP_DOCS_DIR 清理 OP 资产；根为 docs 时保留宿主文档
 #   - 从项目 .claude/settings.json 的 hooks 段移除 omni_powers 注册的 hook（command 命中 OP_HOME/hooks/run-hook.cmd 或含 omni_powers）
 #   - 删 .git/hooks/ 下含 omni_powers 标记的 git hook 文件
 #
@@ -58,9 +58,9 @@ print_plan() {
     echo "         路径前缀：$CLAUDE_HOME/agents/"
     echo "  [全局] 移除 $CLAUDE_HOME/settings.json 的 env.OP_HOME"
     if [ "$PURGE_PROJECT" -eq 1 ]; then
-        echo "  [项目] 删 docs/omni_powers/（当前目录）"
-        echo "  [项目] 清 .claude/settings.json 中 omni_powers 注册的 hook"
-        echo "  [项目] 删 .git/hooks/ 下 omni_powers 生成的 git hook"
+        echo "  [项目] 按 .claude/settings.json 的 env.OP_DOCS_DIR 清理 OP 资产"
+        echo "  [项目] 清 .claude/settings.json 中 omni_powers hook + env.OP_DOCS_DIR"
+        echo "  [项目] 删 .git/hooks/ 下 omni_powers 生成的 git hook/helper"
     fi
 }
 
@@ -97,39 +97,106 @@ remove_global() {
 }
 
 # ── 项目级清理 ──
+remove_managed_block() {
+    local file="$1"
+    local label="$2"
+    local begin="<!-- omni_powers managed start: $label -->"
+    local end="<!-- omni_powers managed end: $label -->"
+    [ -f "$file" ] || return 0
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo "  [DRY] 移除 $file 的 omni_powers managed block"
+        return 0
+    fi
+    local tmp
+    tmp="$(mktemp "$(dirname "$file")/.op-uninstall.XXXXXX")"
+    awk -v begin="$begin" -v end="$end" '
+        $0 == begin {skip=1; next}
+        $0 == end {skip=0; next}
+        !skip {print}
+    ' "$file" > "$tmp"
+    mv "$tmp" "$file"
+    [ -s "$file" ] || rm -f "$file"
+}
+
 purge_project() {
     echo "=== 项目级清理（$(pwd)）==="
-    local docs_op="docs/omni_powers"
-    del "$docs_op"
+    local root settings docs_dir docs_root
+    root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+    settings="$root/.claude/settings.json"
+    docs_dir="docs/omni_powers"
 
-    # 项目 .claude/settings.json hooks 清理
-    local ps=".claude/settings.json"
-    if [ -f "$ps" ] && command -v jq >/dev/null 2>&1; then
-        if jq -e '.hooks' "$ps" >/dev/null 2>&1; then
-            if [ "$DRY_RUN" -eq 1 ]; then
-                echo "  [DRY] 清理 .claude/settings.json 的 omni_powers hook"
-            else
-                backup_settings "$ps"
-                tmp="$(mktemp)"
-                # 各 hook 事件数组里，丢弃 command 命中 omni_powers / OP_HOME/hooks/run-hook.cmd 的项
-                jq '
-                    def is_op: (.command // "") | test("omni_powers|\\$OP_HOME/hooks/run-hook\\.cmd|OP_HOME/hooks/run-hook\\.cmd");
-                    .hooks |= with_entries(
-                        .value |= map(select(. | is_op | not))
-                    )
-                    | .hooks |= with_entries(select(.value | length > 0))
-                ' "$ps" > "$tmp" && mv "$tmp" "$ps"
-                echo "  [OK] 清理 $ps 中 omni_powers hook"
-            fi
+    if [ -f "$settings" ]; then
+        command -v jq >/dev/null 2>&1 || { echo "[FAIL] 缺 jq，无法安全解析 $settings" >&2; return 1; }
+        jq -e '
+            type == "object" and
+            ((.env? // {}) | type == "object") and
+            (((.env? // {}) | has("OP_DOCS_DIR") | not) or
+             (((.env.OP_DOCS_DIR | type) == "string") and ((.env.OP_DOCS_DIR | length) > 0)))
+        ' "$settings" >/dev/null 2>&1 || { echo "[FAIL] $settings 中 env 或 env.OP_DOCS_DIR 类型/值非法" >&2; return 1; }
+        configured="$(jq -r '(.env? // {}).OP_DOCS_DIR // empty' "$settings")"
+        [ -z "$configured" ] || docs_dir="$configured"
+    fi
+
+    source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/op_paths.sh"
+    docs_dir="$(op_normalize_docs_dir "$docs_dir")" || return 1
+    op_reject_symlink_path "$root" ".claude" || return 1
+    op_reject_symlink_path "$root" ".claude/settings.json" || return 1
+    op_reject_symlink_path "$root" "$docs_dir" || return 1
+    docs_root="$root/$docs_dir"
+
+    if [ "$docs_dir" = "docs" ]; then
+        local item
+        for item in op_blueprint op_execution op_record e2e profile; do
+            del "$docs_root/$item"
+        done
+        remove_managed_block "$docs_root/README.md" README.md
+        remove_managed_block "$docs_root/index.md" index.md
+        remove_managed_block "$docs_root/.gitignore" gitignore
+    else
+        del "$docs_root"
+    fi
+
+    if [ -f "$settings" ]; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+            echo "  [DRY] 清理 $settings 的 omni_powers hook + env.OP_DOCS_DIR"
         else
-            echo "  [SKIP] $ps 无 hooks 段"
+            backup_settings "$settings"
+            tmp="$(mktemp "$root/.claude/.settings.XXXXXX")"
+            jq '
+                def is_op: (.command // "") | test("omni_powers|\\$OP_HOME/hooks/run-hook\\.cmd|OP_HOME/hooks/run-hook\\.cmd");
+                def clean_matcher:
+                    if (.hooks? | type) == "array" then
+                        .hooks |= map(select(. | is_op | not))
+                    else . end;
+                if (.hooks? | type) == "object" then
+                    .hooks |= with_entries(
+                        if (.value | type) == "array" then
+                            .value |= map(clean_matcher | select((.hooks? // []) | length > 0))
+                        else . end
+                    )
+                    | .hooks |= with_entries(select((.value | type) != "array" or (.value | length) > 0))
+                else . end
+                | if (.env? | type) == "object" then del(.env.OP_DOCS_DIR) else . end
+                | if .env == {} then del(.env) else . end
+                | if .hooks == {} then del(.hooks) else . end
+            ' "$settings" > "$tmp"
+            mv "$tmp" "$settings"
+            echo "  [OK] 清理 $settings 中 omni_powers 配置"
         fi
     fi
 
-    # git hooks
-    local git_hooks
-    git_hooks="$(git rev-parse --git-path hooks 2>/dev/null || true)"
+    local git_hooks git_dir gh
+    git_hooks="$(git -C "$root" rev-parse --path-format=absolute --git-path hooks 2>/dev/null || true)"
+    git_dir="$(git -C "$root" rev-parse --absolute-git-dir 2>/dev/null || true)"
     if [ -n "$git_hooks" ] && [ -d "$git_hooks" ]; then
+        case "$git_hooks/" in
+            "$git_dir/"*) ;;
+            *)
+                echo "  [WARN] core.hooksPath 位于 Git dir 外，拒绝自动删除: $git_hooks" >&2
+                return 0
+                ;;
+        esac
+        del "$git_hooks/op_paths.sh"
         for gh in "$git_hooks"/*; do
             [ -f "$gh" ] || continue
             if grep -q "omni_powers" "$gh" 2>/dev/null; then
@@ -139,6 +206,7 @@ purge_project() {
     else
         echo "  [SKIP] 非 git 仓库或无 hooks 目录"
     fi
+    return 0
 }
 
 print_plan
@@ -160,5 +228,9 @@ if [ "$DRY_RUN" -eq 1 ]; then
     echo "[OK] dry-run 预览完成（未实际删除，去掉 --dry-run 执行）"
 else
     echo "[OK] 卸载完成"
-    [ "$PURGE_PROJECT" -eq 0 ] && echo "  如需清理某项目的 docs/omni_powers/ 与 hook：在该项目根跑 bash uninstall.sh --purge-project -y"
+    if [ "$PURGE_PROJECT" -eq 0 ]; then
+        echo "  如需清理某项目的 OP 资产与 hook：在该项目根跑 bash uninstall.sh --purge-project -y"
+    fi
 fi
+
+exit 0

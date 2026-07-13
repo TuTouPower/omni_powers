@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # op_new_task：建 task 工作区目录并拷二模板（report/review）
 # 用法: op_new_task.sh <TID>
-# spec 不在 task 目录——每 task 一份于 docs/omni_powers/op_execution/specs/{TID}_{slug}.md（task:spec 1:1）
+# spec 不在 task 目录——每 task 一份于 $OP_DOCS_DIR/op_execution/specs/{TID}_{slug}.md（task:spec 1:1）
 # 注：tasks_list.json 的录入归 opintake 拆 task 时（写完整字段）；未拆的待办进 issues/ 不进 tasks_list
 set -euo pipefail
 
 TID="${1:?用法: op_new_task.sh <TID>}"
 PLUGIN_ROOT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
+TASK_DIR="$OP_DOCS_ROOT/op_execution/tasks/$TID"
 TEMPLATE_DIR="$PLUGIN_ROOT/docs_template/omni_powers/op_execution/tasks/{TID}"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }

@@ -1,12 +1,20 @@
 ---
 name: oplrun
 description: >
-  lite 续跑执行（零侵入版）：读 profile → task 循环（implementer → leader 自验 → reviewer 双裁决 → per-task 裸评 → leader 收口 commit）。
+  lite 续跑执行（低侵入版）：读 profile → task 循环（implementer → leader 自验 → reviewer 双裁决 → per-task 裸评 → leader 收口 commit）。
   触发：/oplrun、继续、下一步、干活。
   与 heavy 的 oprun 区别：无 hook（leader 亲自验证代替）、无 closer（leader 收口）、脚本自带、验收前置（D6，commit 在裸评 PASS 后）。
 ---
 
 # Op Lite Run Skill
+
+> **路径前置**：进入 skill 后先执行：
+> ```bash
+> source "$OP_HOME/scripts/op_paths.sh"
+> op_load_paths "" "$(git rev-parse --show-toplevel)"
+> ```
+> 后文 `$OP_DOCS_DIR` 使用解析后项目相对路径；旧项目无配置自动取 `docs/omni_powers`。
+
 
 > **运行前**：`bash "$OP_HOME/scripts/op_check_env.sh"`（jq/git）。
 > controller = leader 主会话。lite 无 hook——**leader 每 task 亲自跑测试 + 读 diff 验证**（代替 heavy 的机器校验）。
@@ -22,8 +30,8 @@ lite 脚本统一在 `$OP_HOME/scripts/`（两版共用，install.sh --set-ophom
 ## 步骤一：读状态
 
 ```bash
-cat docs/omni_powers/profile          # 必须 lite，否则停（heavy 项目用 /oprun）
-cat docs/omni_powers/op_execution/leader_checkpoint.md
+cat "$OP_DOCS_DIR/profile"          # 必须 lite，否则停（heavy 项目用 /oprun）
+cat "$OP_DOCS_DIR/op_execution/leader_checkpoint.md"
 bash "$OP_HOME/scripts/op_jq.sh" all
 ```
 
@@ -66,19 +74,19 @@ bash "$OP_HOME/scripts/op_jq.sh" deps {TID}      # 确认前置全 done
 leader 先建 task 工作区（不写 brief）：
 
 ```bash
-mkdir -p docs/omni_powers/op_execution/tasks/{TID}
+mkdir -p $OP_DOCS_DIR/op_execution/tasks/{TID}
 # report.md/review.md 由 agent 产出；无 brief——dispatch 给指针
 DISPATCH_SHA=$(git rev-parse HEAD)   # 记 dispatch 锚点 sha（D3：3.4 reviewer diff 锚定 + 3.6 spec 写保护用，leader 循环内持有）
 bash "$OP_HOME/scripts/op_implementer_check.sh" {TID}   # 输出 mode=normal|fail|blocked, round
 bash "$OP_HOME/scripts/op_status.sh" {TID} in_progress
-awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {if(!f)print}' docs/omni_powers/op_execution/leader_checkpoint.md > /tmp/cp.md && mv /tmp/cp.md docs/omni_powers/op_execution/leader_checkpoint.md
+awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {if(!f)print}' $OP_DOCS_DIR/op_execution/leader_checkpoint.md > /tmp/cp.md && mv /tmp/cp.md $OP_DOCS_DIR/op_execution/leader_checkpoint.md
 ```
 
 dispatch 指针（不生成文件，prompt 直给）：
 
 ```
 TID: {TID}
-spec: docs/omni_powers/op_execution/specs/{TID}_{slug}.md
+spec: $OP_DOCS_DIR/op_execution/specs/{TID}_{slug}.md
 取元数据: jq 查 tasks_list.json 该 task（workset/depends_on）
 ```
 
@@ -105,7 +113,7 @@ Agent(subagent_type="op-implementer", prompt:
 implementer 返回后 **leader 亲自验证**，不信 agent 自述：
 
 ```bash
-head -20 docs/omni_powers/op_execution/tasks/{TID}/report.md   # 只读顶部总报告 + evidence 路径
+head -20 $OP_DOCS_DIR/op_execution/tasks/{TID}/report.md   # 只读顶部总报告 + evidence 路径
 # 按 report 的 evidence 段跑测试命令，读 verdict（不把全量输出纳入上下文）
 git diff --stat                                                 # 先看改动面
 # 定向读改动核心 hunk（不全量 git diff）
@@ -146,7 +154,7 @@ bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}   # exit 0=PASS, 1=FAIL
 
 ```bash
 bash "$OP_HOME/scripts/op_assemble_eval_brief.sh" {TID}
-# 产出 docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md
+# 产出 $OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md
 ```
 
 派发（prompt 极简——内容全在 brief）：
@@ -155,8 +163,8 @@ bash "$OP_HOME/scripts/op_assemble_eval_brief.sh" {TID}
 Agent(subagent_type="op-evaluator", prompt:
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite
-   读 docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md，按 brief 执行 per-task 裸评 {TID}。
-   逐条验收标准评估 → PASS 的验收标准 固化成 docs/omni_powers/e2e/{TID}/（lite 零侵入，不进用户测试 runner，§5.3） → 破坏检查 → 对抗探索。
+   读 $OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md，按 brief 执行 per-task 裸评 {TID}。
+   逐条验收标准评估 → PASS 的验收标准 固化成 $OP_DOCS_DIR/e2e/{TID}/（lite 私有路径，不进用户测试 runner，§5.3） → 破坏检查 → 对抗探索。
    输出 acceptance/{TID}/eval.md，末行 verdict: PASS 或 FAIL。
    **lite 硬约束（A11）：禁止主动 Read src/** 与 task 目录实现细节，E2E 期望只从 spec 推导**。")
 ```
@@ -175,10 +183,10 @@ Agent(subagent_type="op-evaluator", prompt:
 ```bash
 # ⚠️ lite 无 worktree——implementer 直改主工作树。
 # D3 spec 写保护：dispatch 锚点 sha 后 specs/ 不许动（防 implementer 改 spec 迎合实现）
-git diff --quiet "$DISPATCH_SHA" -- docs/omni_powers/op_execution/specs/ || echo "[WARN] specs/ dispatch 后改动——走变更子流程（§2.4）或显式确认" >&2
-# Q6 收紧 add：-u（已跟踪改动，归档由 op_close_post 的 git mv 处理）+ 未跟踪文件 leader 确认（防 git add -A 误纳 docs/omni_powers/ 外的临时文件/.env）
+git diff --quiet "$DISPATCH_SHA" -- $OP_DOCS_DIR/op_execution/specs/ || echo "[WARN] specs/ dispatch 后改动——走变更子流程（§2.4）或显式确认" >&2
+# Q6 收紧 add：-u（已跟踪改动，归档由 op_close_post 的 git mv 处理）+ 未跟踪文件 leader 确认（防 git add -A 误纳 $OP_DOCS_DIR/ 外的临时文件/.env）
 git add -u
-git status --short | grep -E '^\?\? ' | grep -v 'docs/omni_powers/' && echo "[WARN] 有未跟踪的非 omni_powers 文件——leader 确认是否本 task 产出（lite 无 merge gate，越界靠 advisory）" || true
+git status --short | grep -E '^\?\? ' | awk -v prefix="?? $OP_DOCS_DIR/" 'index($0, prefix) != 1' && echo "[WARN] 有未跟踪的非 omni_powers 文件——leader 确认是否本 task 产出（lite 无 merge gate，越界靠 advisory）" || true
 bash "$OP_HOME/scripts/op_close_post.sh" {TID} {feature}   # 校验 review+eval PASS + 归档 task/spec/acceptance + 标 done
 ```
 
@@ -207,8 +215,8 @@ bash "$OP_HOME/scripts/close_check.sh" {TID}   # 非 0 不许进下一个 task
 lite 不单装 opstatus——用户说"看进度/现在啥情况"时，leader 内联渲染（只读，不改文件）：
 
 ```bash
-cat docs/omni_powers/profile
-cat docs/omni_powers/op_execution/leader_checkpoint.md
+cat "$OP_DOCS_DIR/profile"
+cat "$OP_DOCS_DIR/op_execution/leader_checkpoint.md"
 bash "$OP_HOME/scripts/op_jq.sh" all
 bash "$OP_HOME/scripts/op_jq.sh" blocked
 ```
@@ -235,7 +243,7 @@ bash "$OP_HOME/scripts/op_jq.sh" blocked
 
 ## compact 恢复
 
-1. 读本 SKILL + `docs/omni_powers/profile`（确认 lite）
+1. 读本 SKILL + `$OP_DOCS_DIR/profile`（确认 lite）
 2. `bash "$OP_HOME/scripts/op_jq.sh" all`
 3. 有未归档 tasks/{TID}/ 则从 report.md + review.md 重建状态
 4. 重选 task 进循环

@@ -7,14 +7,26 @@
 
 set -uo pipefail
 
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+op_paths_helper="$(git rev-parse --git-path hooks 2>/dev/null)/op_paths.sh"
+if [ -f "$op_paths_helper" ]; then
+    source "$op_paths_helper"
+elif [ -n "${OP_HOME:-}" ] && [ -f "$OP_HOME/scripts/op_paths.sh" ]; then
+    source "$OP_HOME/scripts/op_paths.sh"
+else
+    echo "[git hook] FATAL: op_paths.sh 缺失，重跑 /opinit" >&2
+    exit 1
+fi
+op_load_paths "" "$repo_root" || exit 1
+
 against="$(git rev-parse --verify HEAD >/dev/null 2>&1 && echo HEAD || echo "$(git hash-object -t tree /dev/null)")"
 
 blocked=0
-while IFS= read -r path; do
+while IFS= read -r -d '' path; do
     [ -n "$path" ] || continue
     case "$path" in
-        docs/omni_powers/op_blueprint/specs/*.md|docs/omni_powers/op_blueprint/baselines/*|docs/omni_powers/op_blueprint/*.md)
-            status="$(awk -F': *' '/^status:/{print $2; exit}' "$path" 2>/dev/null | tr -d '[:space:]')"
+        $OP_DOCS_DIR/op_blueprint/specs/*.md|$OP_DOCS_DIR/op_blueprint/baselines/*|$OP_DOCS_DIR/op_blueprint/*.md)
+            status="$(git show ":$path" 2>/dev/null | awk -F': *' '/^status:/{print $2; exit}' | tr -d '[:space:]')"
             case "$status" in
                 approved|in_progress)
                     echo "[git pre-commit] BLOCKED: $path 状态=$status，受写保护。" >&2
@@ -24,16 +36,16 @@ while IFS= read -r path; do
             esac
             ;;
     esac
-done < <(git diff-index --cached --name-only "$against")
+done < <(git diff-index --cached -z --name-only "$against")
 
 [ "$blocked" -eq 0 ] || exit 1
 
 # ── merge gate 硬约束（本轮改进）：有 in_progress task 且缺 merge gate 证据 → 拒 commit ──
-TASKS_FILE="docs/omni_powers/op_execution/tasks_list.json"
+TASKS_FILE="$OP_DOCS_DIR/op_execution/tasks_list.json"
 if [ -f "$TASKS_FILE" ] && command -v jq >/dev/null 2>&1; then
     while IFS= read -r tid; do
         [ -n "$tid" ] || continue
-        gate_evidence="docs/omni_powers/op_execution/tasks/$tid/.merge_gate_passed"
+        gate_evidence="$OP_DOCS_DIR/op_execution/tasks/$tid/.merge_gate_passed"
         if [ ! -f "$gate_evidence" ]; then
             echo "[git pre-commit] BLOCKED: task $tid in_progress 但未过 merge gate。" >&2
             echo "  必须先跑 op_merge_gate.sh $tid <task_branch> 通过后才许 commit。" >&2

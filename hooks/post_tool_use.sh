@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 # PostToolUse hook: 代码/测试编辑后自动跑受影响测试，留机器证据
-# 证据存 docs/omni_powers/op_execution/tasks/{TID}/test_evidence_*.log
+# 证据存 $OP_DOCS_DIR/op_execution/tasks/{TID}/test_evidence_*.log
 # SubagentStop hook 校验 5 分钟内新鲜证据；本 hook 保留 60 分钟审计轨迹
 
 set -uo pipefail
+
+project_root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+op_paths_script="${OP_HOME:-}/scripts/op_paths.sh"
+if [ -f "$op_paths_script" ]; then
+  source "$op_paths_script"
+  if ! op_load_paths "" "$project_root"; then
+    echo "[Hook] BLOCKED: OP_DOCS_DIR 配置无效，保护性拒绝" >&2
+    exit 2
+  fi
+else
+  echo "[Hook] BLOCKED: $op_paths_script 缺失，无法解析 OP_DOCS_DIR" >&2
+  exit 2
+fi
 
 input="$(cat)"
 tool_name="$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)"
@@ -17,16 +30,16 @@ rel="${file_path#$root/}"
 
 # #20: 管理测试相关路径——src/** + tests/** + e2e/**（原仅 src/**，漏 tests/e2e 致 Stop 误伤 #19）
 case "$rel" in
-  src/*|tests/*|e2e/*) ;;
-  *) exit 0 ;;
+  src/*|tests/*) ;;
+  *) op_is_e2e_path "$rel" || exit 0 ;;
 esac
 
 # 找当前 TID
-checkpoint="docs/omni_powers/op_execution/leader_checkpoint.md"
+checkpoint="$OP_EXECUTION_DIR/leader_checkpoint.md"
 tid="$(awk '/^### current_task$/{f=1;next} /^### /{f=0} f&&NF{print;exit}' "$checkpoint" 2>/dev/null | tr -d ' ')"
 [ -z "$tid" ] && exit 0
 
-tasks_dir="docs/omni_powers/op_execution/tasks/$tid"
+tasks_dir="$OP_EXECUTION_DIR/tasks/$tid"
 mkdir -p "$tasks_dir"
 
 # 检测测试命令

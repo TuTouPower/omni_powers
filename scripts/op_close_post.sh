@@ -8,9 +8,12 @@ OP_HOME_DIR="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 TID="${1:?用法: op_close_post.sh <TID> <feature>}"
 FEATURE="${2:?缺少 feature}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASK_DIR="$ROOT/docs/omni_powers/op_execution/tasks/$TID"
-ARCHIVE_DIR="$ROOT/docs/omni_powers/op_record/tasks/$TID"
-PROGRESS_FILE="$ROOT/docs/omni_powers/op_record/progress.md"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
+TASK_DIR="$OP_DOCS_ROOT/op_execution/tasks/$TID"
+ARCHIVE_DIR="$OP_DOCS_ROOT/op_record/tasks/$TID"
+PROGRESS_FILE="$OP_DOCS_ROOT/op_record/progress.md"
 DATE="$(TZ='Asia/Shanghai' date +'%F %T UTC+8')"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
@@ -40,9 +43,9 @@ verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$ACTIVE_DIR/review.md" |
 
 # 校验 acceptance_report.md verdict PASS（D6 验收前置，design §2.5）——非行为型 task（eval:skip）豁免
 # 文件名契约与 op-evaluator.md 输出段一致（acceptance_report.md，非 eval.md）
-EVAL_SKIP="$(jq -r --arg tid "$TID" '.tasks[] | select(.id==$tid) | .eval // "required"' "$ROOT/docs/omni_powers/op_execution/tasks_list.json" 2>/dev/null || echo required)"
+EVAL_SKIP="$(jq -r --arg tid "$TID" '.tasks[] | select(.id==$tid) | .eval // "required"' "$OP_DOCS_ROOT/op_execution/tasks_list.json" 2>/dev/null || echo required)"
 if [ "$EVAL_SKIP" != "skip" ]; then
-    EVAL_MD="$ROOT/docs/omni_powers/op_execution/acceptance/$TID/acceptance_report.md"
+    EVAL_MD="$OP_DOCS_ROOT/op_execution/acceptance/$TID/acceptance_report.md"
     [ -s "$EVAL_MD" ] || die "acceptance_report.md 缺或空: $EVAL_MD（D6：验收 PASS 才收口）"
     eval_verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$EVAL_MD" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
     [ -n "$eval_verdict" ] || die "acceptance_report.md 缺 verdict 末行: $EVAL_MD（evaluator 必写 verdict: PASS|FAIL）"
@@ -61,21 +64,22 @@ fi
 # T0003 B2：blueprint 提案未合入时阻断，防止稳定真相在 task 归档后蒸发。
 BLUEPRINT_HAS_UPDATE=0
 for _b in \
-    "$ROOT/docs/omni_powers/op_execution/acceptance/$TID/blueprint_update.md" \
-    "$ROOT/docs/omni_powers/op_record/acceptance/$TID/blueprint_update.md"; do
+    "$OP_DOCS_ROOT/op_execution/acceptance/$TID/blueprint_update.md" \
+    "$OP_DOCS_ROOT/op_record/acceptance/$TID/blueprint_update.md"; do
     if [ -s "$_b" ] && grep -qE '^###[[:space:]]+(新增|修改)([[:space:]]|$)' "$_b"; then
         BLUEPRINT_HAS_UPDATE=1
         break
     fi
 done
 if [ "$BLUEPRINT_HAS_UPDATE" = "1" ]; then
-    if ! { git show --pretty='' --name-only HEAD -- 2>/dev/null; git diff --cached --name-only --; } | grep -q '^docs/omni_powers/op_blueprint/'; then
+    blueprint_prefix="$OP_DOCS_DIR/op_blueprint/"
+    if ! { git show -z --pretty='' --name-only HEAD -- 2>/dev/null; git diff -z --cached --name-only --; } | awk -v RS='\0' -v prefix="$blueprint_prefix" 'index($0, prefix) == 1 {found=1; exit} END {exit !found}'; then
         die "blueprint 提案未合入，先执行 3.8 leader 自审写入"
     fi
 fi
 
 # T0003 B3：未 triage 的本次 open issue 阻断，防止 issue 随收口失去分级入口。
-while IFS= read -r issue_file; do
+while IFS= read -r -d '' issue_file; do
     [ -n "$issue_file" ] || continue
     issue_name="$(basename "$issue_file")"
     issue_tid="$(grep -E '^spec:[[:space:]]*' "$issue_file" | head -1 | sed -E 's/^spec:[[:space:]]*//; s/[[:space:]]+$//' || true)"
@@ -84,10 +88,10 @@ while IFS= read -r issue_file; do
         && ! grep -qE '^triaged:[[:space:]]*' "$issue_file"; then
         die "先跑 /optriage 分级（分级后在 issue frontmatter 加 triaged: P0-P3|closed）: $issue_file"
     fi
-done < <({ git diff --cached --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; git diff --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; } | sort -u)
+done < <({ git diff --cached -z --name-only --diff-filter=A -- "$OP_DOCS_DIR/op_execution/issues/*.md"; git diff -z --name-only --diff-filter=A -- "$OP_DOCS_DIR/op_execution/issues/*.md"; })
 
 # 校验 merge gate 证据（本轮改进：防绕过。无 .merge_gate_passed 直接 die）
-GATE_EVIDENCE="$ROOT/docs/omni_powers/op_execution/tasks/$TID/.merge_gate_passed"
+GATE_EVIDENCE="$OP_DOCS_ROOT/op_execution/tasks/$TID/.merge_gate_passed"
 [ -f "$GATE_EVIDENCE" ] || die "merge gate 证据缺失——先过 op_merge_gate.sh $TID <task_branch> 再收口"
 
 # ── E2E 证据质量扫描（WARN 不阻断，强制 leader 看到，本轮改进）──
@@ -114,19 +118,19 @@ fi
 
 # 归档（工作区 → 归档）：task 目录 + spec 原文 + acceptance（design §1.2 三态——活区清理）
 if [ "$ACTIVE_DIR" = "$TASK_DIR" ]; then
-    mkdir -p "$(dirname "$ARCHIVE_DIR")" "$ROOT/docs/omni_powers/op_record/specs" "$ROOT/docs/omni_powers/op_record/acceptance" || die "创建归档父目录失败"
+    mkdir -p "$(dirname "$ARCHIVE_DIR")" "$OP_DOCS_ROOT/op_record/specs" "$OP_DOCS_ROOT/op_record/acceptance" || die "创建归档父目录失败"
     git mv "$TASK_DIR" "$ARCHIVE_DIR" || die "归档 task 失败: $TID"
     # spec 原文（glob 直取，避开 ls|head 在 pipefail 下 ls 非零杀脚本的陷阱）
     SPEC_SRC=""
-    for _s in "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md; do
+    for _s in "$OP_DOCS_ROOT"/op_execution/specs/${TID}_*.md; do
         [ -e "$_s" ] && { SPEC_SRC="$_s"; break; }
     done
-    if [ -n "$SPEC_SRC" ] && [ ! -e "$ROOT/docs/omni_powers/op_record/specs/$(basename "$SPEC_SRC")" ]; then
-        git mv "$SPEC_SRC" "$ROOT/docs/omni_powers/op_record/specs/" || die "归档 spec 失败: $TID"
+    if [ -n "$SPEC_SRC" ] && [ ! -e "$OP_DOCS_ROOT/op_record/specs/$(basename "$SPEC_SRC")" ]; then
+        git mv "$SPEC_SRC" "$OP_DOCS_ROOT/op_record/specs/" || die "归档 spec 失败: $TID"
     fi
     # acceptance 工作区
-    ACCEPT_SRC="$ROOT/docs/omni_powers/op_execution/acceptance/$TID"
-    ACCEPT_DST="$ROOT/docs/omni_powers/op_record/acceptance/$TID"
+    ACCEPT_SRC="$OP_DOCS_ROOT/op_execution/acceptance/$TID"
+    ACCEPT_DST="$OP_DOCS_ROOT/op_record/acceptance/$TID"
     if [ -d "$ACCEPT_SRC" ] && [ ! -e "$ACCEPT_DST" ]; then
         git mv "$ACCEPT_SRC" "$ACCEPT_DST" || die "归档 acceptance 失败: $TID"
     fi
@@ -145,7 +149,7 @@ bash "$OP_HOME_DIR/scripts/op_status.sh" "$TID" done || die "更新状态失败:
 # checkpoint 更新并入脚本，不靠 leader 手动（防过期，本轮改进）
 # 段格式见 docs_template/.../leader_checkpoint.md（### 标题 + 正文），非 current_task: 冒号简写
 # 用临时文件代 sed -i（BSD/GNU 通吃），失败 WARN 不静默
-CHECKPOINT="$ROOT/docs/omni_powers/op_execution/leader_checkpoint.md"
+CHECKPOINT="$OP_DOCS_ROOT/op_execution/leader_checkpoint.md"
 if [ -f "$CHECKPOINT" ]; then
     tmp="$(mktemp)"
     # 清 current_task 段正文 + last_completed 段刷成本 TID + next_step 提示回 3.1 选下一 task
@@ -167,14 +171,14 @@ fi
 # stage 边界收窄（#25）：add 本 task 归档 + progress + tasks_list + 更新后的 checkpoint
 # + specs/acceptance 归档路径（MEDIUM-5：git mv 只覆盖已跟踪文件，evaluator 新产物需显式 add）
 git add \
-    "docs/omni_powers/op_record/tasks/$TID" \
-    "docs/omni_powers/op_record/progress.md" \
-    "docs/omni_powers/op_execution/tasks_list.json" \
-    "docs/omni_powers/op_execution/leader_checkpoint.md" || die "git add 失败"
+    "$OP_DOCS_DIR/op_record/tasks/$TID" \
+    "$OP_DOCS_DIR/op_record/progress.md" \
+    "$OP_DOCS_DIR/op_execution/tasks_list.json" \
+    "$OP_DOCS_DIR/op_execution/leader_checkpoint.md" || die "git add 失败"
 git add -A -- \
-    "docs/omni_powers/op_execution/specs" \
-    "docs/omni_powers/op_execution/acceptance/$TID" \
-    "docs/omni_powers/op_record/specs" \
-    "docs/omni_powers/op_record/acceptance/$TID" 2>/dev/null || true
+    "$OP_DOCS_DIR/op_execution/specs" \
+    "$OP_DOCS_DIR/op_execution/acceptance/$TID" \
+    "$OP_DOCS_DIR/op_record/specs" \
+    "$OP_DOCS_DIR/op_record/acceptance/$TID" 2>/dev/null || true
 
 echo "[OK] close post: $TID"

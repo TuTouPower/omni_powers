@@ -8,8 +8,11 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
 TID="${1:?用法: op_read_verdict.sh <TID>}"
-REVIEW_FILE="$ROOT/docs/omni_powers/op_execution/tasks/$TID/review.md"
+REVIEW_FILE="$OP_DOCS_ROOT/op_execution/tasks/$TID/review.md"
 
 if [ ! -f "$REVIEW_FILE" ]; then
     echo "round: 0"

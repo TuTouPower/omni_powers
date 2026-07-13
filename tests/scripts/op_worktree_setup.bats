@@ -15,13 +15,15 @@ setup() {
     git init -q
     git config user.email t@t
     git config user.name t
-    mkdir -p src/store e2e/b01 \
+    mkdir -p src/store e2e/b01 tests/e2e tests/app/e2e \
              docs/omni_powers/op_execution/tasks/T01 \
              docs/omni_powers/op_execution/specs \
              docs/omni_powers/op_execution/acceptance/T01 \
              docs/omni_powers/op_record/tasks/T0000_old
     echo code > src/store/x.ts
     echo test > e2e/b01/t.spec.js
+    echo test > tests/e2e/t.spec.js
+    echo test > tests/app/e2e/t.spec.js
     echo report > docs/omni_powers/op_execution/tasks/T01/report.md
     echo spec > docs/omni_powers/op_execution/specs/T01_x.md
     echo baseline > docs/omni_powers/op_execution/acceptance/T01/baselines.txt
@@ -39,6 +41,8 @@ teardown() {
     [ "$status" -eq 0 ]
     [ -d ".claude/wt/src" ]
     [ ! -d ".claude/wt/e2e" ]
+    [ ! -d ".claude/wt/tests/e2e" ]
+    [ ! -d ".claude/wt/tests/app/e2e" ]
     [ -d ".claude/wt/docs/omni_powers/op_execution/specs" ]                    # H9: dev 有 specs
     [ -f ".claude/wt/docs/omni_powers/op_execution/tasks/T01/report.md" ]      # report 可写
 }

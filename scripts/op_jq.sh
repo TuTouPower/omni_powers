@@ -15,7 +15,10 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-TASKS="$ROOT/docs/omni_powers/op_execution/tasks_list.json"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
+TASKS="$OP_DOCS_ROOT/op_execution/tasks_list.json"
 CMD="${1:?用法: op_jq.sh <pending|awaiting|pending_plan|deps|blocked|obsolete|suspended|downstream|status|all> [args...]}"
 shift
 

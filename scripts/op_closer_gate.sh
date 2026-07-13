@@ -7,13 +7,16 @@ set -uo pipefail
 
 TID="${1:?用法: op_closer_gate.sh <TID>}"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
 cd "$ROOT"
 
 # closer 允许写的路径前缀（design §2.6 权限清单）
 ALLOWED=(
-  "docs/omni_powers/op_record/decisions.md"
-  "docs/omni_powers/op_execution/issues/"
-  "docs/omni_powers/op_execution/acceptance/${TID}/"
+  "$OP_DOCS_DIR/op_record/decisions.md"
+  "$OP_DOCS_DIR/op_execution/issues/"
+  "$OP_DOCS_DIR/op_execution/acceptance/${TID}/"
 )
 
 # 扫工作区改动（closer 产出）——只报告，不撤销

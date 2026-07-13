@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # op_assemble_eval_brief：机械组装 evaluator brief（leader 不参与内容，防主会话污染）
 # 用法: op_assemble_eval_brief.sh <TID>
-# 产出: docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md
+# 产出: $OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md
 # 内容源（固定路径 cat，per-task 不写 op_blueprint 故生效规格天然是开工前基线）:
 #   - 工作 spec: op_execution/specs/{TID}_{slug}.md（AC/INV/边界/可测性契约）
 #   - 生效规格: op_blueprint/specs/{feature}.md（经 spec_index 索引）
@@ -10,14 +10,17 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+OP_PATHS_SCRIPT="${OP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/scripts/op_paths.sh"
+source "$OP_PATHS_SCRIPT"
+op_load_paths "" "$ROOT"
 TID="${1:?用法: op_assemble_eval_brief.sh <TID>}"
-ACCEPT_DIR="$ROOT/docs/omni_powers/op_execution/acceptance/$TID"
-BLUEPRINT_DIR="$ROOT/docs/omni_powers/op_blueprint"
+ACCEPT_DIR="$OP_DOCS_ROOT/op_execution/acceptance/$TID"
+BLUEPRINT_DIR="$OP_DOCS_ROOT/op_blueprint"
 
 die() { echo "[FAIL] $*" >&2; exit 1; }
 
 # spec 文件名 {TID}_{slug}.md，glob 取唯一匹配
-WORK_SPEC=$(ls "$ROOT"/docs/omni_powers/op_execution/specs/${TID}_*.md 2>/dev/null | head -1 || true)
+WORK_SPEC=$(ls "$OP_DOCS_ROOT"/op_execution/specs/${TID}_*.md 2>/dev/null | head -1 || true)
 [ -n "$WORK_SPEC" ] || die "工作 spec 不存在: specs/${TID}_*.md"
 mkdir -p "$ACCEPT_DIR"
 
