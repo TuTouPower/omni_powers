@@ -64,7 +64,8 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo
   echo "- 所有 Bash 命令必须在 dispatch 指定的 eval worktree 内执行。"
   echo "- cd 后用相对路径写产物，禁止用绝对路径写主工作区。"
-  echo "- 写 Playwright selector 前先 dump 目标页面 DOM，实测属性后再写；禁止猜测 data-* 属性名。"
+  echo "- 写 Playwright selector 前先 dump 目标页面 DOM，实测属性后再写；禁止猜测 data-* 属性名。
+- **禁止用 .fill() 替代真实用户交互**：range/touch/slider 控件必须用 pointer 轨迹（mouse.move → mouse.down → mouse.move → mouse.up）模拟拖动。`.fill()` 只证明 input handler 能响应程序赋值，不能证明用户可操作。"
   echo
 
   echo "## E2E 固化落点"

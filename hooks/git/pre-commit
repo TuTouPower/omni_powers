@@ -27,4 +27,20 @@ while IFS= read -r path; do
 done < <(git diff-index --cached --name-only "$against")
 
 [ "$blocked" -eq 0 ] || exit 1
+
+# ── merge gate 硬约束（本轮改进）：有 in_progress task 且缺 merge gate 证据 → 拒 commit ──
+TASKS_FILE="docs/omni_powers/op_execution/tasks_list.json"
+if [ -f "$TASKS_FILE" ] && command -v jq >/dev/null 2>&1; then
+    while IFS= read -r tid; do
+        [ -n "$tid" ] || continue
+        gate_evidence="docs/omni_powers/op_execution/tasks/$tid/.merge_gate_passed"
+        if [ ! -f "$gate_evidence" ]; then
+            echo "[git pre-commit] BLOCKED: task $tid in_progress 但未过 merge gate。" >&2
+            echo "  必须先跑 op_merge_gate.sh $tid <task_branch> 通过后才许 commit。" >&2
+            blocked=1
+        fi
+    done < <(jq -r '.tasks[] | select(.status=="in_progress") | .id' "$TASKS_FILE" 2>/dev/null)
+fi
+
+[ "$blocked" -eq 0 ] || exit 1
 exit 0

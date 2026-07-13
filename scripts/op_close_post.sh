@@ -86,6 +86,32 @@ while IFS= read -r issue_file; do
     fi
 done < <({ git diff --cached --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; git diff --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; } | sort -u)
 
+# 校验 merge gate 证据（本轮改进：防绕过。无 .merge_gate_passed 直接 die）
+GATE_EVIDENCE="$ROOT/docs/omni_powers/op_execution/tasks/$TID/.merge_gate_passed"
+[ -f "$GATE_EVIDENCE" ] || die "merge gate 证据缺失——先过 op_merge_gate.sh $TID <task_branch> 再收口"
+
+# ── E2E 证据质量扫描（WARN 不阻断，强制 leader 看到，本轮改进）──
+E2E_DIR="$ROOT/e2e/$TID"
+if [ -d "$E2E_DIR" ]; then
+    while IFS= read -r spec_file; do
+        [ -n "$spec_file" ] || continue
+        # 条件跳过核心断言：if (...) 块内含 expect( → 断言可能被跳过
+        # 用 awk 做跨行检测，比 grep 更可靠
+        if awk '/^[[:space:]]*if[[:space:]]*\(/{if_depth=1; has_expect=0; next}
+                /\{/{if(if_depth>0)if_depth++}
+                /expect\(/{if(if_depth>0)has_expect=1}
+                /\}/{if(if_depth>0)if_depth--; if(if_depth==0 && has_expect){print "SKIP_GUARD:" FNR; has_expect=0}}' \
+                "$spec_file" 2>/dev/null | grep -q .; then
+            echo "[WARN] $spec_file: 检测到 if 条件块内包含 expect——核心断言可能被条件跳过，核实是否假绿" >&2
+        fi
+        # fill() 替代真实拖动
+        if grep -qE '\.fill\(.*\)' "$spec_file" 2>/dev/null && \
+           grep -qE 'type=.range|range' "$spec_file" 2>/dev/null; then
+            echo "[WARN] $spec_file: range input 上使用 .fill()——不能证明用户可拖动，需真实 pointer 交互" >&2
+        fi
+    done < <(find "$E2E_DIR" -name '*.spec.*' -o -name '*.test.*' -o -name '*.e2e.*' 2>/dev/null)
+fi
+
 # 归档（工作区 → 归档）：task 目录 + spec 原文 + acceptance（design §1.2 三态——活区清理）
 if [ "$ACTIVE_DIR" = "$TASK_DIR" ]; then
     mkdir -p "$(dirname "$ARCHIVE_DIR")" "$ROOT/docs/omni_powers/op_record/specs" "$ROOT/docs/omni_powers/op_record/acceptance" || die "创建归档父目录失败"

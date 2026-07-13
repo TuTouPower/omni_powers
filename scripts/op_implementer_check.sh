@@ -17,12 +17,23 @@ if [ ! -f "$REVIEW_FILE" ] || ! grep -q '^verdict:' "$REVIEW_FILE" 2>/dev/null; 
     exit 0
 fi
 
-# 已有 review 轮次 = verdict 行数
-max_round=$(grep -c '^verdict:' "$REVIEW_FILE" || true)   # 无匹配时 grep -c 自身输出 0，不可再 echo 0（会得 "0\n0"）
-next_round=$((max_round + 1))
+# 先读末行 verdict（最后一行是权威裁决结果——本轮修复：不用全部 verdict 行计数，防 FAIL+PASS 误判）
+last_verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$REVIEW_FILE" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//')"
 
-# review ≤ 2 轮：第 3 轮 blocked
-if [ "$next_round" -gt 2 ]; then
+# 末行 PASS → implementer 已完成，不应再派
+if [ "$last_verdict" = "PASS" ]; then
+    echo "mode: done"
+    echo "round: 0"
+    echo "# implementer 已完成（review 末行 verdict: PASS），不需再派"
+    exit 0
+fi
+
+# 末行 FAIL → 统计 FAIL 行数决定模式
+fail_count=$(grep -cE '^verdict:[[:space:]]*FAIL' "$REVIEW_FILE" || true)
+next_round=$((fail_count + 1))
+
+# 第 2 次 FAIL 后 blocked
+if [ "$fail_count" -ge 2 ]; then
     echo "mode: blocked"
     echo "round: $next_round"
     exit 1

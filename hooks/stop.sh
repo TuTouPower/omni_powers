@@ -35,13 +35,43 @@ fi
 
 tasks_dir="docs/omni_powers/op_execution/tasks/$tid"
 
-# P1-6：无测试框架项目（只有 NONE 标记）→ 放行
-[ -f "$tasks_dir/test_evidence_NONE.log" ] && exit 0
-# 找 5 分钟内的证据
-evidence="$(find "$tasks_dir" -name 'test_evidence_*.log' -not -name 'test_evidence_NONE.log' -mmin -5 2>/dev/null | head -1)"
-if [ -z "$evidence" ]; then
-  echo "[Hook] BLOCKED: $tid 无 5 分钟内新鲜测试证据。跑测试产出证据后再收工。" >&2
-  exit 2
-fi
+# ── 按 agent 类型分别校验（本轮改进：evaluator/closer 缺位补齐）──
+case "$agent_type" in
+  op-implementer)
+    # P1-6：无测试框架项目（只有 NONE 标记）→ 放行
+    [ -f "$tasks_dir/test_evidence_NONE.log" ] && exit 0
+    # 找 5 分钟内的证据
+    evidence="$(find "$tasks_dir" -name 'test_evidence_*.log' -not -name 'test_evidence_NONE.log' -mmin -5 2>/dev/null | head -1)"
+    if [ -z "$evidence" ]; then
+      echo "[Hook] BLOCKED: $tid 无 5 分钟内新鲜测试证据。跑测试产出证据后再收工。" >&2
+      exit 2
+    fi
+    ;;
+  op-evaluator)
+    # evaluator 交工门禁：acceptance_report.md 必须存在且含 verdict:
+    acc_report="docs/omni_powers/op_execution/acceptance/$tid/acceptance_report.md"
+    if [ ! -f "$acc_report" ]; then
+      echo "[Hook] BLOCKED: $tid evaluator 交工缺 acceptance_report.md。按 brief 执行验收并写报告。" >&2
+      exit 2
+    fi
+    if ! grep -qE '^verdict:[[:space:]]*(PASS|FAIL)' "$acc_report" 2>/dev/null; then
+      echo "[Hook] BLOCKED: $tid acceptance_report.md 缺 verdict: 末行。必写 verdict: PASS 或 FAIL。" >&2
+      exit 2
+    fi
+    ;;
+  op-closer)
+    # closer 交工门禁：写入路径在白名单内（复用 op_closer_gate.sh 逻辑）
+    op_closer_gate="$OP_HOME/scripts/op_closer_gate.sh"
+    if [ -x "$op_closer_gate" ] || [ -f "$op_closer_gate" ]; then
+      bash "$op_closer_gate" "$tid" || {
+        echo "[Hook] BLOCKED: $tid closer 越界写入——白名单外路径。修正后重交。" >&2
+        exit 2
+      }
+    fi
+    ;;
+  *)
+    # reviewer / 未知 agent 不设 SubagentStop（reviewer 产出由 leader 落盘）
+    ;;
+esac
 
 exit 0

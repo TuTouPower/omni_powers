@@ -239,7 +239,18 @@ git add "e2e/{TID}" && git diff --cached --quiet "e2e/{TID}" && echo "[WARN] e2e
 >
 > **leader 不接管 implementer（本轮改进）**：eval FAIL 的根因常是运行时行为 bug（implementer 禁跑 e2e、reviewer 静态审看不见，必然堆到 eval 才爆——这是设计张力，非流程冗余）。但修复仍归 implementer，leader 亲自改 src 会击穿"被监督者之外证据链"。若限流/中断打断 eval，恢复后续跑，不由 leader 顶替。
 
-到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 merge gate（3.6）。
+到顶处置（design §2.5：验收标准是 binary gate，**不存在降级落 issue**）——人裁三选一：继续追加修复轮（显式授权）/ 显式豁免带 FAIL 验收标准归档（记 decisions.md + 该验收标准在生效规格标注 KNOWN-FAIL + 自动开 P1 issue）/ 转设计 task 改思路。范围外发现（不属本 task spec 验收标准 的问题/可用性建议）→ issues。验收 PASS → 进 mutation check → merge gate（3.6）。
+
+**验收 PASS 后，运行 mutation check（本轮接入）**：
+```bash
+# 对 src/ 下受本 task workset 覆盖的 JS/TS 源文件跑变异测试（WARN 不阻断）
+for f in <workset文件列表>; do
+    if echo "$f" | grep -qE '\.(js|ts|jsx|tsx)$' && [ -f "$f" ]; then
+        bash "$OP_HOME/scripts/op_mutation_check.sh" "$f" "npx vitest run --reporter=verbose 2>/dev/null || npx jest --no-coverage 2>/dev/null" || true
+    fi
+done
+```
+> ESCAPE 记 WARN 不阻断——mutation check 是体检层，不挡流程。
 
 ---
 
@@ -283,6 +294,7 @@ Agent({ name: "op-closer", subagent_type: "op-closer",
 closer 返回后 leader 跑收口前机械脚本：
 
 ```bash
+bash "$OP_HOME/scripts/op_closer_gate.sh" {TID}   # 机械校验 closer 写入路径白/黑名单，越界拒进 leader 自审（本轮接入）
 bash "$OP_HOME/skills/oprun/scripts/op_close_pre.sh" {TID}   # tasks_list 标"收口中"（不盖戳 spec）
 ```
 

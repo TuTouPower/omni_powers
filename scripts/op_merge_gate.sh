@@ -146,3 +146,8 @@ fi
 
 echo "[OK] merge gate PASS: $TID（$BRANCH → $BASE）"
 echo "[OK]   改动 ${#CHANGED[@]} 文件全在白名单，review verdict=PASS，许 squash-merge"
+
+# 写入 merge gate 证据（pre-commit hook + op_close_post 双校验，防绕过）
+GATE_EVIDENCE="$ROOT/docs/omni_powers/op_execution/tasks/$TID/.merge_gate_passed"
+mkdir -p "$(dirname "$GATE_EVIDENCE")"
+echo "PASS $TID $BRANCH→$BASE $(date -Iseconds)" > "$GATE_EVIDENCE"

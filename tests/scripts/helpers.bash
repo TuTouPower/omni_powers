@@ -30,6 +30,9 @@ JSON
   printf "# blueprint update\\n\\n无更新\\n" > docs/omni_powers/op_execution/acceptance/T01/blueprint_update.md
   touch e2e/T01/.keep
 
+  # merge gate 证据（本轮改进：op_close_post 强制要求）
+  echo "PASS T01 op/task/T01→main $(date -Iseconds)" > docs/omni_powers/op_execution/tasks/T01/.merge_gate_passed
+
   # leader_checkpoint（### 段格式，对齐 docs_template/.../leader_checkpoint.md；current_task 正文=T01）
   cat > docs/omni_powers/op_execution/leader_checkpoint.md <<'EOF'
 # Leader Checkpoint
