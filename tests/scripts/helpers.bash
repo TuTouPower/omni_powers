@@ -16,7 +16,8 @@ setup_mock_project() {
   mkdir -p docs/omni_powers/op_execution/tasks/T01
   mkdir -p docs/omni_powers/op_execution/issues
   mkdir -p docs/omni_powers/op_record/tasks
-  mkdir -p e2e
+  mkdir -p docs/omni_powers/op_execution/acceptance/T01
+  mkdir -p e2e/T01
 
   # tasks_list.json（schema：id/title/status/spec/depends_on/workset/eval/eval_reason，design §2.3/D9）
   cat > docs/omni_powers/op_execution/tasks_list.json <<'JSON'
@@ -26,6 +27,8 @@ JSON
   # task 工作区（review verdict PASS；无 brief，design §1.1）
   echo "# report" > docs/omni_powers/op_execution/tasks/T01/report.md
   printf "# review\\n\\nverdict: PASS\\n" > docs/omni_powers/op_execution/tasks/T01/review.md
+  printf "# blueprint update\\n\\n无更新\\n" > docs/omni_powers/op_execution/acceptance/T01/blueprint_update.md
+  touch e2e/T01/.keep
 
   # leader_checkpoint（### 段格式，对齐 docs_template/.../leader_checkpoint.md；current_task 正文=T01）
   cat > docs/omni_powers/op_execution/leader_checkpoint.md <<'EOF'

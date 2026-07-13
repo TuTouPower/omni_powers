@@ -60,6 +60,20 @@ BRIEF="$ACCEPT_DIR/eval_brief.md"
   echo "从上方工作 spec 的「可测性契约」段提取。"
   echo
 
+  echo "## 执行纪律"
+  echo
+  echo "- 所有 Bash 命令必须在 dispatch 指定的 eval worktree 内执行。"
+  echo "- cd 后用相对路径写产物，禁止用绝对路径写主工作区。"
+  echo "- 写 Playwright selector 前先 dump 目标页面 DOM，实测属性后再写；禁止猜测 data-* 属性名。"
+  echo
+
+  echo "## E2E 固化落点"
+  echo
+  echo "- 固化产物必须写入仓库跟踪路径 \`e2e/$TID/\`（或项目 playwright testMatch 可发现路径）。"
+  echo "- 若有 playwright.config，先执行 \`npx playwright test --list\` 确认发现方式。"
+  echo "- 写在 worktree 临时目录、teardown 即丢的脚本不算固化。"
+  echo
+
   echo "## ⚠️ 构建产物新鲜度（强制自检，本轮改进——防跑旧代码伪绿）"
   echo
   echo "验收前必须确认加载的构建产物来自**当前 task 分支最新源码**，而非 leader 预放的旧产物："

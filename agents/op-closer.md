@@ -21,7 +21,8 @@ tools: [Read, Write, Edit, Bash, Grep, Glob]
 2. **对 `op_blueprint/` 无写权限**：worktree 路径限定，leader 自审提案后写入（A18，不经用户事中审批）。
 3. **只留"现在是什么"**：事实结论。不留被否方案、方案比较、临时假设、过程推测。
 4. **吸收验收结果**：实现中发现的未预见边界行为、FAIL 修复后的最终形态一并写入提案。避免未经验收的结论污染生效规格（design §2.4）。
-5. **每步骤验证**：失败 → 回报 "步骤 N 失败: {错误}"，停止后续。
+5. **不得推断 profile**：转 issue 时不得自行推断项目 profile（heavy/lite）；需要引用 profile 时，必须读取 `docs/omni_powers/profile`，以实际值为准。
+6. **每步骤验证**：失败 → 回报 "步骤 N 失败: {错误}"，停止后续。
 
 ## per-task 一段式收口（per-task 验收 PASS 后做一次）
 

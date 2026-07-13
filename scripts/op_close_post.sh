@@ -47,7 +47,44 @@ if [ "$EVAL_SKIP" != "skip" ]; then
     eval_verdict="$(grep -oE '^verdict:[[:space:]]*(PASS|FAIL)' "$EVAL_MD" | tail -1 | sed -E 's/.*verdict:[[:space:]]*//' || true)"
     [ -n "$eval_verdict" ] || die "acceptance_report.md 缺 verdict 末行: $EVAL_MD（evaluator 必写 verdict: PASS|FAIL）"
     [ "$eval_verdict" = "PASS" ] || die "eval 未 PASS: $EVAL_MD ($eval_verdict)（D6：验收 PASS 才收口，FAIL 须回流 implementer 重验）"
+
+    # T0003 B5：evaluator 产物未跟踪时阻断，防止验收 PASS 但 E2E 在收口后蒸发。
+    if ! git ls-files "e2e/$TID/*" | grep -q .; then
+        if [ "${OP_E2E_WAIVER:-0}" = "1" ]; then
+            echo "[WARN] OP_E2E_WAIVER=1：跳过 E2E 固化闸 e2e/$TID/" >&2
+        else
+            die "E2E 未固化入库（evaluator 固化产物须落主仓库 e2e/$TID/）"
+        fi
+    fi
 fi
+
+# T0003 B2：blueprint 提案未合入时阻断，防止稳定真相在 task 归档后蒸发。
+BLUEPRINT_HAS_UPDATE=0
+for _b in \
+    "$ROOT/docs/omni_powers/op_execution/acceptance/$TID/blueprint_update.md" \
+    "$ROOT/docs/omni_powers/op_record/acceptance/$TID/blueprint_update.md"; do
+    if [ -s "$_b" ] && grep -qE '^###[[:space:]]+(新增|修改)([[:space:]]|$)' "$_b"; then
+        BLUEPRINT_HAS_UPDATE=1
+        break
+    fi
+done
+if [ "$BLUEPRINT_HAS_UPDATE" = "1" ]; then
+    if ! { git show --pretty='' --name-only HEAD -- 2>/dev/null; git diff --cached --name-only --; } | grep -q '^docs/omni_powers/op_blueprint/'; then
+        die "blueprint 提案未合入，先执行 3.8 leader 自审写入"
+    fi
+fi
+
+# T0003 B3：未 triage 的本次 open issue 阻断，防止 issue 随收口失去分级入口。
+while IFS= read -r issue_file; do
+    [ -n "$issue_file" ] || continue
+    issue_name="$(basename "$issue_file")"
+    issue_tid="$(grep -E '^spec:[[:space:]]*' "$issue_file" | head -1 | sed -E 's/^spec:[[:space:]]*//; s/[[:space:]]+$//' || true)"
+    if { [[ "${issue_name,,}" == *"${TID,,}"* ]] || [ "$issue_tid" = "$TID" ]; } \
+        && grep -qE '^status:[[:space:]]*open([[:space:]]|$)' "$issue_file" \
+        && ! grep -qE '^triaged:[[:space:]]*' "$issue_file"; then
+        die "先跑 /optriage 分级（分级后在 issue frontmatter 加 triaged: P0-P3|closed）: $issue_file"
+    fi
+done < <({ git diff --cached --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; git diff --name-only --diff-filter=A -- 'docs/omni_powers/op_execution/issues/*.md'; } | sort -u)
 
 # 归档（工作区 → 归档）：task 目录 + spec 原文 + acceptance（design §1.2 三态——活区清理）
 if [ "$ACTIVE_DIR" = "$TASK_DIR" ]; then
