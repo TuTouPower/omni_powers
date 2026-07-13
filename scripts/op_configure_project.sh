@@ -30,8 +30,8 @@ fi
 cleanup_lock() { rmdir "$lock_dir" 2>/dev/null || true; }
 trap cleanup_lock EXIT
 settings="$root/.claude/settings.json"
-owned=(op_blueprint op_execution op_record e2e profile)
-shared=(README.md index.md .gitignore)
+owned=(op_blueprint op_execution op_record e2e profile op_readme.md op_index.md)
+shared=(.gitignore)
 
 op_reject_symlink_path "$root" "$target"
 op_reject_symlink_path "$root" ".claude"
@@ -207,7 +207,55 @@ for item in "${owned[@]}" "${shared[@]}"; do
     snapshot "$source_root/$item"
     [ "$source_root/$item" = "$target_root/$item" ] || snapshot "$target_root/$item"
 done
+for legacy in README.md index.md; do
+    snapshot "$source_root/$legacy"
+    snapshot "$target_root/$legacy"
+done
 snapshot "$settings"
+
+_nav_upgrade() {
+    # 将旧 README.md/index.md 迁入新 op_readme.md/op_index.md
+    local _src_root="$1" _tgt_root="$2" _src_is_docs="$3" _tgt_is_docs="$4" _nav="$5"
+    local _old_name _new_name _label _candidate _tgt_file _content
+    if [ "$_nav" = "readme" ]; then
+        _old_name="README.md" _new_name="op_readme.md" _label="README.md"
+    else
+        _old_name="index.md" _new_name="op_index.md" _label="index.md"
+    fi
+    _tgt_file="$_tgt_root/$_new_name"
+
+    _content=""
+    if [ "$_src_is_docs" = "yes" ]; then
+        _content="$(managed_extract "$_src_root/$_old_name" "$_label")"
+    elif [ -f "$_src_root/$_old_name" ]; then
+        _content="$(cat "$_src_root/$_old_name")"
+    fi
+    [ -n "$_content" ] || return 0
+
+    if [ -f "$_tgt_file" ]; then
+        if [ "$(cat "$_tgt_file")" = "$_content" ]; then
+            # 一致：只需清理旧源
+            :
+        else
+            echo "[FAIL] 导航升级冲突: $_tgt_file 与 $_src_root/$_old_name 内容不同" >&2
+            return 1
+        fi
+    else
+        printf '%s\n' "$_content" > "$_tgt_file"
+    fi
+
+    if [ "$_src_is_docs" = "yes" ]; then
+        managed_remove "$_src_root/$_old_name" "$_label"
+    else
+        rm -f "$_src_root/$_old_name"
+    fi
+}
+
+_nav_maybe_upgrade() {
+    local _src_root="$1" _src_is_docs="$2"
+    _nav_upgrade "$_src_root" "$target_root" "$_src_is_docs" "$([ "$target" = "docs" ] && echo yes || echo no)" readme
+    _nav_upgrade "$_src_root" "$target_root" "$_src_is_docs" "$([ "$target" = "docs" ] && echo yes || echo no)" index
+}
 
 if [ "$current" != "$target" ] && [ -d "$source_root" ]; then
     op_reject_symlink_path "$root" "$current"
@@ -231,6 +279,8 @@ if [ "$current" != "$target" ] && [ -d "$source_root" ]; then
         fi
     done
     [ "${OP_TEST_FAIL_AFTER_STAGE:-}" != owned ] || false
+    _nav_maybe_upgrade "$source_root" "$([ "$current" = "docs" ] && echo yes || echo no)"
+    [ "${OP_TEST_FAIL_AFTER_STAGE:-}" != nav ] || false
     for item in "${shared[@]}"; do
         label="$item"
         [ "$item" != ".gitignore" ] || label="gitignore"
@@ -256,6 +306,7 @@ if [ "$current" != "$target" ] && [ -d "$source_root" ]; then
     rmdir "$source_root" 2>/dev/null || true
 else
     mkdir -p "$target_root"
+    _nav_maybe_upgrade "$source_root" "$([ "$current" = "docs" ] && echo yes || echo no)"
 fi
 
 managed_merge /dev/null "$target_root/.gitignore" gitignore

@@ -71,8 +71,8 @@ OP 项目根由项目 `.claude/settings.json.env.OP_DOCS_DIR` 配置。`/opinit`
 │   └── optriage/          #   issue 分级与转 task（内部，oprun 收尾时调用）
 │
 └── docs_template/omni_powers/ # 文档模板（三态模型）
-    ├── README.md            #   模板用法和命名约定
-    ├── index.md             #   文档导航总图
+    ├── op_readme.md        #   模板用法和命名约定
+    ├── op_index.md         #   文档导航总图
     ├── op_blueprint/   #   稳定真相：prd / architecture / domain / conventions / spec / test
     ├── op_execution/   #   流动工作区：tasks_list / task 工作区 / issues / checkpoint
     └── op_record/      #   冻结历史：decisions / progress / tasks 归档
@@ -102,7 +102,7 @@ heavy / lite 共用 `install.sh`（见「快速开始」）。不再使用手动
 | lite 差异与两版共存架构 | `docs/omni_powers_design.md` §5 |
 | 决策记录 | `docs/op_decisions.md` |
 | 实验发现（归档） | `docs/archive/op_findings.md` |
-| 文档模板 | `docs_template/omni_powers/README.md` |
-| 文档导航（模板） | `docs_template/omni_powers/index.md`（部署后为 `$OP_DOCS_DIR/index.md`） |
+| 文档模板 | `docs_template/omni_powers/op_readme.md` |
+| 文档导航（模板） | `docs_template/omni_powers/op_index.md`（部署后为 `$OP_DOCS_DIR/op_index.md`） |
 | 厂商分析 | `docs/vendors_analyze/overview.md` |
 | 历史安装方案（已废弃） | `docs/op_install.md` |

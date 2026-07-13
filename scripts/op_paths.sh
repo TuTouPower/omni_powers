@@ -145,7 +145,7 @@ op_load_paths() {
     selected="$(op_normalize_docs_dir "$selected")" || return 1
     op_reject_symlink_path "$root" "$selected" || return 1
     local op_asset
-    for op_asset in op_blueprint op_execution op_record e2e profile README.md index.md .gitignore; do
+    for op_asset in op_blueprint op_execution op_record e2e profile op_readme.md op_index.md .gitignore; do
         op_reject_symlink_path "$root" "$selected/$op_asset" || return 1
     done
 
@@ -158,8 +158,8 @@ op_load_paths() {
     OP_EXECUTION_DIR_REL="$selected/op_execution"
     OP_RECORD_DIR_REL="$selected/op_record"
     OP_PROFILE_FILE_REL="$selected/profile"
-    OP_README_FILE_REL="$selected/README.md"
-    OP_INDEX_FILE_REL="$selected/index.md"
+    OP_README_FILE_REL="$selected/op_readme.md"
+    OP_INDEX_FILE_REL="$selected/op_index.md"
     OP_GITIGNORE_FILE_REL="$selected/.gitignore"
     OP_LITE_E2E_DIR_REL="$selected/e2e"
 

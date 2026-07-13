@@ -29,7 +29,7 @@ teardown() {
     mkdir -p docs/omni_powers/op_execution docs/omni_powers/op_record docs/omni_powers/op_blueprint
     printf 'heavy\n' > docs/omni_powers/profile
     printf '{"tasks":[]}\n' > docs/omni_powers/op_execution/tasks_list.json
-    printf '# OP old\n' > docs/omni_powers/README.md
+    printf '# OP old\n' > docs/omni_powers/op_readme.md
     printf '# Host docs\n\nkeep me\n' > docs/README.md
 
     run bash "$SCRIPT" --root "$TEST_ROOT" --target docs --yes
@@ -37,8 +37,7 @@ teardown() {
     [ -f docs/op_execution/tasks_list.json ]
     [ ! -e docs/omni_powers/op_execution ]
     grep -q 'keep me' docs/README.md
-    grep -q 'omni_powers managed start' docs/README.md
-    grep -q '# OP old' docs/README.md
+    grep -q '# OP old' docs/op_readme.md
 }
 
 @test "configure: 冲突预检失败时不修改文件或配置" {
@@ -129,7 +128,7 @@ EOF
     [ -f docs/README.md ]
     grep -q 'keep me' docs/README.md
     ! grep -q 'omni_powers managed' docs/README.md
-    [ "$(cat custom/op/README.md)" = "# OP navigation" ]
+    [ "$(cat custom/op/op_readme.md)" = "# OP navigation" ]
     [ -f custom/op/op_execution/x.md ]
 }
 

@@ -446,4 +446,23 @@
 
 **影响**：design.md（§0-§5 全文，硬门闭合 + 闸门 C 批量 + 状态机校正 + ASCII 机读 + 共享脚本 + e2e config + T0001 + 清标记）；运行时（agents/skills/scripts/RULES/docs_template 同步关键冲突——D-1 顺序/A1 单写者/A5 T0001/D-7 共享目录/D-6 模板 ASCII/归因(b)/op-evaluator merge 前验；脚本实现细节——op_merge_gate 白名单逻辑、op_closer_gate 新建、oplrun 收口 A8/A9/A11、opinit/oplinit D-8 e2e config——属 P1 实现工作，design 已正本清源）。
 
+## D28：将 OP 导航文件改为 op_readme.md / op_index.md（2026-07-13）
+
+**触发**：`docs_template/omni_powers/README.md` 与 `index.md` 与宿主同名文件产生冲突——当 `$OP_DOCS_DIR=docs` 时需 managed block 共存，增加了配置、生成、迁移和卸载的复杂度。
+
+**决策**：模板文件重命名为 `op_readme.md` 和 `op_index.md`，升级为 OP 独占资产（与 `profile`、`op_blueprint/` 同级），不再使用 managed block。`$OP_DOCS_DIR=docs` 共享根下，只有 `.gitignore` 继续使用 managed block。
+
+**理由**：
+- `op_` 前缀明确归属，避免与宿主 `README.md`、`index.md` 同名冲突
+- managed block 是"共享"约定，一旦文件不再共享，就不应继续维护
+- 旧版 managed block 清理作为兼容路径保留在迁移和卸载中，现有项目升级不丢失内容
+
+**迁移不变量**：
+- `docs` 共享根：旧 managed block 内容提取到 `docs/op_*.md`，宿主文件只保留非 OP 内容
+- 非 `docs` 根：旧完整文件视为 OP 独占，内容迁为 `op_*` 后删除旧名
+- 新旧内容不一致时 fail closed，不改任何文件
+- 运行 `op_configure_project.sh` 触发，current==target 时执行原地升级
+
+**影响**：`docs_template/omni_powers/op_readme.md`（rename + 自引用）、`docs_template/omni_powers/op_index.md`（rename）、`scripts/op_paths.sh`（变量值）、`scripts/op_configure_project.sh`（owned 数组 + nav upgrade）、`uninstall.sh`（删除新文件 + 保留旧 block 清理）、`skills/opinit/SKILL.md`（生成契约）、`CLAUDE.md`、`docs/omni_powers_design.md`（所有权模型）、`tests/scripts/op_configure_project.bats`、`tests/scripts/uninstall.bats`。
+
 

@@ -146,7 +146,7 @@ purge_project() {
 
     if [ "$docs_dir" = "docs" ]; then
         local item
-        for item in op_blueprint op_execution op_record e2e profile; do
+        for item in op_blueprint op_execution op_record e2e profile op_readme.md op_index.md; do
             del "$docs_root/$item"
         done
         remove_managed_block "$docs_root/README.md" README.md

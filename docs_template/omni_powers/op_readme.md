@@ -19,7 +19,7 @@
 
 | 模板 | 路径 | 用途 |
 |---|---|---|
-| [index.md](index.md) | `$OP_DOCS_DIR/index.md` | 文档导航总图（三态模型 + 目录索引） |
+| [op_index.md](op_index.md) | `$OP_DOCS_DIR/op_index.md` | 文档导航总图（三态模型 + 目录索引） |
 | [op_execution/tasks_list.json](op_execution/tasks_list.json) | `$OP_DOCS_DIR/op_execution/tasks_list.json` | task 清单 + 依赖 + status（核心） |
 | [op_execution/leader_checkpoint.md](op_execution/leader_checkpoint.md) | `$OP_DOCS_DIR/op_execution/leader_checkpoint.md` | compact 恢复断点（机器读） |
 | [op_execution/acceptance/](op_execution/acceptance/) | `$OP_DOCS_DIR/op_execution/acceptance/{TID}/` | evaluator 验收工作区（运行时生成） |
