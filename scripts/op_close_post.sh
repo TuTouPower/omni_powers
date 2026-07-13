@@ -139,10 +139,16 @@ if [ -f "$CHECKPOINT" ]; then
 fi
 
 # stage 边界收窄（#25）：add 本 task 归档 + progress + tasks_list + 更新后的 checkpoint
+# + specs/acceptance 归档路径（MEDIUM-5：git mv 只覆盖已跟踪文件，evaluator 新产物需显式 add）
 git add \
     "docs/omni_powers/op_record/tasks/$TID" \
     "docs/omni_powers/op_record/progress.md" \
     "docs/omni_powers/op_execution/tasks_list.json" \
     "docs/omni_powers/op_execution/leader_checkpoint.md" || die "git add 失败"
+git add -A -- \
+    "docs/omni_powers/op_execution/specs" \
+    "docs/omni_powers/op_execution/acceptance/$TID" \
+    "docs/omni_powers/op_record/specs" \
+    "docs/omni_powers/op_record/acceptance/$TID" 2>/dev/null || true
 
 echo "[OK] close post: $TID"

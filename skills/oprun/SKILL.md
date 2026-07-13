@@ -192,6 +192,10 @@ bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}
 
 **派 evaluator 前 leader 先做访问隔离准备（结构 + 脚本，design §2.5；前提：hook 对 subagent 失效，隔离靠 worktree 结构 + 脚本机械组装 brief，不靠 hook 拦截）**：
 1. 跑 `bash "$OP_HOME/scripts/op_assemble_eval_brief.sh" {TID}` 机械组装 evaluator brief——固定路径 cat（该 task 工作 spec 条件强制+可测性契约 / 生效规格开工前基线 / baselines 索引 / 启动方式，**剥设计探索结论段**），leader 不参与内容，evaluator 只读 brief 文件。
+   **brief 生成后立即 commit 到 task 分支**——未 commit 文件不会出现在新 worktree，evaluator 连 brief 都读不到（HIGH-2 事故）：
+   ```bash
+   git add "docs/omni_powers/op_execution/acceptance/{TID}/eval_brief.md" && git commit -m "chore({TID}): evaluator brief"
+   ```
 2. **创建 evaluator 隔离 worktree**（基于 task 分支切出，sparse-checkout 排除 `src/`、`docs/omni_powers/op_execution/tasks/`、`op_record/tasks/`、`decisions.md`，防无意抄实现）：
 
    ```bash
@@ -211,20 +215,23 @@ Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
 
 > prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、验收标准、可测性契约执行：逐条验收标准评估 → PASS 的验收标准 固化成 acceptance/{TID}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
 
-**evaluator 返回后：leader 收拢 E2E 固化产物入主仓库（本轮改进，防蒸发）**。evaluator 在 eval worktree 写的 `e2e/{TID}/` 会随 worktree teardown 蒸发（T0003 事故：`run-acceptance.mjs` 写在 op-eval worktree 内，删 worktree 即丢，验收报告引用的固化脚本仓库里根本不存在）。leader 必须在 teardown 前把固化产物落回主仓库并提交：
+**evaluator 返回后：leader 收拢验收产物入主仓库（本轮改进，防蒸发）**。evaluator 在 eval worktree 写的产物会随 worktree teardown 蒸发（T0003 事故：`run-acceptance.mjs` 写在 op-eval worktree 内，删 worktree 即丢，验收报告引用的固化脚本仓库里根本不存在）。leader 必须在 teardown 前把两类产物落回主仓库：
 
 ```bash
-# 1. 从 eval worktree 收拢固化的 e2e 到主仓库（evaluator 按 brief 已写到 worktree 的 e2e/{TID}/）
+# 1. 从 eval worktree 回收 acceptance 产物（acceptance_report.md 等——op_close_post.sh 强依赖）
+mkdir -p "docs/omni_powers/op_execution/acceptance/{TID}"
+cp -r ".claude/worktrees/op-eval/docs/omni_powers/op_execution/acceptance/{TID}/." "docs/omni_powers/op_execution/acceptance/{TID}/" 2>/dev/null || true
+[ -s "docs/omni_powers/op_execution/acceptance/{TID}/acceptance_report.md" ] || echo "[WARN] acceptance_report.md 缺失——evaluator 可能未正常产出" >&2
+# 2. 从 eval worktree 回收固化的 e2e 到主仓库（evaluator 按 brief 已写到 worktree 的 e2e/{TID}/）
 mkdir -p "e2e/{TID}"
 cp -r ".claude/worktrees/op-eval/e2e/{TID}/." "e2e/{TID}/" 2>/dev/null || true
-# 2. 校验确有固化产物（B5 闸：op_close_post.sh 归档前要求 e2e/{TID}/ 已跟踪）
+# 3. 校验确有固化产物（B5 闸：op_close_post.sh 归档前要求 e2e/{TID}/ 已跟踪）
 git add "e2e/{TID}" && git diff --cached --quiet "e2e/{TID}" && echo "[WARN] e2e/{TID}/ 无固化产物——非行为型 task 用 eval:skip，行为型 task 须补" >&2
-# 3. e2e/** 是 merge gate 黑名单 + pre-commit 保护路径，走 leader e2e 专属入口（trailer 解锁）
-trailer=$(bash "$OP_HOME/scripts/op_trailer_unlock.sh")   # 绑本次 staged e2e 文件清单的 HMAC
-git commit -m "test({TID}): 固化 per-task 验收 E2E（AC 回归保护）" -m "$trailer"
+# ⚠️ 此时不 commit e2e！e2e 提交放在 squash-merge 之后（3.6）。若先提交到主分支，
+# 后续 merge gate tip-to-tip diff 会把主分支独有 e2e 解释为 task 分支删除，必然 REJECT（HIGH-1 事故）。
 ```
 
-> **为何 e2e 走专属入口而非 merge gate 白名单**：e2e/** 是 leader 专属写入区（design §3.4 黑名单），implementer/task 分支禁碰。evaluator 固化产物由 **leader** 用 trailer 解锁提交到主仓库——这是黑名单的合法通道，不经 task 分支 merge gate。因此 B5 归档闸（`e2e/{TID}/` 须已跟踪）与 merge gate 黑名单不冲突：前者查主仓库入库状态，后者拦 task 分支越权。
+> **为何 e2e 走专属入口而非 merge gate 白名单**：e2e/** 是 leader 专属写入区（design §3.4 黑名单），implementer/task 分支禁碰。evaluator 固化产物由 **leader** 用 trailer 解锁提交到主仓库——这是黑名单的合法通道，不经 task 分支 merge gate。B5 归档闸（`e2e/{TID}/` 须已跟踪）查主仓库入库状态（squash-merge 后 E2E commit 落盘），merge gate 黑名单拦 task 分支越权——两者不冲突。**E2E commit 必须放在 squash-merge 之后**，避免 tip-to-tip diff 误判。
 
 验收范围内 FAIL → **回流 op-implementer 修复**（同分支续做，fail 模式，回 3.2 派 implementer——**leader 不亲自改 src/**，防越权顶替；leader 只派发+读结果），修复后**必须重派 op-evaluator 重验收**，**≤3 轮**。
 
@@ -250,7 +257,16 @@ bash "$OP_HOME/scripts/op_merge_gate.sh" {TID} {task_branch}   # task_branch 如
 
 > **实现状态**：`op_merge_gate.sh` 已落地（本轮）。用 `git merge-base {base} {task_branch}` 三点 diff 算实际改动集，不依赖 dispatch 锚点。REJECT（exit 1）时停下按越界项处理，不强合。exit 2 表示环境/参数错误，必须硬停并报告用户；禁止降级为人工检查 workset 后直接 commit。
 
-merge gate PASS → squash-merge 回主分支（design §3.4 步骤 6，`git merge --squash`，兑现"task 即 commit"）。**不归档、不删分支**——归档在闸门 C 后（3.8）。进 closer 一段式收尾（3.7）。
+merge gate PASS → squash-merge 回主分支（design §3.4 步骤 6，`git merge --squash`，兑现"task 即 commit"）。**不归档、不删分支**——归档在闸门 C 后（3.8）。
+
+squash-merge 完成后，E2E 固化产物走 leader 专属入口提交（放在 squash 之后，避免 tip-to-tip diff 误判——HIGH-1）：
+```bash
+git add "e2e/{TID}"
+trailer=$(bash "$OP_HOME/scripts/op_trailer_unlock.sh")
+git commit -m "test({TID}): 固化 per-task 验收 E2E（AC 回归保护）" -m "$trailer"
+```
+
+进 closer 一段式收尾（3.7）。
 
 ---
 

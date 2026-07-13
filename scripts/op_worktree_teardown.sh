@@ -44,10 +44,15 @@ if ! $force && [ -d "$wt_path" ]; then
         if [ -n "$cmp" ]; then
             unmerged="$(git -C "$wt_path" log --oneline "$cmp".."$branch" 2>/dev/null)"
             if [ -n "$unmerged" ]; then
-                echo "[FAIL] 分支 $branch 有未合并到 $cmp 的 commit，拒绝删除（防成果蒸发）:" >&2
-                echo "$unmerged" | head -30 >&2
-                echo "[HINT] 先 merge 回 $cmp，或确认丢弃后加 --force 重跑" >&2
-                exit 2
+                # ancestry 不通过时判 tree 等价（squash-merge：内容已入主分支但 commit 非祖先）
+                if git diff --quiet "$branch" "$cmp" -- . ':!e2e/' 2>/dev/null; then
+                    echo "[OK] squash-merge 检测: $branch 内容已等价于 $cmp（tree diff 空，e2e/ 除外）"
+                else
+                    echo "[FAIL] 分支 $branch 有未合并到 $cmp 的 commit，拒绝删除（防成果蒸发）:" >&2
+                    echo "$unmerged" | head -30 >&2
+                    echo "[HINT] 先 merge 回 $cmp，或确认丢弃后加 --force 重跑" >&2
+                    exit 2
+                fi
             fi
         fi
     fi

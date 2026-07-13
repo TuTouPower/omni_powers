@@ -80,9 +80,16 @@ else
         fi
     done
 
-    # docs / docs_template 只放不覆盖（用户项目可能有自己的 docs/）
-    for d in docs docs_template; do
+    # docs 只放不覆盖（用户项目可能有自己的 docs/）
+    for d in docs; do
         if [ -e "$REPO_ROOT/$d" ] && [ ! -e "$OP_HOME/$d" ]; then
+            install_item "$REPO_ROOT/$d" "$OP_HOME/$d"
+        fi
+    done
+
+    # docs_template 属发布资产，每次原子覆盖（MEDIUM-4：升级不刷新已安装模板）
+    for d in docs_template; do
+        if [ -e "$REPO_ROOT/$d" ]; then
             install_item "$REPO_ROOT/$d" "$OP_HOME/$d"
         fi
     done

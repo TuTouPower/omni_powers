@@ -46,4 +46,4 @@ helpers.bash 建临时 git 仓库 + mock 三区结构（ASCII fixture + eval:ski
 
 ## 未覆盖（随实现落地）
 
-merge gate（op_merge_gate.sh，P1 未落地）、系统层夜跑（P2+/P3 未落地）—— 实现后补 bats。
+merge gate（op_merge_gate.sh，已落地，测试见 op_merge_gate.bats）、系统层夜跑（P2+/P3 未落地）—— 实现后补 bats。
