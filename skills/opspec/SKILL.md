@@ -1,5 +1,7 @@
 ---
 name: opspec
+disable-model-invocation: true
+user-invocable: false
 description: >
   工作 spec 生成（内部 skill，被 opintake 调用）。模板 + 假设先行 + 不变量强制 + 内联设计探索。
   产出 op_execution/specs/{TID}_{slug}.md（task:spec 1:1，每 task 一份），含 frontmatter status/type、不变量、验收标准、边界、技术决策。

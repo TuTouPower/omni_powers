@@ -1,5 +1,6 @@
 ---
 name: oplintake
+disable-model-invocation: true
 description: >
   lite 需求入口（低侵入版）：spec 编写（task:spec 1:1）→ 拆 task → 闸门 A → tasks_list.json 就绪。
   触发：/oplintake "<需求>"、新需求、做个功能。

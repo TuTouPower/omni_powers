@@ -1,9 +1,10 @@
 ---
 name: opinit
+disable-model-invocation: true
 description: >
-  一次性初始化（heavy）：生成 omni_powers 三区骨架 + 写 profile=heavy + hooks 注册。在一个已有项目中初始化工作流目录与规范文档。
-  触发：/opinit。
-  前置：已跑仓库 install.sh --set-ophome（唯一安装脚本，heavy/lite 共用）。
+  一次性初始化（heavy）：绑定项目 skill + 三区骨架 + profile=heavy + hooks 注册。
+  触发：/opinit（全局常驻入口之一；业务 skill 由本 skill 绑到项目 .claude/skills/）。
+  前置：已跑仓库 install.sh --set-ophome（全局仅装 opinit+oplinit + OP_HOME）。
 ---
 
 # Op Init Skill
@@ -13,6 +14,16 @@ description: >
 `/opinit` 在已有项目中初始化 omni_powers 工作流骨架，归档旧文档，注册 hooks。一次性。
 
 > **问询原则**：步骤零先浏览所有文档 + 整理所有问题，**一次性向用户提问**。后续步骤（二/六等）按零答案执行，**不再问**——除非遇严重阻塞（插件资源缺失 / 关键文件读不到，直接 die 提示，不是问）。
+
+## 步骤 -1：绑定项目 skill（业务 skill 不进全局）
+
+在项目根执行（幂等；软链到 `$OP_HOME/skills/*`，**不**写 agents）：
+
+```bash
+bash "$OP_HOME/scripts/op_bind_project_skills.sh" --profile heavy
+```
+
+绑定后本项目可 `/opintake` `/oprun` `/opstatus` `/optriage`（均 `disable-model-invocation`，仅用户 `/` 触发）。未 bind 前这些命令在本项目不存在。
 
 ## 步骤零：浏览 + 一次问
 
@@ -157,5 +168,6 @@ bash "$OP_HOME/skills/opinit/scripts/opinit_register_hooks.sh"
 4. 提取了多少未执行计划 issue
 
 提示用户：
-- **git 未 commit**：opinit 不自动 commit，N 文件变更在工作区。建议 `git add -A && git commit -m "opinit 初始化"` 提交
+- **git 未 commit**：opinit 不自动 commit，N 文件变更在工作区。建议 `git add -A && git commit -m "opinit 初始化"` 提交（含 `.claude/skills/` 软链）
 - `/opintake "<需求>"` 开始新需求，或 `/oprun` 续跑已有 task，`/opstatus` 看状态
+- skill 断链时重跑：`bash "$OP_HOME/scripts/op_bind_project_skills.sh" --profile heavy`

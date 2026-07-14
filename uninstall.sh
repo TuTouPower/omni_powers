@@ -3,13 +3,14 @@
 # 用法: bash uninstall.sh [--dry-run] [-y] [--purge-project]
 #
 # 默认（全局卸载）：
-#   - 删 ~/.claude/skills/{opinit,opintake,oprun,opspec,opred,opstatus,optriage,oplinit,oplintake,oplrun}
-#   - 删 ~/.claude/agents/{op-implementer,op-reviewer,op-evaluator,op-closer}.md
+#   - 删 ~/.claude/skills/{opinit,oplinit} 及旧版遗留业务 skill
+#   - 删旧版遗留 ~/.claude/agents/op-*.md
 #   - 从 ~/.claude/settings.json 的 env 段移除 OP_HOME（备份后改）
 #
 # --purge-project（在已初始化的项目根跑，额外清理该项目的 omni_powers 产物）：
 #   - 按项目 env.OP_DOCS_DIR 清理 OP 资产；根为 docs 时保留宿主文档
-#   - 从项目 .claude/settings.json 的 hooks 段移除 omni_powers 注册的 hook（command 命中 OP_HOME/hooks/run-hook.cmd 或含 omni_powers）
+#   - 删项目 .claude/skills/ 下 op* skill（bind 产物）
+#   - 从项目 .claude/settings.json 的 hooks 段移除 omni_powers 注册的 hook
 #   - 删 .git/hooks/ 下含 omni_powers 标记的 git hook 文件
 #
 # 不动用户其它 skill/agent/hook。软链与拷贝两种安装形态均处理（删目标，不动源仓库）。
@@ -30,15 +31,41 @@ for arg in "$@"; do
     esac
 done
 
-SKILLS=(opinit opintake oprun opspec opred opstatus optriage oplinit oplintake oplrun)
-AGENTS=(op-implementer op-reviewer op-evaluator op-closer)
+# 全局：init 两个 + 旧版可能装过的业务 skill
+SKILLS=(opinit oplinit opintake oprun opspec opred opstatus optriage oplintake oplrun op)
+# 项目 bind 集合（heavy∪lite）
+PROJECT_SKILLS=(opinit oplinit opintake oprun oplintake oplrun opstatus optriage opspec opred)
+AGENTS=(op-implementer.md op-reviewer.md op-evaluator.md op-closer.md)
 
-# del <path>：删文件或目录，dry-run 只打印不删。软链/文件/目录统一处理。
+# del <path>：无条件删（仅用于明确 OP 独占路径，如 docs 三区）
 del() {
     local dst="$1"
     if [ -e "$dst" ] || [ -L "$dst" ]; then
         if [ "$DRY_RUN" -eq 1 ]; then echo "  [DRY] del $dst"
         else rm -rf "$dst"; echo "  [DEL] $dst"; fi
+    fi
+}
+
+# 解析 OP_HOME 供所有权判定（卸载时 settings 可能仍有）
+resolve_op_home() {
+    local settings="${CLAUDE_HOME}/settings.json"
+    OP_HOME="${OP_HOME:-}"
+    if [ -z "$OP_HOME" ] && [ -f "$settings" ] && command -v jq >/dev/null 2>&1; then
+        OP_HOME="$(jq -r '.env.OP_HOME // empty' "$settings" 2>/dev/null || true)"
+    fi
+    export OP_HOME
+    local own
+    own="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/op_asset_ownership.sh"
+    if [ -f "$own" ]; then
+        # shellcheck source=scripts/op_asset_ownership.sh
+        source "$own"
+    elif [ -n "$OP_HOME" ] && [ -f "$OP_HOME/scripts/op_asset_ownership.sh" ]; then
+        # shellcheck source=/dev/null
+        source "$OP_HOME/scripts/op_asset_ownership.sh"
+    else
+        # 无 ownership 脚本时拒绝删 skill（fail closed）
+        op_rm_owned_skill() { echo "  [SKIP] 无 ownership 脚本，不删 $1" >&2; return 2; }
+        op_rm_owned_agent() { echo "  [SKIP] 无 ownership 脚本，不删 $1" >&2; return 2; }
     fi
 }
 
@@ -52,13 +79,14 @@ backup_settings() {
 
 print_plan() {
     echo "=== 将执行 ==="
-    echo "  [全局] 删 skill（${#SKILLS[@]} 个）：${SKILLS[*]}"
+    echo "  [全局] 删 skill（含遗留）：${SKILLS[*]}"
     echo "         路径前缀：$CLAUDE_HOME/skills/"
-    echo "  [全局] 删 agent（${#AGENTS[@]} 个）：${AGENTS[*]}"
+    echo "  [全局] 清遗留 agent：${AGENTS[*]}"
     echo "         路径前缀：$CLAUDE_HOME/agents/"
     echo "  [全局] 移除 $CLAUDE_HOME/settings.json 的 env.OP_HOME"
     if [ "$PURGE_PROJECT" -eq 1 ]; then
         echo "  [项目] 按 .claude/settings.json 的 env.OP_DOCS_DIR 清理 OP 资产"
+        echo "  [项目] 删 .claude/skills/ 下 op* bind 产物：${PROJECT_SKILLS[*]}"
         echo "  [项目] 清 .claude/settings.json 中 omni_powers hook + env.OP_DOCS_DIR"
         echo "  [项目] 删 .git/hooks/ 下 omni_powers 生成的 git hook/helper"
     fi
@@ -67,15 +95,31 @@ print_plan() {
 # ── 全局卸载 ──
 remove_global() {
     echo "=== 全局卸载 → $CLAUDE_HOME ==="
+    resolve_op_home
+    local s a dry="$DRY_RUN"
     for s in "${SKILLS[@]}"; do
-        del "$CLAUDE_HOME/skills/$s"
+        op_rm_owned_skill "$CLAUDE_HOME/skills/$s" "$s" "$dry" || true
     done
     for a in "${AGENTS[@]}"; do
-        del "$CLAUDE_HOME/agents/$a.md"
+        op_rm_owned_agent "$CLAUDE_HOME/agents/$a" "$a" "$dry" || true
     done
 
-    # 共享 scripts 目录（D5 install 装的，A6 反向清理）
-    del "$CLAUDE_HOME/scripts/omni_powers"
+    # 历史 ~/.claude/scripts/omni_powers：仅当是指向 OP_HOME 的软链或空目录才删
+    local legacy_scripts="$CLAUDE_HOME/scripts/omni_powers"
+    if [ -e "$legacy_scripts" ] || [ -L "$legacy_scripts" ]; then
+        if [ -L "$legacy_scripts" ] && [ -n "${OP_HOME:-}" ]; then
+            local t
+            t="$(readlink -f "$legacy_scripts" 2>/dev/null || true)"
+            if [ "$t" = "$(readlink -f "$OP_HOME" 2>/dev/null || echo "$OP_HOME")" ] \
+                || [ "$t" = "$(readlink -f "$OP_HOME/scripts" 2>/dev/null || true)" ]; then
+                del "$legacy_scripts"
+            else
+                echo "  [SKIP] 非 OP 软链: $legacy_scripts" >&2
+            fi
+        else
+            echo "  [SKIP] 不自动删 $legacy_scripts（非确认 OP 软链；现行 install 不装此路径）" >&2
+        fi
+    fi
 
     local settings="$CLAUDE_HOME/settings.json"
     if [ -f "$settings" ] && command -v jq >/dev/null 2>&1; then
@@ -155,6 +199,13 @@ purge_project() {
     else
         del "$docs_root"
     fi
+
+    # 项目级 skill bind：仅删 OP 软链
+    resolve_op_home
+    local ps
+    for ps in "${PROJECT_SKILLS[@]}"; do
+        op_rm_owned_skill "$root/.claude/skills/$ps" "$ps" "$DRY_RUN" || true
+    done
 
     if [ -f "$settings" ]; then
         if [ "$DRY_RUN" -eq 1 ]; then

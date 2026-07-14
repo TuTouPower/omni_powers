@@ -1,10 +1,11 @@
 ---
 name: oplinit
+disable-model-invocation: true
 description: >
-  lite 项目初始化（低侵入版）：在目标项目建 omni_powers 三区骨架 + 写 profile=lite。
-  触发：/oplinit。一次性。
+  lite 项目初始化（低侵入版）：绑定项目 skill + 三区骨架 + profile=lite。
+  触发：/oplinit（全局常驻入口之一；业务 skill 由本 skill 绑到项目 .claude/skills/）。
   与 heavy 的 opinit 区别：不注册 hook、不归档旧文档、不重构 CLAUDE.md、不提炼 blueprint。
-  前置：已全量安装到 ~/.claude（见仓库 install.sh）。
+  前置：已跑 install.sh --set-ophome（全局仅装 opinit+oplinit + OP_HOME）。
 ---
 
 # Op Lite Init Skill
@@ -17,12 +18,21 @@ description: >
 
 | | opinit（heavy） | oplinit（lite） |
 |---|---|---|
+| 绑定项目 skill | heavy 集 | lite 集 |
 | 三区骨架 | ✓ | ✓ |
 | 注册 hook 到项目 .claude | ✓ | **✗** |
 | 归档旧文档 | ✓ | **✗** |
 | 重构 CLAUDE.md | ✓ | **✗** |
 | 提炼 blueprint | ✓ | **✗**（op_blueprint 空壳占位） |
 | profile | heavy | lite |
+
+## 步骤 0：绑定项目 skill（业务 skill 不进全局）
+
+```bash
+bash "$OP_HOME/scripts/op_bind_project_skills.sh" --profile lite
+```
+
+绑定后本项目可 `/oplintake` `/oplrun` `/opstatus` `/optriage`。未 bind 前这些命令在本项目不存在。
 
 ## 步骤：一次询问 OP 根并建骨架
 
@@ -50,12 +60,14 @@ lite 不注册 hook；项目 settings 仅持久化 `env.OP_DOCS_DIR`。
 骨架就绪，profile=lite。提示用户：
 
 - `/oplintake "<需求>"` 开始新需求
-- `git add -- "$OP_DOCS_DIR" .claude/settings.json && git commit -m "oplinit"` 提交骨架（oplinit 不自动 commit）
+- `git add -- "$OP_DOCS_DIR" .claude/settings.json .claude/skills && git commit -m "oplinit"` 提交骨架（oplinit 不自动 commit；含 skill 软链）
+- skill 断链时重跑：`bash "$OP_HOME/scripts/op_bind_project_skills.sh" --profile lite`
 
 ## 相关文件
 
 | 文件 | 用途 |
 |---|---|
-| `scripts/oplinit_skeleton.sh` | 三区骨架 + profile=lite |
-| `../oplintake/SKILL.md` | 需求入口 |
-| `../oplrun/SKILL.md` | 续跑执行 |
+| `$OP_HOME/scripts/op_bind_project_skills.sh` | 项目 skill 绑定 |
+| `$OP_HOME/skills/oplinit/scripts/oplinit_skeleton.sh` | 三区骨架 + profile=lite |
+| `$OP_HOME/skills/oplintake/SKILL.md` | 需求入口 |
+| `$OP_HOME/skills/oplrun/SKILL.md` | 续跑执行 |

@@ -1,5 +1,6 @@
 ---
 name: opstatus
+disable-model-invocation: true
 description: >
   读 tasks_list.json + leader_checkpoint.md，渲染人类可读状态报告。
   触发：/opstatus、看进度、现在啥情况。

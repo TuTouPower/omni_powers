@@ -1,5 +1,6 @@
 ---
 name: oplrun
+disable-model-invocation: true
 description: >
   lite 续跑执行（低侵入版）：读 profile → task 循环（implementer → leader 自验 → reviewer 双裁决 → per-task 裸评 → leader 收口 commit）。
   触发：/oplrun、继续、下一步、干活。
@@ -23,7 +24,17 @@ description: >
 
 lite 脚本统一在 `$OP_HOME/scripts/`（两版共用，install.sh --set-ophome 已设）。
 
-派 agent 用 `subagent_type`（agent 定义已装 `~/.claude/agents/op-*.md`）。**dispatch prompt 必须注入 `OP_PROFILE=lite`**，agent 环境入口据此走 lite 分支。
+### Agent 派发协议（模板注入，非注册 subagent）
+
+OP 角色 **不** 注册到 `~/.claude/agents/`。模板路径 `$OP_HOME/agents/op-*.md`。
+
+**每次派发**：
+
+1. `Read` 模板全文
+2. `subagent_type: "general-purpose"`（**禁止** `op-*` 类型名）
+3. `prompt` = 模板全文 + `\n\n---\n\n` + 本轮 brief
+4. `tools` 对齐模板 frontmatter
+5. **dispatch prompt 必须注入 `OP_PROFILE=lite`**（agent 环境入口走 lite 分支）
 
 **不派 op-closer**——lite 收口由 leader 机械完成（子步骤 3.6）。
 
@@ -90,10 +101,11 @@ spec: $OP_DOCS_DIR/op_execution/specs/{TID}_{slug}.md
 取元数据: jq 查 tasks_list.json 该 task（workset/depends_on）
 ```
 
-派发（注入 lite 环境变量）：
+派发（注入 lite 环境变量；先 `Read $OP_HOME/agents/op-implementer.md` → ROLE）：
 
 ```
-Agent(subagent_type="op-implementer", prompt:
+Agent(name="op-implementer", subagent_type="general-purpose", prompt:
+  ROLE + "\n\n---\n\n" +
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite
    {title}（{TID}）。先跑 op_implementer_check.sh {TID} 定模式。
@@ -126,7 +138,9 @@ bash "$OP_HOME/scripts/op_status.sh" {TID} reviewing
 ```
 
 ```
-Agent(subagent_type="op-reviewer", prompt:
+// 先 Read $OP_HOME/agents/op-reviewer.md → ROLE
+Agent(name="op-reviewer", subagent_type="general-purpose", prompt:
+  ROLE + "\n\n---\n\n" +
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite
    review {TID}。读 spec（dispatch 给路径）。读 report.md。代码变更：git diff ${DISPATCH_SHA}（leader 注入锚点 sha，防 implementer 自行 commit 致 diff 空，D3；新增文件先 git add -N 纳入）。
@@ -157,10 +171,11 @@ bash "$OP_HOME/scripts/op_assemble_eval_brief.sh" {TID}
 # 产出 $OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md
 ```
 
-派发（prompt 极简——内容全在 brief）：
+派发（先 `Read $OP_HOME/agents/op-evaluator.md` → ROLE；brief 内容全在 brief 文件）：
 
 ```
-Agent(subagent_type="op-evaluator", prompt:
+Agent(name="op-evaluator", subagent_type="general-purpose", prompt:
+  ROLE + "\n\n---\n\n" +
   "cd <项目根> && pwd
    环境：OP_PROFILE=lite
    读 $OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md，按 brief 执行 per-task 裸评 {TID}。
@@ -210,29 +225,21 @@ bash "$OP_HOME/scripts/close_check.sh" {TID}   # 非 0 不许进下一个 task
 
 > lite 无 closer、无 blueprint——leader 直接归档（无 blueprint 合入）。P0/P1 issue 进结束报告，不事中阻断（A18，§5.8）。
 
-## 看进度（lite 内联状态渲染，代 opstatus）
+## 看进度
 
-lite 不单装 opstatus——用户说"看进度/现在啥情况"时，leader 内联渲染（只读，不改文件）：
+`/oplinit` bind 已含 **opstatus**（项目 `.claude/skills/opstatus`）。优先：
+
+```bash
+# 用户 /opstatus，或 leader 读 skills/opstatus/SKILL.md 执行
+```
+
+若会话未加载 skill，可内联等价渲染（只读）：
 
 ```bash
 cat "$OP_DOCS_DIR/profile"
 cat "$OP_DOCS_DIR/op_execution/leader_checkpoint.md"
 bash "$OP_HOME/scripts/op_jq.sh" all
 bash "$OP_HOME/scripts/op_jq.sh" blocked
-```
-
-渲染格式：
-
-```
-== profile == lite
-== 上次断点 == {checkpoint 摘要}
-== task 进度 ==
-  T0001 ✅完成  {title}
-  T0002 🔄进行中 {title}
-  T0003 ⏳待开始 (依赖 T0002) {title}
-  T04 🚫阻塞 (quality) {title}
-  T05 ⚫废弃 {title}
-== 下一步 == {下一个可跑 task 或阻塞原因}
 ```
 
 ## 收尾

@@ -34,6 +34,7 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 | close_check.bats | 归档验收（tasks_list done + 归档二件齐全） |
 | pre_tool_use.bats | 路径匹配（含 baselines）、spec 写保护 |
 | op_check_env.bats | 环境检查（jq/git/OP_HOME） |
+| op_bind_project_skills.bats | 项目 skill 按 profile 绑定 |
 | opinit_register_hooks.bats | hooks 注册（PreToolUse/PostToolUse/SubagentStop/Stop）、OP_HOME 校验、Windows wrapper |
 | opinit_skeleton.bats | 三区骨架、模板复制、幂等保留 |
 | run-hook.bats | polyglot wrapper、hook name 自动补 `.sh` |

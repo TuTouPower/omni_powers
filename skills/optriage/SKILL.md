@@ -1,5 +1,6 @@
 ---
 name: optriage
+disable-model-invocation: true
 description: >
   issue 分级与转 task。扫 issues/ 目录，按 P0-P3 分级，将需修的转正式 task 走对应 change type 流程。
   由 leader 收尾时调用（oprun 驱动），或用户显式 /optriage。

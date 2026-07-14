@@ -2,7 +2,7 @@
 
 > **定位**：compact 恢复入口 + 跨 agent/skill 的全局运行时视图。只写谁都展开不深的全局规则，**不重复** agent/skill/design 的内容。
 > **设计理由**见 `$OP_HOME/docs/omni_powers_design.md`（设计档案，不进运行时）。
-> **各 agent 行为**见 `$OP_HOME/agents/*.md`；**各 skill 流程**见 `$OP_HOME/skills/*/SKILL.md`。
+> **各 agent 行为**见 `$OP_HOME/agents/*.md`（**提示词模板，不注册全局**）；**各 skill 流程**见 `$OP_HOME/skills/*/SKILL.md`。
 > **模板/脚本**通过 `$OP_HOME`（插件安装目录环境变量）引用。
 >
 > compact 恢复：先读 `$OP_DOCS_DIR/profile`（判定 heavy/lite）→ 按 profile 选状态机（见「profile 分叉」段）→ jq 查 `tasks_list.json`（⚠️ 严禁 Read 整文件）+ 读 `leader_checkpoint.md`。
@@ -11,7 +11,17 @@
 
 ## 角色拓扑
 
-leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewer + op-evaluator + op-closer。职责细节见各 agent.md。全线 Sub Agent，每次 task fresh dispatch，上下文隔离。
+leader（主会话/controller，被 oprun 驱动）+ op-implementer + op-reviewer + op-evaluator + op-closer。职责细节见各 `$OP_HOME/agents/*.md`。
+
+**安装与发现（防平常会话干扰）**：
+
+- **全局**只装 `/opinit`、`/oplinit`；业务 skill 由 init 绑到**项目** `.claude/skills/`（`op_bind_project_skills.sh`）
+- skill 一律 `disable-model-invocation: true`——只响应用户 `/` 调用，模型不自触发
+- agent **不**装进任何 `agents/` 发现路径；只作 `$OP_HOME/agents/*.md` 模板
+- 派发：`Read` 模板 → `subagent_type: "general-purpose"` + `prompt = 模板全文 + brief`（**禁止** `subagent_type: "op-*"`）
+- 细节见 `skills/oprun/SKILL.md` / `skills/oplrun/SKILL.md`「Agent 派发协议」
+
+全线 Sub Agent，每次 task fresh dispatch，上下文隔离。
 
 模型环境变量：`OP_IMPLEMENTER_MODEL` / `OP_REVIEWER_MODEL` / `OP_EVALUATOR_MODEL` / `OP_CLOSER_MODEL`，值填 `haiku`/`sonnet`/`opus` 之一；未设则**不传 model 参数，继承主会话当前模型——dispatch 绝不准自行指定 model**（推荐档仅作用户配置参考）。**spec 编写（含设计探索）归 leader 主会话**，不走 dispatch——闸门 A 前 `/model` 切 Opus（错误放大系数最大）。
 
@@ -128,7 +138,7 @@ bash $OP_HOME/scripts/op_jq.sh all              # 全部概览
 
 **heavy**（现状默认）：本文件通篇规则原样生效。
 
-**lite**（零侵入版，入口 `/oplintake` `/oplrun`。lite 也需 `--set-ophome`——全局 `~/.claude/` 不算侵入，零侵入指不修改项目级 `.claude/` 配置与文件结构）。差异声明：
+**lite**（低侵入版，入口 `/oplintake` `/oplrun`。需 `--set-ophome`：全局仅 opinit/oplinit + OP_HOME。低侵入 = 不注册 hook、不改用户已有文档；**允许** 写 `env.OP_DOCS_DIR` + bind 项目 `.claude/skills/`）。差异声明：
 
 | 维度 | lite 分叉 |
 |---|---|

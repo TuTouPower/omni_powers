@@ -1,5 +1,6 @@
 ---
 name: oprun
+disable-model-invocation: true
 description: >
   从 checkpoint 续跑：task 循环（review → per-task 验收 → merge → closer 收尾 → leader 自审写入 → 归档）。一次 oprun 结束生成事后报告（A18，无用户事中审批）。
   触发：/oprun、继续、下一步、干活。
@@ -21,6 +22,30 @@ description: >
 `/oprun` 从 checkpoint 续跑待开始的 task。leader 查状态、派 implementer、review、收口，自动推进。
 
 协议规则、状态机、review 判定等见 `RULES.md`。spec 编写见 `opintake`。
+
+## Agent 派发协议（模板注入，非注册 subagent）
+
+OP 角色 **不** 注册到 `~/.claude/agents/`，平常会话无 `op-*` 类型、不会被自动委派。
+角色定义是提示词模板：`$OP_HOME/agents/op-implementer.md` 等。
+
+**每次派发硬步骤**（缺一不可）：
+
+1. `Read` 对应模板全文（如 `$OP_HOME/agents/op-implementer.md`）
+2. `subagent_type` **必须** `"general-purpose"`（**禁止** `subagent_type: "op-*"`——未注册会失败）
+3. `prompt` = **模板全文** + 分隔线 + **本轮任务 brief**（环境、TID、路径指针）
+4. `tools` 对齐模板 frontmatter 的 `tools`（默认 `Read, Write, Edit, Bash, Grep, Glob`）
+5. `name` 用角色名（如 `op-implementer`）仅作会话可读标签，不代替类型注册
+6. `model` 按下方「派发模型规则」
+
+```js
+// ROLE = Read("$OP_HOME/agents/op-implementer.md") 的全文
+Agent({
+  name: "op-implementer",
+  subagent_type: "general-purpose",
+  // model: 按规则；tools: 对齐模板 frontmatter
+  prompt: ROLE + "\n\n---\n\n" + TASK_BRIEF
+})
+```
 
 ## 派发模型规则
 
@@ -154,9 +179,11 @@ awk '/^### current_task$/{print;print "";print "{TID}";f=1;next} /^### /{f=0} {i
 ```
 
 ```js
-Agent({ name: "op-implementer", subagent_type: "op-implementer",
+// 先 Read $OP_HOME/agents/op-implementer.md → ROLE
+Agent({ name: "op-implementer", subagent_type: "general-purpose",
   // model: 按顶部"派发模型规则"传——读 OP_IMPLEMENTER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n{title}（{TID}）。先跑 op_implementer_check.sh {TID} 确定模式。读 spec（路径见 dispatch prompt）。TDD 实现（只跑结构层单测，不跑 e2e）。写 report.md（顶部总报告 + 分 Round 追加）。" })
+  // tools: 对齐模板 frontmatter
+  prompt: ROLE + "\n\n---\n\ncd <work_dir> && pwd\n{title}（{TID}）。先跑 op_implementer_check.sh {TID} 确定模式。读 spec（路径见 dispatch prompt）。TDD 实现（只跑结构层单测，不跑 e2e）。写 report.md（顶部总报告 + 分 Round 追加）。" })
 ```
 
 implementer 返回后读摘要验证产出：
@@ -174,9 +201,11 @@ bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}
 ```
 
 ```js
-Agent({ name: "op-reviewer", subagent_type: "op-reviewer",
+// 先 Read $OP_HOME/agents/op-reviewer.md → ROLE
+Agent({ name: "op-reviewer", subagent_type: "general-purpose",
   // model: 按顶部"派发模型规则"传——读 OP_REVIEWER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\nreview {TID}。\n读 spec（路径见 dispatch prompt）（op_execution/specs/{spec}.md）。\n读 tasks/{TID}/report.md（顶部总报告 + 分轮）。\n代码变更：git diff\n输出：tasks/{TID}/review.md\n双裁决：规格合规（覆盖验收标准/不偏航/不自由发挥）+ 测试可信（测的是验收标准还是 mock/断言用户可观察/危险模式/implementer 是否偷跑了 e2e）。\n文件最后一行必须写 verdict: PASS 或 FAIL。重审在末尾追加新 verdict 行。" })
+  // tools: 对齐模板 frontmatter
+  prompt: ROLE + "\n\n---\n\ncd <work_dir> && pwd\nreview {TID}。\n读 spec（路径见 dispatch prompt）（op_execution/specs/{spec}.md）。\n读 tasks/{TID}/report.md（顶部总报告 + 分轮）。\n代码变更：git diff\n输出：tasks/{TID}/review.md\n双裁决：规格合规（覆盖验收标准/不偏航/不自由发挥）+ 测试可信（测的是验收标准还是 mock/断言用户可观察/危险模式/implementer 是否偷跑了 e2e）。\n文件最后一行必须写 verdict: PASS 或 FAIL。重审在末尾追加新 verdict 行。" })
 ```
 
 reviewer spawn/环境出错退避重试 max 3。重试仍失败 → 不写质量 verdict；`bash "$OP_HOME/scripts/op_status.sh {TID} blocked spawn`，下游保持 ready（调度器依 depends_on 不选中，A16），记录 spawn 错误摘要到 `op_execution/issues/{TID}_spawn.md` 后回 3.1。
@@ -214,11 +243,13 @@ bash "$OP_HOME/scripts/op_read_verdict.sh" {TID}
 3. dispatch prompt 固定模板（advisory 留痕，不拦截），`cd` 指向 `.claude/worktrees/op-eval`。
 
 ```js
+// 先 Read $OP_HOME/agents/op-evaluator.md → ROLE
 eval_brief_path="$OP_DOCS_DIR/op_execution/acceptance/{TID}/eval_brief.md"
 
-Agent({ name: "op-evaluator", subagent_type: "op-evaluator",
+Agent({ name: "op-evaluator", subagent_type: "general-purpose",
   // model: 按顶部"派发模型规则"传——读 OP_EVALUATOR_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n读 {eval_brief_path}，按 brief 执行 per-task 验收 {TID}。" })
+  // tools: 对齐模板 frontmatter
+  prompt: ROLE + "\n\n---\n\ncd <work_dir> && pwd\n读 {eval_brief_path}，按 brief 执行 per-task 验收 {TID}。" })
 ```
 
 > prompt 故意极简——内容全在脚本组装的 brief 里，prompt 不塞 task 路径/report/diff（dispatch 协议层）。evaluator 按 brief 内的启动方式、验收标准、可测性契约执行：逐条验收标准评估 → PASS 的验收标准 固化成 acceptance/{TID}/ → 破坏检查 → 对抗探索。范围内 FAIL 转修复 task；范围外落 issues。
@@ -295,9 +326,11 @@ git commit -m "test({TID}): 固化 per-task 验收 E2E（AC 回归保护）" -m 
 派 op-closer 做 per-task 一段式收尾（吸收验收结果）：同时产 blueprint 更新提案 + append decisions + 转暂存 issue。
 
 ```js
-Agent({ name: "op-closer", subagent_type: "op-closer",
+// 先 Read $OP_HOME/agents/op-closer.md → ROLE
+Agent({ name: "op-closer", subagent_type: "general-purpose",
   // model: 按顶部"派发模型规则"传——读 OP_CLOSER_MODEL，设了传该值，没设不传 model
-  prompt: "cd <work_dir> && pwd\n收尾 task {TID} \"{title}\"。验收已 PASS。\n一段式 per-task 收口：\n提取 report.md 的红灯归因段 append 到 op_record/decisions.md（来源标记 red-attribution，[来源标记 | {TID} | Round-N | 日期]；小决策不收，spec-delta 由 leader 写不经你）；将 review 【暂存】项按 optriage issue 格式全部转 issues（加 tech-debt 标签，不二次筛选）；产 blueprint 更新提案到 op_execution/acceptance/{TID}/blueprint_update.md（diff 覆盖 op_blueprint 全部文档 + baselines 合入段 + task 归档提案）。吸收验收发现的边界行为、FAIL 修复后的最终形态。只留\"现在是什么\"，过滤被否方案。\n权限红线（design §2.4）：仅写 decisions.md + issues/ + acceptance/{TID}/blueprint_update.md；不跑脚本、不碰 git、不改 status、不 stage、不碰 spec、不碰 op_blueprint、不归档、不盖戳。" })
+  // tools: 对齐模板 frontmatter
+  prompt: ROLE + "\n\n---\n\ncd <work_dir> && pwd\n收尾 task {TID} \"{title}\"。验收已 PASS。\n一段式 per-task 收口：\n提取 report.md 的红灯归因段 append 到 op_record/decisions.md（来源标记 red-attribution，[来源标记 | {TID} | Round-N | 日期]；小决策不收，spec-delta 由 leader 写不经你）；将 review 【暂存】项按 optriage issue 格式全部转 issues（加 tech-debt 标签，不二次筛选）；产 blueprint 更新提案到 op_execution/acceptance/{TID}/blueprint_update.md（diff 覆盖 op_blueprint 全部文档 + baselines 合入段 + task 归档提案）。吸收验收发现的边界行为、FAIL 修复后的最终形态。只留\"现在是什么\"，过滤被否方案。\n权限红线（design §2.4）：仅写 decisions.md + issues/ + acceptance/{TID}/blueprint_update.md；不跑脚本、不碰 git、不改 status、不 stage、不碰 spec、不碰 op_blueprint、不归档、不盖戳。" })
 ```
 
 closer 返回后 leader 跑收口前机械脚本：

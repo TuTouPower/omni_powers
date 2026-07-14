@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# install：唯一安装脚本（heavy + lite 共用），全量装 omni_powers 到 OP_HOME。
+# install：唯一安装脚本（heavy + lite 共用）。
 # 用法: bash install.sh [--link] [--set-ophome]
-#   --link       用软链代替拷贝（开发期，改仓库即生效）
+#   --link       用软链代替拷贝同步到 OP_HOME（开发期，改仓库即生效）
 #   --set-ophome 强制写 OP_HOME 到 ~/.claude/settings.json（即使已存在）
 #
 # OP_HOME 确定顺序：
@@ -10,9 +10,9 @@
 #
 # 安装内容：
 #   - skills/ agents/ scripts/ hooks/ docs/ docs_template/ → OP_HOME
-#   - skills/* → ~/.claude/skills/（软链，Claude Code 查找路径）
-#   - agents/*.md → ~/.claude/agents/（软链，Claude Code 查找路径）
-#   - scripts/ hooks/ docs/ docs_template/ 留在 OP_HOME，通过 $OP_HOME 引用
+#   - 全局仅软链 opinit + oplinit → ~/.claude/skills/（业务 skill 由 init 绑到项目）
+#   - agents 只留 OP_HOME（提示词模板，不注册 ~/.claude/agents/）
+#   - scripts/ hooks/ docs/ docs_template/ 经 $OP_HOME 引用
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -80,21 +80,18 @@ else
         fi
     done
 
-    # docs 只放不覆盖（用户项目可能有自己的 docs/）
     for d in docs; do
         if [ -e "$REPO_ROOT/$d" ] && [ ! -e "$OP_HOME/$d" ]; then
             install_item "$REPO_ROOT/$d" "$OP_HOME/$d"
         fi
     done
 
-    # docs_template 属发布资产，每次原子覆盖（MEDIUM-4：升级不刷新已安装模板）
     for d in docs_template; do
         if [ -e "$REPO_ROOT/$d" ]; then
             install_item "$REPO_ROOT/$d" "$OP_HOME/$d"
         fi
     done
 
-    # 顶层文件（CLAUDE.md / RULES.md）
     for f in CLAUDE.md RULES.md; do
         if [ -f "$REPO_ROOT/$f" ]; then
             cp "$REPO_ROOT/$f" "$OP_HOME/$f"
@@ -103,31 +100,54 @@ else
     done
 fi
 
-# 脚本 + hook 加执行权限
 find "$OP_HOME/scripts" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
 find "$OP_HOME/hooks" -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
 
-# ── 从 OP_HOME 软链 skills + agents 到 ~/.claude/ ──
+# ── 全局仅注册 opinit + oplinit（覆盖前校验 OP 所有权）──
+# shellcheck source=scripts/op_asset_ownership.sh
+source "$OP_HOME/scripts/op_asset_ownership.sh"
+# OP_HOME 已 export 语义：ownership 脚本读环境变量
+export OP_HOME
+
 SKILLS_DST="$CLAUDE_HOME/skills"
 AGENTS_DST="$CLAUDE_HOME/agents"
-mkdir -p "$SKILLS_DST" "$AGENTS_DST"
+mkdir -p "$SKILLS_DST"
 
-echo "=== 注册 skills → ~/.claude/skills/ ==="
-for s in "$OP_HOME/skills/"*; do
-    [ -d "$s" ] || continue
-    name="$(basename "$s")"
-    rm -rf "$SKILLS_DST/$name"
-    ln -s "$s" "$SKILLS_DST/$name"
-    echo "  [LINK] $SKILLS_DST/$name → $s"
+GLOBAL_SKILLS=(opinit oplinit)
+echo "=== 注册全局 skill（仅 init）→ ~/.claude/skills/ ==="
+for name in "${GLOBAL_SKILLS[@]}"; do
+    src="$OP_HOME/skills/$name"
+    dst="$SKILLS_DST/$name"
+    [ -d "$src" ] || die "缺 skill: $src"
+    if ! op_is_owned_skill "$dst" "$name"; then
+        die "全局 skill 路径已被非 OP 资产占用，拒绝覆盖: $dst"
+    fi
+    rm -rf "$dst"
+    ln -s "$src" "$dst" || die "软链失败: $dst → $src"
+    echo "  [LINK] $dst → $src"
 done
 
-echo "=== 注册 agents → ~/.claude/agents/ ==="
-for a in "$OP_HOME/agents/"*.md; do
-    [ -f "$a" ] || continue
-    name="$(basename "$a")"
-    rm -rf "$AGENTS_DST/$name"
-    ln -s "$a" "$AGENTS_DST/$name"
-    echo "  [LINK] $AGENTS_DST/$name → $a"
+# 清理旧版业务 skill：仅删 OP 拥有的软链
+LEGACY_SKILLS=(oprun opintake opstatus oplrun oplintake opspec opred optriage op)
+echo "=== 清理遗留全局业务 skill（仅 OP 资产）==="
+for name in "${LEGACY_SKILLS[@]}"; do
+    dst="$SKILLS_DST/$name"
+    rc=0
+    op_rm_owned_skill "$dst" "$name" 0 || rc=$?
+    if [ "$rc" -eq 2 ]; then
+        warn "保留非 OP 同名路径: $dst"
+    fi
+done
+
+LEGACY_AGENTS=(op-implementer.md op-reviewer.md op-evaluator.md op-closer.md)
+echo "=== 清理遗留 agents（仅 OP 资产）→ ~/.claude/agents/ ==="
+for name in "${LEGACY_AGENTS[@]}"; do
+    dst="$AGENTS_DST/$name"
+    rc=0
+    op_rm_owned_agent "$dst" "$name" 0 || rc=$?
+    if [ "$rc" -eq 2 ]; then
+        warn "保留非 OP 同名 agent: $dst"
+    fi
 done
 
 # ── OP_HOME 写入 settings.json ──
@@ -151,6 +171,7 @@ fi
 echo ""
 echo "[OK] 安装完成"
 echo "  OP_HOME = $OP_HOME"
+echo "  全局 skill：/opinit /oplinit（仅此二者）"
 echo "  按项目选模式："
-echo "    heavy  : /opinit → /opintake → /oprun"
-echo "    lite   : /oplinit → /oplintake → /oplrun"
+echo "    heavy  : /opinit →（自动 bind 项目 skill）→ /opintake → /oprun"
+echo "    lite   : /oplinit →（自动 bind 项目 skill）→ /oplintake → /oplrun"

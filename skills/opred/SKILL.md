@@ -1,5 +1,7 @@
 ---
 name: opred
+disable-model-invocation: true
+user-invocable: false
 description: >
   红灯归因协议。测试变红时，提供 implementer 和 reviewer 共同遵守的改动依据判定。
   被 op-implementer / op-reviewer 引用，不对外。

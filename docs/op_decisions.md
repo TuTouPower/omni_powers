@@ -465,4 +465,33 @@
 
 **影响**：`docs_template/omni_powers/op_readme.md`（rename + 自引用）、`docs_template/omni_powers/op_index.md`（rename）、`scripts/op_paths.sh`（变量值）、`scripts/op_configure_project.sh`（owned 数组 + nav upgrade）、`uninstall.sh`（删除新文件 + 保留旧 block 清理）、`skills/opinit/SKILL.md`（生成契约）、`CLAUDE.md`、`docs/omni_powers_design.md`（所有权模型）、`tests/scripts/op_configure_project.bats`、`tests/scripts/uninstall.bats`。
 
+## D29：agent 不注册全局，skill 禁止模型自触发（2026-07-14）
+
+**触发**：全局注册 `op-*` agents 会进 `/agents` 列表，Claude 可能在非 OP 会话按 description 自动委派；skill 的 description 也会自动触发。
+
+**决策**：
+1. **agents 只放 `$OP_HOME/agents/` 作提示词模板**，`install.sh` 不再软链到 `~/.claude/agents/`；重装时清理旧软链
+2. **派发协议**：`Read` 模板 → `subagent_type: "general-purpose"` + `prompt = 模板全文 + brief`（禁止 `subagent_type: "op-*"`）
+3. **全部 skill** `disable-model-invocation: true`——只响应用户 `/` 调用；内部 `opspec`/`opred` 另加 `user-invocable: false`
+
+**影响**：见 D30 安装分层后的最终形态。
+
+## D30：全局仅 opinit/oplinit，业务 skill 项目级 bind（2026-07-14）
+
+**触发**：全局装全部 op\* skill 会在非 OP 项目污染 `/` 菜单与 description 池；又不想引入统一 `/op` 路由器。
+
+**决策**：
+1. **`install.sh` 全局只软链 `opinit` + `oplinit`**，并清理旧版全局业务 skill
+2. **`op_bind_project_skills.sh --profile heavy|lite`**：init 第一步把对应 skill 软链到项目 `.claude/skills/`（含本侧 init）
+3. **heavy 集**：opinit opintake oprun opstatus optriage opspec opred
+   **lite 集**：oplinit oplintake oplrun opstatus optriage opspec opred
+4. 不设 `/op`；不装 agents 到任何发现路径
+5. **所有权**：覆盖/删除 skill 前必须是 OP 软链（`op_asset_ownership.sh`）；非 OP 同名路径 die 或 SKIP
+6. **profile 互斥在 bind 前**：冲突零写入
+7. **软链失败 die**，无 cp fallback
+
+**理由**：bootstrap 需要可发现的 init 命令，故全局保留两个入口；业务 skill 仅已 init 项目可见。软链 OP_HOME 便于升级。
+
+**影响**：`install.sh` / `uninstall.sh` / `scripts/op_bind_project_skills.sh` / `op_asset_ownership.sh` / `opinit`/`oplinit` SKILL / CLAUDE / RULES / design §4.1 / tests。
+
 

@@ -1,5 +1,6 @@
 ---
 name: opintake
+disable-model-invocation: true
 description: >
   需求入口：spec 编写（含设计探索，task:spec 1:1 每 task 一份）→ 拆 task（awaiting_gate）→ 闸门 A 批复（→ready）→ tasks_list.json 就绪（顺序依赖机读，不进 spec 本体）。
   触发：/opintake "<需求>"、新需求、做个功能。
