@@ -42,7 +42,7 @@
   - `skills/opintake/SKILL.md` (第 64, 81 行)
   - `skills/oplintake/SKILL.md` (第 7, 80, 98 行)
 - **现象**: 在最近的重构中，`scripts/op_status.sh` (以及 `skills/oplrun/scripts/op_status.sh`) 被修改为仅接受 ASCII 状态机读值（如 `pending`, `ready`, `in_progress`, `reviewing`, `closing`, `done`, `suspended`, `blocked`, `obsolete`）。但是，上述脚本 and 文档在调用 `op_status.sh` 或写 `tasks_list.json` 时，仍然使用了中文状态值（如 `"完成"`, `"收口中"`, `"进行中"`, `"审阅中"`, `"待开始"`, `"待规划"`）。
-- **影响**: 
+- **影响**:
   1. 当运行 `op_close_pre.sh` 和 `op_close_post.sh` 时，会因为向 `op_status.sh` 传递了中文状态名 `"完成"` 或 `"收口中"` 而报错退出，阻断整个收尾流程的自动执行。
   2. 若 Agent 在 triage 或 intake 阶段按照 `SKILL.md` 的规范将 `"待开始"`、`"待规划"` 直接写入 `tasks_list.json`，将导致 `op_jq.sh` 无法根据 ASCII 状态匹配出对应的 task。
 - **建议**:

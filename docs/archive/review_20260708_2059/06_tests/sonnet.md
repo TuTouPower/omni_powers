@@ -331,7 +331,7 @@ Design §5.5 明确列出 10 个脚本在 lite 下有行为分支差异。当前
 
 **影响**: lite 退化矩阵（design §5.7）的行为变更无法被回归验证。heavy 路径修改可能意外破坏 lite 分支。
 
-**建议**: 
+**建议**:
 1. 新增 `op_lite_profile.bats` 或在各测试文件中增加 `OP_PROFILE=lite` 的参数化测试
 2. 至少覆盖 op_close_post.sh lite 分支（跳过 closing 检查）+ op_check_env.sh lite 分支（跳过 OP_HOME 检查）
 
